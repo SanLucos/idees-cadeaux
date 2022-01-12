@@ -14,7 +14,7 @@ class IdeaController extends AbstractController
         return new Response(<<<EOF
         <html>
             <body>
-                <img src="/images/under-construction.gif" />
+                <h1>COUCOU</h1>
             </body>
         </html>
         EOF
