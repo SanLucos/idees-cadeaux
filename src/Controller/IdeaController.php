@@ -14,10 +14,12 @@ class IdeaController extends AbstractController
         return new Response(<<<EOF
         <html>
             <body>
-                <h1>COUCOU</h1>
+                <h1>ça va</h1>
             </body>
         </html>
         EOF
         );    
+
+        // return $this->render('index.html.twig');
     }
 }
