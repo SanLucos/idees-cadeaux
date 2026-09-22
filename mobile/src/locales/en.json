@@ -1,0 +1,12 @@
+{
+  "app": {
+    "name": "Idées Cadeaux"
+  },
+  "home": {
+    "title": "Home",
+    "apiStatusLabel": "API status",
+    "apiStatusOk": "Connected",
+    "apiStatusError": "Unreachable",
+    "apiStatusChecking": "Checking…"
+  }
+}
