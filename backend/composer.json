@@ -18,6 +18,7 @@
         "league/flysystem-async-aws-s3": "^3.31",
         "league/flysystem-bundle": "^3.7",
         "lexik/jwt-authentication-bundle": "^3.2",
+        "nelmio/cors-bundle": "^2.6",
         "symfony/asset": "7.4.*",
         "symfony/console": "7.4.*",
         "symfony/doctrine-messenger": "7.4.*",

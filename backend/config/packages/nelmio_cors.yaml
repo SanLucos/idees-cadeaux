@@ -1,0 +1,15 @@
+nelmio_cors:
+    defaults:
+        origin_regex: true
+        allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
+        allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+        # X-Acting-As: spec §5.15 (profils enfants gérés), lot 4 bis.
+        allow_headers: ['Content-Type', 'Authorization', 'X-Acting-As']
+        expose_headers: ['Link']
+        max_age: 3600
+    paths:
+        # The mobile app calls the API cross-origin in the Vite dev
+        # server (native builds aren't subject to CORS at all). The
+        # guest web page (spec §5.16, lot 7 bis) is server-rendered,
+        # same-origin, and doesn't need this.
+        '^/api': {}
