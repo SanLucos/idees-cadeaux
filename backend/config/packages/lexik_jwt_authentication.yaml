@@ -1,0 +1,6 @@
+lexik_jwt_authentication:
+    secret_key: '%env(resolve:JWT_SECRET_KEY)%'
+    public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
+    pass_phrase: '%env(JWT_PASSPHRASE)%'
+    # Access token ~15 min (spec §5.1); refresh token rotation via gesdinet/jwt-refresh-token-bundle.
+    token_ttl: 900

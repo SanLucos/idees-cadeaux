@@ -1,0 +1,15 @@
+api_platform:
+    title: '%env(APP_NAME)% API'
+    version: 1.0.0
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin', 'X-Acting-As']
+        pagination_client_items_per_page: false
+        pagination_items_per_page: 20
+        pagination_maximum_items_per_page: 50
+    formats:
+        jsonld: ['application/ld+json']
+        json: ['application/json']
+    error_formats:
+        jsonproblem: ['application/problem+json']

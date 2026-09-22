@@ -1,0 +1,6 @@
+gesdinet_jwt_refresh_token:
+    refresh_token_class: App\Entity\RefreshToken
+    # ~30 days, with rotation on each use (spec §5.1); rotation itself is
+    # wired into the auth firewall at lot 1.
+    ttl: 2592000
+    single_use: true
