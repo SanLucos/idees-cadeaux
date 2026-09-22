@@ -39,7 +39,37 @@ Application mobile (iOS/Android) de listes d'idées cadeaux entre amis. Back : S
 
 ## Commandes
 
-À renseigner au lot 0, dès que les projets existent (installation, lancement, tests, lint, build pour `/backend` et `/mobile`, et `docker compose up`).
+Copier `.env.example` → `.env` à la racine (et `mobile/.env.example` → `mobile/.env`) avant de démarrer.
+
+**Stack Docker (Postgres, PHP-FPM, Nginx, Mailpit)**
+```
+docker compose up -d          # démarre postgres, mailpit, php, nginx
+docker compose down           # arrête tout
+```
+Backend servi sur `http://localhost:8000` (port configurable via `BACKEND_LOCAL_PORT`), Mailpit sur `http://localhost:8026`.
+
+**Backend (`/backend`, toutes les commandes via le conteneur `php`)**
+```
+docker compose run --rm php composer install
+docker compose run --rm php bin/console lexik:jwt:generate-keypair --skip-if-exists
+docker compose run --rm php bin/console doctrine:database:create --if-not-exists
+docker compose run --rm php bin/console doctrine:migrations:migrate --no-interaction
+docker compose run --rm php composer lint     # lint:yaml + lint:container + composer validate
+docker compose run --rm php composer test     # PHPUnit (dont la suite de visibilité tests/Visibility)
+docker compose run --rm php bin/console doctrine:migrations:diff --no-interaction   # nouvelle migration après une entité modifiée
+```
+
+**Mobile (`/mobile`, sur l'hôte, Node ≥ 20)**
+```
+npm install
+npm run dev          # serveur de dev Vite
+npm run lint          # ESLint
+npm run test:unit -- --run   # Vitest
+npm run build          # vue-tsc + build de prod
+npx cypress run        # tests e2e (nécessite `npm run dev` ou le build servi en parallèle)
+```
+
+**CI** : `.github/workflows/ci.yml`, deux jobs (`backend`, `mobile`), lint + tests, déclenchés sur push/PR vers `main`.
 
 ## Sécurité
 
