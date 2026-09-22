@@ -63,14 +63,16 @@ services:
       STORAGE_REGION: us-east-1
 
   # Consumes emails, push, RGPD export and link-preview jobs (spec §2:
-  # "tâches asynchrones : Symfony Messenger"). Same image as php.
+  # "tâches asynchrones : Symfony Messenger") plus scheduled tasks
+  # (#[AsPeriodicTask], e.g. daily friend-request expiry, spec §5.3).
+  # Same image as php.
   worker:
     build:
       context: ./docker/php
       args:
         USER_ID: ${HOST_UID:-1000}
         GROUP_ID: ${HOST_GID:-1000}
-    command: ["bin/console", "messenger:consume", "async", "--time-limit=3600", "-vv"]
+    command: ["bin/console", "messenger:consume", "async", "scheduler_default", "--time-limit=3600", "-vv"]
     restart: unless-stopped
     depends_on:
       - postgres
