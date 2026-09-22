@@ -2,11 +2,136 @@
   "app": {
     "name": "Idées Cadeaux"
   },
+  "nav": {
+    "profile": "Profil",
+    "logout": "Se déconnecter"
+  },
   "home": {
     "title": "Accueil",
+    "welcome": "Bonjour {name} !",
     "apiStatusLabel": "État de l'API",
     "apiStatusOk": "Connectée",
     "apiStatusError": "Injoignable",
     "apiStatusChecking": "Vérification…"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Mot de passe",
+    "login": {
+      "title": "Connexion",
+      "submit": "Se connecter",
+      "forgotPassword": "Mot de passe oublié ?",
+      "noAccount": "Pas encore de compte ?",
+      "createAccount": "Créer un compte",
+      "orSocial": "ou"
+    },
+    "register": {
+      "title": "Créer un compte",
+      "passwordHint": "10 caractères minimum",
+      "submit": "S'inscrire",
+      "haveAccount": "Déjà un compte ?",
+      "signIn": "Se connecter",
+      "success": "Compte créé. Vérifiez votre email pour continuer."
+    },
+    "verifyEmail": {
+      "title": "Vérification de l'email",
+      "instructions": "Un code à 6 chiffres a été envoyé à {email}.",
+      "code": "Code de vérification",
+      "submit": "Vérifier",
+      "resend": "Renvoyer le code",
+      "resendSuccess": "Code renvoyé si le compte existe.",
+      "success": "Email vérifié, vous pouvez vous connecter."
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "instructions": "Recevez un code pour réinitialiser votre mot de passe.",
+      "submit": "Envoyer le code",
+      "sent": "Si un compte existe, un code a été envoyé.",
+      "backToLogin": "Retour à la connexion"
+    },
+    "resetPassword": {
+      "title": "Nouveau mot de passe",
+      "code": "Code reçu par email",
+      "newPassword": "Nouveau mot de passe",
+      "submit": "Réinitialiser",
+      "success": "Mot de passe modifié, vous pouvez vous connecter."
+    },
+    "social": {
+      "google": "Continuer avec Google",
+      "apple": "Continuer avec Apple",
+      "notConfigured": "Connexion {provider} pas encore configurée sur cet appareil."
+    }
+  },
+  "onboarding": {
+    "title": "Bienvenue !",
+    "pseudoLabel": "Pseudo",
+    "pseudoHint": "2 à 30 caractères, visible de vos amis.",
+    "birthdayTitle": "Anniversaire (optionnel)",
+    "birthDay": "Jour",
+    "birthMonth": "Mois",
+    "birthYear": "Année (optionnel)",
+    "submit": "Continuer"
+  },
+  "profile": {
+    "title": "Mon profil",
+    "pseudoLabel": "Pseudo",
+    "birthdayLabel": "Anniversaire",
+    "changeAvatar": "Changer l'avatar",
+    "save": "Enregistrer",
+    "saved": "Profil mis à jour.",
+    "sizes": {
+      "title": "Tailles",
+      "add": "Ajouter une taille",
+      "label": "Libellé",
+      "value": "Valeur",
+      "note": "Note (optionnel)",
+      "empty": "Aucune taille renseignée."
+    },
+    "preferences": {
+      "title": "Préférences",
+      "add": "Ajouter une préférence",
+      "category": "Catégorie",
+      "category_gout": "Goût",
+      "category_marque": "Marque",
+      "category_autre": "Autre",
+      "label": "Libellé",
+      "value": "Valeur",
+      "empty": "Aucune préférence renseignée."
+    }
+  },
+  "common": {
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "add": "Ajouter"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue.",
+    "auth": {
+      "invalid_credentials": "Email ou mot de passe incorrect.",
+      "email_not_verified": "Adresse email non vérifiée.",
+      "email_already_registered": "Cet email est déjà utilisé.",
+      "invalid_code": "Code invalide ou expiré.",
+      "too_many_attempts": "Trop de tentatives, réessayez plus tard.",
+      "refresh_token_invalid": "Session expirée, reconnectez-vous.",
+      "social_token_invalid": "Connexion refusée par le fournisseur.",
+      "social_email_missing": "Ce fournisseur n'a pas partagé d'adresse email.",
+      "required": "Connexion requise."
+    },
+    "validation": {
+      "email_invalid": "Adresse email invalide.",
+      "password_too_short": "Le mot de passe doit contenir au moins 10 caractères.",
+      "display_name_invalid": "Le pseudo doit contenir entre 2 et 30 caractères.",
+      "birth_date_invalid": "Jour et mois de naissance doivent être renseignés ensemble.",
+      "invalid_body": "Requête invalide."
+    },
+    "profile_size": {
+      "limit_reached": "Limite de 100 tailles atteinte."
+    },
+    "upload": {
+      "too_large": "Le fichier dépasse la taille maximale de 5 Mo.",
+      "invalid_type": "Seules les images JPEG, PNG et WebP sont acceptées.",
+      "invalid_image": "Ce fichier n'est pas une image valide.",
+      "invalid": "L'envoi du fichier a échoué."
+    }
   }
 }

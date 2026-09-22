@@ -2,11 +2,136 @@
   "app": {
     "name": "Idées Cadeaux"
   },
+  "nav": {
+    "profile": "Profile",
+    "logout": "Sign out"
+  },
   "home": {
     "title": "Home",
+    "welcome": "Hello {name}!",
     "apiStatusLabel": "API status",
     "apiStatusOk": "Connected",
     "apiStatusError": "Unreachable",
     "apiStatusChecking": "Checking…"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "login": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "No account yet?",
+      "createAccount": "Create an account",
+      "orSocial": "or"
+    },
+    "register": {
+      "title": "Create an account",
+      "passwordHint": "At least 10 characters",
+      "submit": "Sign up",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "success": "Account created. Check your email to continue."
+    },
+    "verifyEmail": {
+      "title": "Verify your email",
+      "instructions": "A 6-digit code was sent to {email}.",
+      "code": "Verification code",
+      "submit": "Verify",
+      "resend": "Resend code",
+      "resendSuccess": "Code resent if the account exists.",
+      "success": "Email verified, you can now sign in."
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "instructions": "Get a code to reset your password.",
+      "submit": "Send code",
+      "sent": "If an account exists, a code was sent.",
+      "backToLogin": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "New password",
+      "code": "Code received by email",
+      "newPassword": "New password",
+      "submit": "Reset",
+      "success": "Password changed, you can now sign in."
+    },
+    "social": {
+      "google": "Continue with Google",
+      "apple": "Continue with Apple",
+      "notConfigured": "{provider} sign-in isn't set up on this device yet."
+    }
+  },
+  "onboarding": {
+    "title": "Welcome!",
+    "pseudoLabel": "Pseudo",
+    "pseudoHint": "2 to 30 characters, visible to your friends.",
+    "birthdayTitle": "Birthday (optional)",
+    "birthDay": "Day",
+    "birthMonth": "Month",
+    "birthYear": "Year (optional)",
+    "submit": "Continue"
+  },
+  "profile": {
+    "title": "My profile",
+    "pseudoLabel": "Pseudo",
+    "birthdayLabel": "Birthday",
+    "changeAvatar": "Change avatar",
+    "save": "Save",
+    "saved": "Profile updated.",
+    "sizes": {
+      "title": "Sizes",
+      "add": "Add a size",
+      "label": "Label",
+      "value": "Value",
+      "note": "Note (optional)",
+      "empty": "No sizes yet."
+    },
+    "preferences": {
+      "title": "Preferences",
+      "add": "Add a preference",
+      "category": "Category",
+      "category_gout": "Taste",
+      "category_marque": "Brand",
+      "category_autre": "Other",
+      "label": "Label",
+      "value": "Value",
+      "empty": "No preferences yet."
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "add": "Add"
+  },
+  "errors": {
+    "generic": "Something went wrong.",
+    "auth": {
+      "invalid_credentials": "Incorrect email or password.",
+      "email_not_verified": "Email address not verified.",
+      "email_already_registered": "This email is already in use.",
+      "invalid_code": "Invalid or expired code.",
+      "too_many_attempts": "Too many attempts, try again later.",
+      "refresh_token_invalid": "Session expired, please sign in again.",
+      "social_token_invalid": "Sign-in rejected by the provider.",
+      "social_email_missing": "This provider did not share an email address.",
+      "required": "Sign-in required."
+    },
+    "validation": {
+      "email_invalid": "Invalid email address.",
+      "password_too_short": "Password must be at least 10 characters.",
+      "display_name_invalid": "Pseudo must be 2 to 30 characters.",
+      "birth_date_invalid": "Birth day and month must be set together.",
+      "invalid_body": "Invalid request."
+    },
+    "profile_size": {
+      "limit_reached": "Limit of 100 sizes reached."
+    },
+    "upload": {
+      "too_large": "File exceeds the 5 MB limit.",
+      "invalid_type": "Only JPEG, PNG and WebP images are accepted.",
+      "invalid_image": "This file is not a valid image.",
+      "invalid": "The upload failed."
+    }
   }
 }

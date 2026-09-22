@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { apiGet } from '../services/api';
+import { api } from '../services/api';
 
 type Status = 'checking' | 'ok' | 'error';
 
@@ -15,7 +15,7 @@ export const useApiHealthStore = defineStore('apiHealth', {
     async check(): Promise<void> {
       this.status = 'checking';
       try {
-        const response = await apiGet<HealthResponse>('/health');
+        const response = await api.get<HealthResponse>('/health', { auth: false });
         this.status = response.status === 'ok' ? 'ok' : 'error';
       } catch {
         this.status = 'error';
