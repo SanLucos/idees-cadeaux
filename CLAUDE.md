@@ -41,12 +41,12 @@ Application mobile (iOS/Android) de listes d'idées cadeaux entre amis. Back : S
 
 Copier `.env.example` → `.env` à la racine (et `mobile/.env.example` → `mobile/.env`) avant de démarrer.
 
-**Stack Docker (Postgres, PHP-FPM, Nginx, Mailpit)**
+**Stack Docker (Postgres, PHP-FPM, Nginx, Mailpit, MinIO, worker Messenger)**
 ```
-docker compose up -d          # démarre postgres, mailpit, php, nginx
+docker compose up -d          # démarre tous les services
 docker compose down           # arrête tout
 ```
-Backend servi sur `http://localhost:8000` (port configurable via `BACKEND_LOCAL_PORT`), Mailpit sur `http://localhost:8026`.
+Backend sur `http://localhost:8000`, Mailpit sur `http://localhost:8026`, console MinIO sur `http://localhost:9001` (ports configurables via `.env`). Le service `worker` consomme la file `async` (emails, etc.) : sans lui, rien n'est envoyé.
 
 **Backend (`/backend`, toutes les commandes via le conteneur `php`)**
 ```
@@ -58,6 +58,7 @@ docker compose run --rm php composer lint     # lint:yaml + lint:container + com
 docker compose run --rm php composer test     # PHPUnit (dont la suite de visibilité tests/Visibility)
 docker compose run --rm php bin/console doctrine:migrations:diff --no-interaction   # nouvelle migration après une entité modifiée
 ```
+Connexion Google/Apple (lot 1) : `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` dans `backend/.env` sont des placeholders. À remplacer par les vrais identifiants OAuth une fois créés (Google Cloud Console / Apple Developer) pour que `/api/auth/social/*` fonctionne.
 
 **Mobile (`/mobile`, sur l'hôte, Node ≥ 20)**
 ```

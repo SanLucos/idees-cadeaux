@@ -31,6 +31,15 @@ jobs:
       APP_SECRET: ci-secret
       JWT_PASSPHRASE: ci-passphrase
       MAILER_DSN: null://null
+      # No MinIO service in CI (services: can't run its custom start
+      # command reliably); avatar upload is covered by manual testing
+      # against docker-compose's minio, not by the automated suite.
+      STORAGE_ENDPOINT: http://localhost:9000
+      STORAGE_PUBLIC_BASE_URL: http://localhost:9000/idees-cadeaux
+      STORAGE_BUCKET: idees-cadeaux
+      STORAGE_KEY: idees_cadeaux
+      STORAGE_SECRET: ci-unused
+      STORAGE_REGION: us-east-1
     steps:
       - uses: actions/checkout@v4
 
