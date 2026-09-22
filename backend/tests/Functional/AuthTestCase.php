@@ -14,6 +14,26 @@ abstract class AuthTestCase extends ApiTestCase
     protected static ?bool $alwaysBootKernel = true;
 
     /**
+     * Rate limiters (login_throttling, limiter.friend_request) are
+     * filesystem-backed and so, unlike the database
+     * (dama/doctrine-test-bundle), persist across the whole test run
+     * instead of resetting per test — every request in every test
+     * reboots the kernel ($alwaysBootKernel), so an in-memory pool
+     * isn't an option either, it would reset *within* a test too and
+     * break tests that deliberately exercise a limit. Clearing the
+     * pool once per test keeps state cumulative across a test's own
+     * requests (what login-throttling tests need) without leaking into
+     * unrelated tests (what login attempts in this class's other
+     * helpers would otherwise trip).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        self::bootKernel();
+        self::getContainer()->get('cache.rate_limiter')->clear();
+    }
+
+    /**
      * Registers, pulls the verification code straight from the
      * `async` in-memory transport (no real mailbox in tests — see
      * config/packages/messenger.yaml's when@test), and verifies.

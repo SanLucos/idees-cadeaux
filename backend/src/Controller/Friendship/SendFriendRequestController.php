@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -25,6 +26,11 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * answers the same way, whatever actually happened (or didn't)
  * server-side, exactly like the register-email anti-enumeration
  * pattern from lot 1.
+ *
+ * Also accepts `{userId}` instead of `{email}`, for the "add from a
+ * contacts match" flow (spec §5.3): POST /contacts/match already
+ * proved the client's own device knows that email, so there's no new
+ * enumeration risk in targeting the match directly by id.
  */
 final class SendFriendRequestController
 {
@@ -46,21 +52,29 @@ final class SendFriendRequestController
         }
 
         $body = json_decode($request->getContent(), true);
-        $email = \is_array($body) ? mb_strtolower(trim((string) ($body['email'] ?? ''))) : '';
-        if ('' === $email || !filter_var($email, \FILTER_VALIDATE_EMAIL)) {
-            throw new ApiProblemException('validation.email_invalid', 'A valid email is required.', 422);
-        }
+        $userId = \is_array($body) ? (string) ($body['userId'] ?? '') : '';
 
-        $this->tryCreateRequest($me, $email);
+        if ('' !== $userId) {
+            if (!Uuid::isValid($userId)) {
+                throw new ApiProblemException('validation.user_id_invalid', 'userId must be a valid identifier.', 422);
+            }
+            $this->tryCreateRequestToUser($me, $this->users->find($userId));
+        } else {
+            $email = \is_array($body) ? mb_strtolower(trim((string) ($body['email'] ?? ''))) : '';
+            if ('' === $email || !filter_var($email, \FILTER_VALIDATE_EMAIL)) {
+                throw new ApiProblemException('validation.email_invalid', 'A valid email is required.', 422);
+            }
+
+            // Managed profiles (spec §5.15) are excluded from email search —
+            // moot until lot 4 bis creates any, but the filter costs nothing now.
+            $this->tryCreateRequestToUser($me, $this->users->findOneBy(['email' => $email, 'type' => UserType::Regular]));
+        }
 
         return new JsonResponse(['status' => 'sent_if_applicable']);
     }
 
-    private function tryCreateRequest(User $me, string $email): void
+    private function tryCreateRequestToUser(User $me, ?User $target): void
     {
-        // Managed profiles (spec §5.15) are excluded from email search —
-        // moot until lot 4 bis creates any, but the filter costs nothing now.
-        $target = $this->users->findOneBy(['email' => $email, 'type' => UserType::Regular]);
         if (null === $target || $target === $me) {
             return;
         }

@@ -30,6 +30,23 @@ final class FriendshipTest extends AuthTestCase
         self::assertSame($known->toArray(), $unknown->toArray());
     }
 
+    public function testSendRequestAcceptsAUserIdInsteadOfAnEmail(): void
+    {
+        $token = $this->registerVerifyAndLogin('fr-uid-a@example.com');
+        $targetToken = $this->registerVerifyAndLogin('fr-uid-b@example.com');
+        $target = static::createClient()->request('GET', '/api/users/me', ['auth_bearer' => $targetToken])->toArray();
+
+        static::createClient()->request('POST', '/api/friendships', [
+            'auth_bearer' => $token,
+            'json' => ['userId' => $target['id']],
+        ]);
+        self::assertResponseStatusCodeSame(200);
+
+        $outgoing = static::createClient()->request('GET', '/api/friendships/outgoing', ['auth_bearer' => $token])->toArray();
+        self::assertCount(1, $outgoing);
+        self::assertSame($target['id'], $outgoing[0]['user']['id']);
+    }
+
     public function testSendRequestCannotTargetSelf(): void
     {
         $token = $this->registerVerifyAndLogin('fr-self@example.com');
