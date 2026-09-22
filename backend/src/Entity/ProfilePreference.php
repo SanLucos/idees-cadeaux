@@ -22,18 +22,18 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 /**
  * A free preference entry ("goût", "marque", "autre"), spec §5.2.
- * Every operation is scoped to the current user by
- * App\Doctrine\Extension\OwnedByCurrentUserExtension: someone else's
- * entry, or a friend's (until lot 2 adds friend-read), is a 404, not
- * a 403.
+ * Read (Get/GetCollection) is scoped to the owner and their accepted
+ * friends by App\Doctrine\Extension\VisibleToOwnerOrFriendsExtension —
+ * anyone else gets a 404, not a 403. Writes (Patch/Delete) are further
+ * restricted to the owner alone by App\Security\Voter\OwnedEntityVoter.
  */
 #[ApiResource(
     operations: [
         new GetCollection(),
         new Get(),
         new Post(input: ProfilePreferenceInput::class, processor: ProfilePreferenceCreateProcessor::class),
-        new Patch(),
-        new Delete(),
+        new Patch(security: "is_granted('OWNER', object)"),
+        new Delete(security: "is_granted('OWNER', object)"),
     ],
     normalizationContext: ['groups' => ['profile_preference:read']],
     denormalizationContext: ['groups' => ['profile_preference:write']],

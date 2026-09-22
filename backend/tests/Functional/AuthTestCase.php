@@ -33,6 +33,13 @@ abstract class AuthTestCase extends ApiTestCase
         self::assertResponseStatusCodeSame(200);
     }
 
+    protected function registerVerifyAndLogin(string $email, string $password = 'correcthorsebattery'): string
+    {
+        $this->registerAndVerify($email, $password);
+
+        return $this->login($email, $password);
+    }
+
     protected function login(string $email, string $password = 'correcthorsebattery'): string
     {
         $response = static::createClient()->request('POST', '/api/auth/login', [

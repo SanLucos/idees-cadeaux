@@ -6,12 +6,15 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Exception\ApiProblemException;
+use App\Repository\FriendshipRepository;
+use App\Repository\UserRepository;
 use App\Serializer\UserNormalizer;
 use App\Service\AvatarUploadService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 final class UserController
@@ -20,6 +23,8 @@ final class UserController
         private readonly UserNormalizer $normalizer,
         private readonly EntityManagerInterface $em,
         private readonly AvatarUploadService $avatarUploads,
+        private readonly UserRepository $users,
+        private readonly FriendshipRepository $friendships,
     ) {
     }
 
@@ -27,6 +32,25 @@ final class UserController
     public function me(#[CurrentUser] User $user): JsonResponse
     {
         return new JsonResponse($this->normalizer->normalize($user));
+    }
+
+    /**
+     * A friend's profile (spec §4 visibility table): pseudo, avatar,
+     * anniversaire — never email, locale or verification state
+     * (App\Serializer\UserNormalizer::normalizeForFriend). Anyone who
+     * isn't an accepted friend gets the same 404 as an id that doesn't
+     * exist at all.
+     */
+    #[Route('/api/users/{id}', name: 'users_show', methods: ['GET'], requirements: ['id' => Requirement::UUID])]
+    public function show(string $id, #[CurrentUser] User $me): JsonResponse
+    {
+        $target = $this->users->find($id);
+
+        if (null === $target || (($target !== $me) && !$this->friendships->areFriends($me, $target))) {
+            throw new ApiProblemException('resource.not_found', 'User not found.', 404);
+        }
+
+        return new JsonResponse($target === $me ? $this->normalizer->normalize($target) : $this->normalizer->normalizeForFriend($target));
     }
 
     /**

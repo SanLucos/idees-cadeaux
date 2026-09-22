@@ -1,0 +1,7 @@
+framework:
+    rate_limiter:
+        # spec §9 / §5.3: "limitation de débit sur ... demandes d'ami".
+        friend_request:
+            policy: sliding_window
+            limit: 20
+            interval: '1 hour'
