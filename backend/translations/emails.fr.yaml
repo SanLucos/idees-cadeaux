@@ -1,0 +1,13 @@
+verify_email:
+  subject: "Votre code de vérification"
+  heading: "Bienvenue !"
+  intro: "Utilisez le code ci-dessous pour vérifier votre adresse email :"
+  expiry: "Ce code expire dans 15 minutes."
+  ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email."
+
+reset_password:
+  subject: "Réinitialisation de votre mot de passe"
+  heading: "Réinitialisation de mot de passe"
+  intro: "Utilisez le code ci-dessous pour choisir un nouveau mot de passe :"
+  expiry: "Ce code expire dans 15 minutes."
+  ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email."

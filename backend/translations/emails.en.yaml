@@ -1,0 +1,13 @@
+verify_email:
+  subject: "Your verification code"
+  heading: "Welcome!"
+  intro: "Use the code below to verify your email address:"
+  expiry: "This code expires in 15 minutes."
+  ignore: "If you didn't request this, you can safely ignore this email."
+
+reset_password:
+  subject: "Reset your password"
+  heading: "Password reset"
+  intro: "Use the code below to choose a new password:"
+  expiry: "This code expires in 15 minutes."
+  ignore: "If you didn't request this, you can safely ignore this email."

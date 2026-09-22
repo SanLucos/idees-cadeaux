@@ -1,0 +1,9 @@
+# Stockage objet compatible S3 (spec §2/§9) : MinIO en local, tout
+# service compatible S3 en prod, via les mêmes variables d'env.
+flysystem:
+    storages:
+        default.storage:
+            adapter: 'asyncaws'
+            options:
+                client: 'AsyncAws\S3\S3Client'
+                bucket: '%env(STORAGE_BUCKET)%'

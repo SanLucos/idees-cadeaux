@@ -18,6 +18,28 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+        bind:
+            $secret: '%kernel.secret%'
+            $mailFromAddress: '%env(MAILER_FROM_ADDRESS)%'
+            $mailFromName: '%env(APP_NAME)%'
+            $googleClientId: '%env(GOOGLE_CLIENT_ID)%'
+            $appleClientId: '%env(APPLE_CLIENT_ID)%'
+            $refreshTokenTtl: '%gesdinet_jwt_refresh_token.ttl%'
+            $storagePublicBaseUrl: '%env(STORAGE_PUBLIC_BASE_URL)%'
+
+    Psr\Cache\CacheItemPoolInterface: '@cache.app'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    # S3-compatible object storage (spec §2 / §9). MinIO locally, any
+    # S3-compatible endpoint in prod; pathStyleEndpoint is needed for
+    # MinIO and most non-AWS S3-compatible providers.
+    AsyncAws\S3\S3Client:
+        arguments:
+            $configuration:
+                endpoint: '%env(STORAGE_ENDPOINT)%'
+                accessKeyId: '%env(STORAGE_KEY)%'
+                accessKeySecret: '%env(STORAGE_SECRET)%'
+                region: '%env(STORAGE_REGION)%'
+                pathStyleEndpoint: true

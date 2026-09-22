@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use App\Exception\TranslatableApiExceptionInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Psr\Log\LoggerInterface;
 
 /**
  * Ensures every API error response is application/problem+json with a
@@ -19,6 +23,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 final class ApiExceptionSubscriber implements EventSubscriberInterface
 {
+    public function __construct(
+        private readonly Security $security,
+        private readonly LoggerInterface $logger,
+    ) {
+    }
+
     public static function getSubscribedEvents(): array
     {
         return [
@@ -45,8 +55,28 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
                 self::codeFromStatus($throwable->getStatusCode()),
                 $throwable->getMessage(),
             ],
+            // Thrown by access_control / #[IsGranted] before a controller
+            // ever runs. Stateless API firewalls have no meaningful entry
+            // point to redirect to, so Symfony surfaces both cases as the
+            // same AccessDeniedException; telling them apart (no
+            // credentials at all vs. authenticated-but-not-permitted)
+            // needs an explicit check here.
+            $throwable instanceof AuthenticationException => [401, 'auth.required', 'Authentication required.'],
+            $throwable instanceof AccessDeniedException => null === $this->security->getUser()
+                ? [401, 'auth.required', 'Authentication required.']
+                : [403, 'access.denied', 'Access denied.'],
             default => [500, 'server.internal_error', 'An unexpected error occurred.'],
         };
+
+        if ($status >= 500) {
+            // The response never carries $throwable's real message (it
+            // would leak internals to the client) — this is the only
+            // place that does, so an unexpected 500 stays debuggable.
+            $this->logger->error('Unhandled API exception: {message}', [
+                'message' => $throwable->getMessage(),
+                'exception' => $throwable,
+            ]);
+        }
 
         $event->setResponse(new JsonResponse(
             [

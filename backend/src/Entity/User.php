@@ -41,8 +41,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
     #[ORM\Column(nullable: true)]
     private ?string $passwordHash = null;
 
-    #[ORM\Column(length: 30)]
-    private string $displayName;
+    /**
+     * Null until onboarding (spec §5.1) sets a pseudo, except for
+     * managed profiles which always get one at creation (spec §5.15).
+     */
+    #[ORM\Column(length: 30, nullable: true)]
+    private ?string $displayName = null;
 
     #[ORM\Column(nullable: true)]
     private ?string $avatarPath = null;
@@ -70,7 +74,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
 
     public function __construct(
         UserType $type,
-        string $displayName,
+        ?string $displayName = null,
         string $locale = 'fr',
         string $timezone = 'Europe/Paris',
         ?Uuid $id = null,
@@ -123,7 +127,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
         $this->passwordHash = $passwordHash;
     }
 
-    public function getDisplayName(): string
+    public function getDisplayName(): ?string
     {
         return $this->displayName;
     }
@@ -131,6 +135,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
     public function setDisplayName(string $displayName): void
     {
         $this->displayName = $displayName;
+    }
+
+    /**
+     * A freshly registered account has no pseudo yet (spec §5.1
+     * onboarding); the client must route it through onboarding before
+     * the rest of the app.
+     */
+    public function isOnboarded(): bool
+    {
+        return null !== $this->displayName;
     }
 
     public function getAvatarPath(): ?string

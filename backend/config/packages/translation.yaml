@@ -1,0 +1,8 @@
+framework:
+    # Français par défaut (spec §5.14 / CLAUDE.md règle 7).
+    default_locale: fr
+    translator:
+        default_path: '%kernel.project_dir%/translations'
+        fallbacks:
+            - fr
+        providers:

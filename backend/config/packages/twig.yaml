@@ -1,5 +1,8 @@
 twig:
     file_name_pattern: '*.twig'
+    globals:
+        # Nom d'app centralisé en config, jamais en dur (CLAUDE.md règle 8).
+        app_name: '%env(APP_NAME)%'
 
 when@test:
     twig:

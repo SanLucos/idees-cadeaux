@@ -1,0 +1,123 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Entity;
+
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use App\ApiResource\Input\ProfileSizeInput;
+use App\Entity\Trait\IdentifiableTrait;
+use App\Entity\Trait\SoftDeletableTrait;
+use App\Entity\Trait\TimestampableTrait;
+use App\Repository\ProfileSizeRepository;
+use App\State\ProfileSizeCreateProcessor;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+
+/**
+ * A free "label + value" entry (e.g. "Pointure : 42"), spec §5.2.
+ * Every operation is scoped to the current user by
+ * App\Doctrine\Extension\OwnedByCurrentUserExtension: someone else's
+ * entry, or a friend's (until lot 2 adds friend-read), is a 404, not
+ * a 403.
+ */
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(input: ProfileSizeInput::class, processor: ProfileSizeCreateProcessor::class),
+        new Patch(),
+        new Delete(),
+    ],
+    normalizationContext: ['groups' => ['profile_size:read']],
+    denormalizationContext: ['groups' => ['profile_size:write']],
+)]
+#[ORM\Entity(repositoryClass: ProfileSizeRepository::class)]
+#[ORM\Table(name: 'profile_size')]
+class ProfileSize implements TimestampableInterface, SoftDeletableInterface, OwnedEntityInterface
+{
+    use IdentifiableTrait;
+    use TimestampableTrait;
+    use SoftDeletableTrait;
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    private User $user;
+
+    #[Groups(['profile_size:read', 'profile_size:write'])]
+    #[ORM\Column(length: 60)]
+    private string $label;
+
+    #[Groups(['profile_size:read', 'profile_size:write'])]
+    #[ORM\Column(length: 60)]
+    private string $value;
+
+    #[Groups(['profile_size:read', 'profile_size:write'])]
+    #[ORM\Column(length: 200, nullable: true)]
+    private ?string $note = null;
+
+    #[Groups(['profile_size:read', 'profile_size:write'])]
+    #[ORM\Column]
+    private int $sortOrder = 0;
+
+    public function __construct(User $user, string $label, string $value, ?string $note = null, int $sortOrder = 0)
+    {
+        $this->initializeId();
+        $this->initializeTimestamps();
+        $this->user = $user;
+        $this->label = $label;
+        $this->value = $value;
+        $this->note = $note;
+        $this->sortOrder = $sortOrder;
+    }
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label;
+    }
+
+    public function setLabel(string $label): void
+    {
+        $this->label = $label;
+    }
+
+    public function getValue(): string
+    {
+        return $this->value;
+    }
+
+    public function setValue(string $value): void
+    {
+        $this->value = $value;
+    }
+
+    public function getNote(): ?string
+    {
+        return $this->note;
+    }
+
+    public function setNote(?string $note): void
+    {
+        $this->note = $note;
+    }
+
+    public function getSortOrder(): int
+    {
+        return $this->sortOrder;
+    }
+
+    public function setSortOrder(int $sortOrder): void
+    {
+        $this->sortOrder = $sortOrder;
+    }
+}
