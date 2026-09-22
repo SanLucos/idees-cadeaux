@@ -3,8 +3,47 @@
     "name": "Idées Cadeaux"
   },
   "nav": {
+    "friends": "Friends",
     "profile": "Profile",
     "logout": "Sign out"
+  },
+  "friends": {
+    "title": "Friends",
+    "add": "Add",
+    "tabs": {
+      "friends": "Friends",
+      "incoming": "Received",
+      "outgoing": "Sent"
+    },
+    "empty": {
+      "friends": "No friends yet.",
+      "incoming": "No requests received.",
+      "outgoing": "No requests sent."
+    },
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "removeConfirmTitle": "Remove this friend?",
+    "removeConfirmMessage": "You'll no longer see their ideas, and they won't see yours.",
+    "status": {
+      "pending": "Pending",
+      "accepted": "Friend",
+      "expired": "Expired"
+    },
+    "add_screen": {
+      "title": "Add a friend",
+      "instructions": "Enter your friend's exact email address.",
+      "submit": "Send request",
+      "sent": "Request sent if an account exists.",
+      "contactsTitle": "From my contacts",
+      "contactsButton": "Import my contacts",
+      "contactsEmpty": "No contact matches an existing account.",
+      "contactsDenied": "Contacts access was denied."
+    },
+    "profile": {
+      "title": "{name}'s profile"
+    }
   },
   "home": {
     "title": "Home",
@@ -122,7 +161,11 @@
       "password_too_short": "Password must be at least 10 characters.",
       "display_name_invalid": "Pseudo must be 2 to 30 characters.",
       "birth_date_invalid": "Birth day and month must be set together.",
-      "invalid_body": "Invalid request."
+      "invalid_body": "Invalid request.",
+      "hashed_emails_invalid": "No contacts to compare."
+    },
+    "request": {
+      "rate_limited": "Too many requests, try again later."
     },
     "profile_size": {
       "limit_reached": "Limit of 100 sizes reached."

@@ -4,6 +4,7 @@
       <ion-toolbar>
         <ion-title>{{ t('app.name') }}</ion-title>
         <ion-buttons slot="end">
+          <ion-button router-link="/friends">{{ t('nav.friends') }}</ion-button>
           <ion-button router-link="/profile">{{ t('nav.profile') }}</ion-button>
         </ion-buttons>
       </ion-toolbar>

@@ -37,6 +37,24 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/ProfilePage.vue'),
     meta: { requiresAuth: true, requiresOnboarding: true },
   },
+  {
+    path: '/friends',
+    name: 'Friends',
+    component: () => import('../views/FriendsPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/friends/add',
+    name: 'AddFriend',
+    component: () => import('../views/AddFriendPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/friends/:id',
+    name: 'FriendProfile',
+    component: () => import('../views/FriendProfilePage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
 ];
 
 const router = createRouter({

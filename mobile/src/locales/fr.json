@@ -3,8 +3,47 @@
     "name": "Idées Cadeaux"
   },
   "nav": {
+    "friends": "Amis",
     "profile": "Profil",
     "logout": "Se déconnecter"
+  },
+  "friends": {
+    "title": "Amis",
+    "add": "Ajouter",
+    "tabs": {
+      "friends": "Amis",
+      "incoming": "Reçues",
+      "outgoing": "Envoyées"
+    },
+    "empty": {
+      "friends": "Pas encore d'amis.",
+      "incoming": "Aucune demande reçue.",
+      "outgoing": "Aucune demande envoyée."
+    },
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "cancel": "Annuler",
+    "remove": "Retirer",
+    "removeConfirmTitle": "Retirer cet ami ?",
+    "removeConfirmMessage": "Vous ne verrez plus ses idées, et il ne verra plus les vôtres.",
+    "status": {
+      "pending": "En attente",
+      "accepted": "Ami",
+      "expired": "Expirée"
+    },
+    "add_screen": {
+      "title": "Ajouter un ami",
+      "instructions": "Entrez l'adresse email exacte de votre ami.",
+      "submit": "Envoyer la demande",
+      "sent": "Demande envoyée si un compte existe.",
+      "contactsTitle": "Depuis mes contacts",
+      "contactsButton": "Importer mes contacts",
+      "contactsEmpty": "Aucun contact ne correspond à un compte existant.",
+      "contactsDenied": "Autorisation d'accès aux contacts refusée."
+    },
+    "profile": {
+      "title": "Profil de {name}"
+    }
   },
   "home": {
     "title": "Accueil",
@@ -122,7 +161,11 @@
       "password_too_short": "Le mot de passe doit contenir au moins 10 caractères.",
       "display_name_invalid": "Le pseudo doit contenir entre 2 et 30 caractères.",
       "birth_date_invalid": "Jour et mois de naissance doivent être renseignés ensemble.",
-      "invalid_body": "Requête invalide."
+      "invalid_body": "Requête invalide.",
+      "hashed_emails_invalid": "Aucun contact à comparer."
+    },
+    "request": {
+      "rate_limited": "Trop de demandes, réessayez plus tard."
     },
     "profile_size": {
       "limit_reached": "Limite de 100 tailles atteinte."

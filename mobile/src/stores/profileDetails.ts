@@ -44,5 +44,14 @@ export const useProfileDetailsStore = defineStore('profileDetails', {
       await api.delete(toApiPath(preference['@id']));
       this.preferences = this.preferences.filter((p) => p['@id'] !== preference['@id']);
     },
+
+    /** Read-only: a friend's sizes/preferences (spec §4), never mutates this store's own `sizes`/`preferences`. */
+    async fetchSizesFor(userId: string): Promise<ProfileSize[]> {
+      return (await api.get<HydraCollection<ProfileSize>>(`/profile_sizes?userId=${userId}`)).member;
+    },
+
+    async fetchPreferencesFor(userId: string): Promise<ProfilePreference[]> {
+      return (await api.get<HydraCollection<ProfilePreference>>(`/profile_preferences?userId=${userId}`)).member;
+    },
   },
 });
