@@ -15,6 +15,7 @@ class ApiProblemException extends \RuntimeException implements TranslatableApiEx
         string $message,
         private readonly int $statusCode = 422,
         ?\Throwable $previous = null,
+        private readonly array $extra = [],
     ) {
         parent::__construct($message, 0, $previous);
     }
@@ -27,5 +28,17 @@ class ApiProblemException extends \RuntimeException implements TranslatableApiEx
     public function getStatusCode(): int
     {
         return $this->statusCode;
+    }
+
+    /**
+     * Extra problem+json members (e.g. who already reserved, spec §5.7).
+     * Only for errors whose audience may already see that data: never
+     * on a path an owner can reach (CLAUDE.md règle 1, "erreurs").
+     *
+     * @return array<string, mixed>
+     */
+    public function getExtra(): array
+    {
+        return $this->extra;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use App\Exception\ApiProblemException;
 use App\Exception\TranslatableApiExceptionInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -85,7 +86,7 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
                 'status' => $status,
                 'detail' => $detail,
                 'code' => $code,
-            ],
+            ] + ($throwable instanceof ApiProblemException ? $throwable->getExtra() : []),
             $status,
             ['Content-Type' => 'application/problem+json'],
         ));

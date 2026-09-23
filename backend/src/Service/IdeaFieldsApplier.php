@@ -8,6 +8,7 @@ use App\Entity\Idea;
 use App\Entity\Occasion;
 use App\Exception\ApiProblemException;
 use App\Repository\OccasionRepository;
+use App\Util\Money;
 
 /**
  * Validates and applies the editable fields of an idea (spec §5.4)
@@ -85,18 +86,11 @@ final class IdeaFieldsApplier
             return null;
         }
 
-        $raw = \is_int($value) || \is_float($value) ? (string) $value : (\is_string($value) ? str_replace(',', '.', trim($value)) : '');
-        if (1 !== preg_match('/^\d{1,8}(\.\d{1,2})?$/', $raw)) {
-            throw new ApiProblemException('validation.idea_price_invalid', 'Price must be a positive amount with at most two decimals.', 422);
-        }
-
-        [$units, $cents] = array_pad(explode('.', $raw), 2, '');
-        $units = ltrim($units, '0');
-
-        return ('' === $units ? '0' : $units).'.'.str_pad($cents, 2, '0');
+        return Money::parse($value)
+            ?? throw new ApiProblemException('validation.idea_price_invalid', 'Price must be a positive amount with at most two decimals.', 422);
     }
 
-    private static function parseCurrency(mixed $value): string
+    public static function parseCurrency(mixed $value): string
     {
         $currency = \is_string($value) ? strtoupper(trim($value)) : '';
         if (1 !== preg_match('/^[A-Z]{3}$/', $currency)) {

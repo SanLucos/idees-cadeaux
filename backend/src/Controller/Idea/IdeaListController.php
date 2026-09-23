@@ -44,7 +44,7 @@ final class IdeaListController
         $filter = IdeaListFilter::fromRequest($request);
 
         return new JsonResponse(
-            $this->page($this->ideas->findOwnerView($me, $filter), $filter, fn (Idea $i) => $this->normalizer->normalizeForOwner($i))
+            $this->page($this->ideas->findOwnerView($me, $filter), $filter, fn (array $ideas) => array_map($this->normalizer->normalizeForOwner(...), $ideas))
             + ['counts' => $this->ideas->countOwnerView($me)],
         );
     }
@@ -69,7 +69,7 @@ final class IdeaListController
         $filter = IdeaListFilter::fromRequest($request);
 
         return new JsonResponse(
-            $this->page($this->ideas->findFriendView($owner, $me, $filter), $filter, fn (Idea $i) => $this->normalizer->normalizeForFriend($i, $me)),
+            $this->page($this->ideas->findFriendView($owner, $me, $filter), $filter, fn (array $ideas) => $this->normalizer->normalizeManyForFriend($ideas, $me)),
         );
     }
 
@@ -89,15 +89,15 @@ final class IdeaListController
     }
 
     /**
-     * @param Paginator<Idea>                       $paginator
-     * @param callable(Idea): array<string, mixed> $normalize
+     * @param Paginator<Idea>                                      $paginator
+     * @param callable(Idea[]): list<array<string, mixed>> $normalize
      *
      * @return array<string, mixed>
      */
     private function page(Paginator $paginator, IdeaListFilter $filter, callable $normalize): array
     {
         return [
-            'member' => array_map($normalize, iterator_to_array($paginator)),
+            'member' => array_values($normalize(iterator_to_array($paginator))),
             'totalItems' => \count($paginator),
             'page' => $filter->page,
             'itemsPerPage' => $filter->itemsPerPage,

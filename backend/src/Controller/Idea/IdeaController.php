@@ -16,7 +16,9 @@ use App\Repository\UserRepository;
 use App\Security\IdeaAccess;
 use App\Serializer\IdeaNormalizer;
 use App\Service\IdeaFieldsApplier;
+use App\Repository\ContributionRepository;
 use App\Service\IdeaImageUploadService;
+use App\Service\IdeaInteractionPurger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,6 +44,8 @@ final class IdeaController
         private readonly IdeaFieldsApplier $fields,
         private readonly IdeaImageUploadService $images,
         private readonly EntityManagerInterface $em,
+        private readonly IdeaInteractionPurger $purger,
+        private readonly ContributionRepository $contributions,
     ) {
     }
 
@@ -150,9 +154,9 @@ final class IdeaController
     }
 
     /**
-     * Spec §5.4 "repasser en privé", allowed at any time. From lot 4 this
-     * also deletes the idea's reservation, comments, reactions and
-     * contribution, and notifies whoever had interacted.
+     * Spec §5.4 "repasser en privé", allowed at any time: the idea's
+     * reservation, comments, reactions and contribution are deleted for
+     * good. Notifying whoever had interacted arrives with lot 5.
      */
     #[Route('/api/ideas/{id}/unpublish', name: 'ideas_unpublish', methods: ['POST'], requirements: ['id' => Requirement::UUID])]
     public function unpublish(string $id, #[CurrentUser] User $me): JsonResponse
@@ -161,6 +165,7 @@ final class IdeaController
         $this->access->assertCanEdit($idea, $me);
 
         $idea->unpublish();
+        $this->purger->purge($idea);
         $this->em->flush();
 
         return new JsonResponse($this->view($idea, $me));
@@ -183,6 +188,8 @@ final class IdeaController
         }
 
         $idea->archive($me, $kind);
+        // Spec §5.4: archiving closes an open contribution.
+        $this->contributions->findOpenForIdea($idea)?->close();
         $this->em->flush();
 
         return new JsonResponse($this->view($idea, $me));

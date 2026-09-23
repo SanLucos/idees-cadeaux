@@ -14,14 +14,17 @@ use App\Entity\User;
  *   suggestion flag — and, from lot 4, never reservation, comments,
  *   contribution, reactions nor any counter.
  * - normalizeForFriend(): what a friend of the owner (or the author of
- *   a draft) sees. Lot 4 adds the hidden interactions here.
+ *   a draft) sees, plus the hidden interactions from
+ *   InteractionNormalizer on a published idea.
  *
  * The manager view (lot 4 bis) and guest view (lot 7 bis) come later.
  */
 final class IdeaNormalizer
 {
-    public function __construct(private readonly string $storagePublicBaseUrl)
-    {
+    public function __construct(
+        private readonly InteractionNormalizer $interactions,
+        private readonly string $storagePublicBaseUrl,
+    ) {
     }
 
     /**
@@ -37,14 +40,35 @@ final class IdeaNormalizer
     }
 
     /**
+     * Friend view of several ideas, with interactions loaded in batch.
+     *
+     * @param Idea[] $ideas
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function normalizeManyForFriend(array $ideas, User $viewer): array
+    {
+        $interactions = $this->interactions->summarize($ideas, $viewer);
+
+        return array_values(array_map(
+            fn (Idea $idea) => $this->normalizeForFriend($idea, $viewer, $interactions[$idea->getId()->toRfc4122()] ?? []),
+            $ideas,
+        ));
+    }
+
+    /**
+     * @param array<string, mixed>|null $interactions precomputed by normalizeManyForFriend()
+     *
      * @return array<string, mixed>
      */
-    public function normalizeForFriend(Idea $idea, User $viewer): array
+    public function normalizeForFriend(Idea $idea, User $viewer, ?array $interactions = null): array
     {
+        $interactions ??= $this->interactions->summarize([$idea], $viewer)[$idea->getId()->toRfc4122()] ?? [];
+
         $author = $idea->getAuthor();
         $isMine = $author === $viewer;
 
-        return $this->publicFields($idea) + [
+        $data = $this->publicFields($idea) + [
             'view' => 'friend',
             'isSuggestion' => $idea->isSuggestion(),
             'isMine' => $isMine,
@@ -56,6 +80,13 @@ final class IdeaNormalizer
             'canEdit' => $isMine,
             'canUnarchive' => $idea->isArchived() && $idea->getArchivedBy() === $viewer,
         ];
+
+        // A private draft has no interactions: only its author's "offert" right remains.
+        return array_merge(
+            $data,
+            ['canMarkGifted' => $isMine && $idea->isSuggestion() && !$idea->isArchived()],
+            $interactions,
+        );
     }
 
     /**
