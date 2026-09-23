@@ -371,6 +371,9 @@ Tous les points ouverts ont été traités et toutes les hypothèses validées.
 14. ✅ **Tranché — idées privées** : brouillons visibles de leur seul auteur, publiés par défaut, repassage en privé possible à tout moment avec suppression des interactions (détails en 5.4).
 15. ✅ **Tranché — profils enfants gérés** : sans email ni connexion, un seul gestionnaire qui voit tout, amis adultes uniquement en v1, rattachement possible d'un email plus tard (détails en 5.15). Le modèle de comptes est à prévoir dès le lot 0.
 16. ✅ **Tranché — partage du profil par lien** : lien révocable créé par le propriétaire, vue invité en lecture seule (pseudo, avatar, idées personnelles publiées) sur page web et dans l'appli, amitié directe et réciproque après confirmation d'un utilisateur connecté, lien également disponible pour les profils enfants, vue invité comprise (détails en 5.16).
+17. ✅ **Tranché (lot 3) — suggestion publiée après un retrait d'ami** : son auteur n'y a plus accès du tout, lecture comprise (404) ; elle reste visible des amis restants du propriétaire, et toujours invisible de lui. Ses brouillons pour l'ex-ami restent lisibles par lui mais ne peuvent plus être publiés (5.3, 5.4).
+18. ✅ **Tranché (lot 3) — compteur « N idées » de la liste d'amis** : idées personnelles publiées et suggestions publiées des amis, actives uniquement, jamais de brouillon. Sans fuite : un propriétaire ne voit jamais son propre compteur.
+19. ✅ **Tranché (lot 3) — codes des occasions** : codes techniques en anglais (`birthday`, `christmas`, `new_year`…), libellés traduits côté client (`occasions.<code>`).
 
 ---
 
