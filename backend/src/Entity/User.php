@@ -79,6 +79,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $parentalConsentAt = null;
 
+    public const array DEFAULT_BIRTHDAY_REMINDER_DAYS = [14, 2];
+
+    /**
+     * Spec §5.11 / §11 décision 29: up to 3 delays (0–30 days) before a
+     * friend's birthday; empty = reminders off. Global, not per friend.
+     *
+     * @var int[]
+     */
+    #[ORM\Column(type: 'json', options: ['default' => '[14,2]'])]
+    private array $birthdayReminderDays = self::DEFAULT_BIRTHDAY_REMINDER_DAYS;
+
     public function __construct(
         UserType $type,
         ?string $displayName = null,
@@ -127,6 +138,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
         $child->parentalConsentAt = new \DateTimeImmutable();
 
         return $child;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getBirthdayReminderDays(): array
+    {
+        return $this->birthdayReminderDays;
+    }
+
+    /**
+     * @param int[] $days
+     */
+    public function setBirthdayReminderDays(array $days): void
+    {
+        $this->birthdayReminderDays = array_values(array_unique($days));
+        rsort($this->birthdayReminderDays);
+    }
+
+    /** Spec §5.13: during the 14-day grace period nothing is sent to or about the account. */
+    public function isSuspended(): bool
+    {
+        return null !== $this->deletionScheduledAt || ($this->isManaged() && null !== $this->managedBy?->getDeletionScheduledAt());
     }
 
     public function getParentalConsentAt(): ?\DateTimeImmutable

@@ -43,3 +43,10 @@ services:
                 accessKeySecret: '%env(STORAGE_SECRET)%'
                 region: '%env(STORAGE_REGION)%'
                 pathStyleEndpoint: true
+
+    App\Notification\Push\PushSender: '@App\Notification\Push\FcmPushSender'
+
+when@test:
+    services:
+        App\Notification\Push\PushSender:
+            class: App\Notification\Push\InMemoryPushSender

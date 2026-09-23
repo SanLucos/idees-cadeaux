@@ -59,6 +59,7 @@ docker compose run --rm php composer test     # PHPUnit (dont la suite de visibi
 docker compose run --rm php bin/console doctrine:migrations:diff --no-interaction   # nouvelle migration après une entité modifiée
 ```
 Connexion Google/Apple (lot 1) : `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` dans `backend/.env` sont des placeholders. À remplacer par les vrais identifiants OAuth une fois créés (Google Cloud Console / Apple Developer) pour que `/api/auth/social/*` fonctionne.
+Push (lot 5) : `FCM_PROJECT_ID` / `FCM_SERVICE_ACCOUNT_JSON` dans `backend/.env` sont vides ; les renseigner (projet Firebase, clé de compte de service, jamais commitée) active l'envoi push. Sans eux, in-app et email fonctionnent. Les rappels d'anniversaire tournent chaque heure sur le `worker`.
 
 **Mobile (`/mobile`, sur l'hôte, Node ≥ 20)**
 ```

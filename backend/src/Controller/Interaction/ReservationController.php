@@ -14,6 +14,8 @@ use App\Repository\ReservationRepository;
 use App\Security\IdeaAccess;
 use App\Serializer\IdeaNormalizer;
 use App\Serializer\InteractionNormalizer;
+use App\Entity\Enum\NotificationType;
+use App\Notification\IdeaEvents;
 use App\Service\IdeaFieldsApplier;
 use App\Util\Money;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
@@ -39,6 +41,7 @@ final class ReservationController
         private readonly IdeaNormalizer $ideaNormalizer,
         private readonly InteractionNormalizer $normalizer,
         private readonly EntityManagerInterface $em,
+        private readonly IdeaEvents $events,
     ) {
     }
 
@@ -81,6 +84,10 @@ final class ReservationController
             throw $this->alreadyReserved($this->reservations->findActiveByIdeas([$idea->getId()->toRfc4122()])[$idea->getId()->toRfc4122()] ?? null);
         }
 
+        if ($created) {
+            $this->events->interaction(NotificationType::IdeaReserved, $idea, $me);
+        }
+
         return new JsonResponse($this->ideaNormalizer->normalizeFor($idea, $me), $created ? 201 : 200);
     }
 
@@ -116,6 +123,7 @@ final class ReservationController
         $reservation->markDeleted();
         $this->em->persist($contribution);
         $this->em->flush();
+        $this->events->interaction(NotificationType::ContributionOpened, $idea, $me, IdeaEvents::contributionPayload($contribution));
 
         // Same shape as ContributionController's responses.
         return new JsonResponse(

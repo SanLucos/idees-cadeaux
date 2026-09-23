@@ -7,6 +7,8 @@ namespace App\Controller\Friendship;
 use App\Entity\User;
 use App\Exception\ApiProblemException;
 use App\Repository\FriendshipRepository;
+use App\Entity\Enum\NotificationType;
+use App\Notification\FriendshipEvents;
 use App\Serializer\FriendshipNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,6 +22,7 @@ final class AcceptFriendRequestController
         private readonly FriendshipRepository $friendships,
         private readonly EntityManagerInterface $em,
         private readonly FriendshipNormalizer $normalizer,
+        private readonly FriendshipEvents $events,
     ) {
     }
 
@@ -41,6 +44,7 @@ final class AcceptFriendRequestController
 
         $friendship->accept();
         $this->em->flush();
+        $this->events->notify(NotificationType::FriendRequestAccepted, $friendship, $me);
 
         return new JsonResponse($this->normalizer->normalize($friendship, $me));
     }

@@ -12,6 +12,7 @@ framework:
             Symfony\Component\Mailer\Messenger\SendEmailMessage: async
             App\Message\SendVerificationCodeEmail: async
             App\Message\SendManagedProfileInvitationEmail: async
+            App\Message\DeliverNotification: async
 
 when@test:
     framework:

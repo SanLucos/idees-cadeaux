@@ -9,6 +9,8 @@ use App\Entity\User;
 use App\Exception\ApiProblemException;
 use App\Repository\CommentRepository;
 use App\Security\IdeaAccess;
+use App\Entity\Enum\NotificationType;
+use App\Notification\IdeaEvents;
 use App\Serializer\InteractionNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -30,6 +32,7 @@ final class CommentController
         private readonly CommentRepository $comments,
         private readonly InteractionNormalizer $normalizer,
         private readonly EntityManagerInterface $em,
+        private readonly IdeaEvents $events,
     ) {
     }
 
@@ -61,6 +64,7 @@ final class CommentController
         $comment = new Comment($idea, $me, self::parseBody($body['body'] ?? null), $id);
         $this->em->persist($comment);
         $this->em->flush();
+        $this->events->interaction(NotificationType::CommentAdded, $idea, $me);
 
         return new JsonResponse($this->normalizer->comment($comment, $me), 201);
     }

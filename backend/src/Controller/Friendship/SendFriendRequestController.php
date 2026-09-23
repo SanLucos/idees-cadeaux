@@ -12,6 +12,8 @@ use App\Exception\ApiProblemException;
 use App\Repository\FriendshipRepository;
 use App\Repository\UserRepository;
 use App\Security\ActingContext;
+use App\Entity\Enum\NotificationType;
+use App\Notification\FriendshipEvents;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,6 +44,7 @@ final class SendFriendRequestController
         #[Autowire(service: 'limiter.friend_request')]
         private readonly RateLimiterFactory $rateLimiter,
         private readonly ActingContext $acting,
+        private readonly FriendshipEvents $events,
     ) {
     }
 
@@ -91,6 +94,7 @@ final class SendFriendRequestController
                 // immediate friendship instead of a second, redundant request.
                 $active->accept();
                 $this->em->flush();
+                $this->events->notify(NotificationType::FriendRequestAccepted, $active, $me);
             }
             // Otherwise: already friends, or we already asked them — no-op.
 
@@ -113,5 +117,6 @@ final class SendFriendRequestController
         }
         $this->em->persist($request);
         $this->em->flush();
+        $this->events->notify(NotificationType::FriendRequestReceived, $request, $me);
     }
 }

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ 'unsubscribe.title'|trans({}, 'notifications', locale) }} · {{ app_name }}</title>
+    <style>
+        body { margin: 0; padding: 40px 20px; background: #F6F0E6; color: #2B211C; font-family: 'Helvetica Neue', system-ui, sans-serif; }
+        main { max-width: 480px; margin: 0 auto; padding: 24px; background: #FFFCF7; border: 1px solid #E4D8C6; border-radius: 16px; }
+        h1 { margin: 0 0 16px; font-family: Georgia, serif; font-weight: 400; font-size: 28px; }
+        button { display: block; width: 100%; min-height: 48px; margin-top: 12px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        .primary { border: 0; background: #A94A2A; color: #FFFCF7; }
+        .secondary { border: 1px solid #E4D8C6; background: #FFFCF7; color: #2B211C; }
+        .muted { color: #6A5D53; font-size: 14px; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>{{ 'unsubscribe.title'|trans({}, 'notifications', locale) }}</h1>
+    {% if invalid is defined %}
+        <p>{{ 'unsubscribe.invalid'|trans({}, 'notifications', locale) }}</p>
+    {% elseif done is defined %}
+        <p>{{ ('unsubscribe.done_' ~ done)|trans({'%type%': type_label}, 'notifications', locale) }}</p>
+    {% else %}
+        <p>{{ 'unsubscribe.confirm_question'|trans({'%type%': type_label}, 'notifications', locale) }}</p>
+        <form method="post">
+            <button class="primary" type="submit" name="scope" value="type">{{ 'unsubscribe.confirm_type'|trans({}, 'notifications', locale) }}</button>
+            <button class="secondary" type="submit" name="scope" value="all">{{ 'unsubscribe.confirm_all'|trans({}, 'notifications', locale) }}</button>
+        </form>
+    {% endif %}
+    <p class="muted">{{ 'unsubscribe.transactional'|trans({}, 'notifications', locale) }}</p>
+</main>
+</body>
+</html>

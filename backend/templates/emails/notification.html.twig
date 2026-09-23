@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; color: #1a1a1a;">
+    <p style="font-size: 18px;">{{ title }}</p>
+    <p style="font-size: 16px;">{{ body }}</p>
+    <p style="color: #666;">{{ 'email.open_app'|trans({}, 'notifications') }}</p>
+    <p style="color: #999; font-size: 13px;">
+        {{ 'email.why'|trans({}, 'notifications') }}
+        <a href="{{ unsubscribe_url }}">{{ 'email.unsubscribe'|trans({}, 'notifications') }}</a>
+    </p>
+    <p style="color: #999; font-size: 13px;">{{ app_name }}</p>
+</body>
+</html>

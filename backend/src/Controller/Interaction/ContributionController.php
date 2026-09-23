@@ -14,6 +14,8 @@ use App\Repository\ReservationRepository;
 use App\Security\IdeaAccess;
 use App\Serializer\IdeaNormalizer;
 use App\Serializer\InteractionNormalizer;
+use App\Entity\Enum\NotificationType;
+use App\Notification\IdeaEvents;
 use App\Service\IdeaFieldsApplier;
 use App\Util\Money;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
@@ -41,6 +43,7 @@ final class ContributionController
         private readonly InteractionNormalizer $normalizer,
         private readonly IdeaNormalizer $ideaNormalizer,
         private readonly EntityManagerInterface $em,
+        private readonly IdeaEvents $events,
     ) {
     }
 
@@ -85,6 +88,8 @@ final class ContributionController
         } catch (UniqueConstraintViolationException) {
             throw new ApiProblemException('contribution.already_open', 'A contribution is already open on this idea.', 409);
         }
+
+        $this->events->interaction(NotificationType::ContributionOpened, $idea, $me, IdeaEvents::contributionPayload($contribution));
 
         return $this->respond($contribution, $me, 201);
     }
@@ -142,6 +147,7 @@ final class ContributionController
             throw new ApiProblemException('validation.pledge_amount_invalid', 'The amount must be greater than zero.', 422);
         }
 
+        $goalWasReached = $this->goalReached($contribution);
         $pledge = $this->pledges->findOneFor($contribution, $me);
         if (null === $pledge) {
             $this->em->persist(new ContributionPledge($contribution, $me, $amount));
@@ -149,6 +155,16 @@ final class ContributionController
             $pledge->setAmount($amount);
         }
         $this->em->flush();
+
+        $idea = $contribution->getIdea();
+        $payload = IdeaEvents::contributionPayload($contribution);
+        if (null === $pledge) {
+            // Spec §5.11: "nouvelle participation (sans montant)".
+            $this->events->interaction(NotificationType::PledgeAdded, $idea, $me, $payload);
+        }
+        if (!$goalWasReached && $this->goalReached($contribution)) {
+            $this->events->interaction(NotificationType::ContributionGoalReached, $idea, null, $payload, 'goal:'.$contribution->getId()->toRfc4122());
+        }
 
         return $this->respond($contribution, $me);
     }
@@ -163,6 +179,17 @@ final class ContributionController
         $this->em->flush();
 
         return $this->respond($contribution, $me);
+    }
+
+    private function goalReached(Contribution $contribution): bool
+    {
+        if (null === $target = $contribution->getTargetAmount()) {
+            return false;
+        }
+        $key = $contribution->getId()->toRfc4122();
+        $total = array_sum(array_map(static fn (ContributionPledge $p) => Money::toCents($p->getAmount()), $this->pledges->findByContributions([$key])[$key] ?? []));
+
+        return $total >= Money::toCents($target);
     }
 
     private function visible(string $id, User $me): Contribution

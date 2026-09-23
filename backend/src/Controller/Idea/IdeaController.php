@@ -6,6 +6,7 @@ namespace App\Controller\Idea;
 
 use App\Entity\Enum\IdeaArchiveKind;
 use App\Entity\Enum\IdeaVisibility;
+use App\Entity\Enum\NotificationType;
 use App\Entity\Idea;
 use App\Entity\User;
 use App\Exception\ApiProblemException;
@@ -14,6 +15,7 @@ use App\Repository\IdeaRepository;
 use App\Repository\UserRepository;
 use App\Security\IdeaAccess;
 use App\Serializer\IdeaNormalizer;
+use App\Notification\IdeaEvents;
 use App\Service\IdeaFieldsApplier;
 use App\Repository\ContributionRepository;
 use App\Service\IdeaImageUploadService;
@@ -44,6 +46,7 @@ final class IdeaController
         private readonly EntityManagerInterface $em,
         private readonly IdeaInteractionPurger $purger,
         private readonly ContributionRepository $contributions,
+        private readonly IdeaEvents $events,
     ) {
     }
 
@@ -96,6 +99,7 @@ final class IdeaController
 
         $this->em->persist($idea);
         $this->em->flush();
+        $this->events->published($idea, $me);
 
         return new JsonResponse($this->view($idea, $me), 201);
     }
@@ -151,6 +155,7 @@ final class IdeaController
 
         $idea->publish();
         $this->em->flush();
+        $this->events->published($idea, $me);
 
         return new JsonResponse($this->view($idea, $me));
     }
@@ -166,9 +171,11 @@ final class IdeaController
         $idea = $this->find($id);
         $this->access->assertCanEdit($idea, $me);
 
+        $notified = $this->events->beforeUnpublish($idea);
         $idea->unpublish();
         $this->purger->purge($idea);
         $this->em->flush();
+        $this->events->unpublished($idea, $notified, $me);
 
         return new JsonResponse($this->view($idea, $me));
     }
@@ -189,10 +196,14 @@ final class IdeaController
             throw new ApiProblemException('idea.already_archived', 'This idea is already archived.', 409);
         }
 
+        $archivedAsGift = IdeaArchiveKind::Gifted === $kind;
         $idea->archive($me, $kind);
         // Spec §5.4: archiving closes an open contribution.
         $this->contributions->findOpenForIdea($idea)?->close();
         $this->em->flush();
+        if ($archivedAsGift) {
+            $this->events->interaction(NotificationType::SuggestionGifted, $idea, $me);
+        }
 
         return new JsonResponse($this->view($idea, $me));
     }
