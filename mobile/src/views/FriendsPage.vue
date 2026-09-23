@@ -6,6 +6,7 @@
       </ion-refresher>
 
       <ScreenHeader>
+        <template v-if="activeProfile.active" #kicker>{{ t('acting.friendsOf', { name: activeProfile.active.displayName }) }}</template>
         {{ t('friends.title') }}
         <template #end>
           <ion-button class="ic-round-button" :aria-label="t('friends.add_screen.title')" router-link="/tabs/friends/add">
@@ -38,6 +39,7 @@
               <div>
                 <div class="name">{{ f.user.displayName }}</div>
                 <div class="ic-muted">{{ t('friends.wantsToBeFriend') }}</div>
+                <div v-if="f.user.managedBy" class="ic-muted managed">{{ t('children.managedBy', { name: f.user.managedBy.displayName }) }}</div>
               </div>
             </div>
             <div class="request-card__actions">
@@ -83,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { bookOutline, calendarOutline, mailOutline, peopleOutline, personAddOutline } from 'ionicons/icons';
 import {
@@ -99,6 +101,7 @@ import {
   type RefresherCustomEvent,
 } from '@ionic/vue';
 import { useFriendsStore } from '../stores/friends';
+import { useActiveProfileStore } from '../stores/activeProfile';
 import AppAvatar from '../components/AppAvatar.vue';
 import EmptyState from '../components/EmptyState.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
@@ -108,6 +111,10 @@ import type { Friendship } from '../types/friendship';
 
 const { t, locale } = useI18n();
 const store = useFriendsStore();
+const activeProfile = useActiveProfileStore();
+
+// Switching profile shows the other profile's friends.
+watch(() => activeProfile.activeId, () => store.fetchAll());
 
 onMounted(() => {
   store.fetchAll();
@@ -129,6 +136,7 @@ function upcoming(f: Friendship): number | null {
 function friendSubtitle(f: Friendship): string {
   const parts: string[] = [];
   if ('link' === f.origin) parts.push(t('friends.addedViaLink'));
+  if (f.user.managedBy) parts.push(t('children.managedBy', { name: f.user.managedBy.displayName }));
   if (typeof f.ideaCount === 'number') parts.push(t('friends.ideaCount', { count: f.ideaCount }, f.ideaCount));
   if (f.user.birthDay && f.user.birthMonth) {
     parts.push(t('friends.birthdayOn', { date: formatBirthday(f.user.birthDay, f.user.birthMonth, locale.value) }));

@@ -5,6 +5,8 @@ export interface FriendSummary {
   /** Only present once friends (spec §4: a pending request shows pseudo + avatar only). */
   birthDay?: number | null;
   birthMonth?: number | null;
+  /** Present when this person is a child profile: "profil géré par X" (spec §5.15). */
+  managedBy?: { displayName: string | null };
 }
 
 export type FriendshipStatus = 'pending' | 'accepted' | 'declined' | 'expired';

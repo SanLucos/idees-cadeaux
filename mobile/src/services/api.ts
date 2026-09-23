@@ -21,6 +21,19 @@ interface RequestOptions {
   json?: unknown;
   formData?: FormData;
   auth?: boolean;
+  /**
+   * Send X-Acting-As for the active child profile (spec §5.15)? On by
+   * default; off for what the manager always does in their own name
+   * (interactions, « Mes enfants », their own account).
+   */
+  acting?: boolean;
+}
+
+let actingAsProfileId: string | null = null;
+
+/** Set by stores/activeProfile: the child profile requests act as, or null. */
+export function setActingAs(profileId: string | null): void {
+  actingAsProfileId = profileId;
 }
 
 let refreshPromise: Promise<void> | null = null;
@@ -66,6 +79,9 @@ async function rawRequest<T>(method: string, path: string, options: RequestOptio
     const token = await tokenStorage.getAccessToken();
     if (token) {
       headers.Authorization = `Bearer ${token}`;
+    }
+    if (actingAsProfileId && options.acting !== false) {
+      headers['X-Acting-As'] = actingAsProfileId;
     }
   }
 

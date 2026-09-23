@@ -40,6 +40,8 @@ export function useIdeaActions(onChange: (change: IdeaChange) => void) {
   }
 
   const isOwnerView = (idea: Idea) => 'owner' === idea.view;
+  /** A personal idea its owner (or their manager, acting) may mark « reçue ». */
+  const canMarkReceived = (idea: Idea) => !idea.isSuggestion && idea.canEdit && 'active' === idea.status;
   // Author, reserver or contribution initiator (spec §5.4): the server decides.
   const canMarkGifted = (idea: Idea) => !isOwnerView(idea) && !!idea.canMarkGifted;
 
@@ -84,7 +86,7 @@ export function useIdeaActions(onChange: (change: IdeaChange) => void) {
   }
 
   function archive(idea: Idea): Promise<void> {
-    const kind = isOwnerView(idea) ? 'received' : 'gifted';
+    const kind = idea.isSuggestion ? 'gifted' : 'received';
 
     return run(async () => ({ type: 'updated', idea: await ideasApi.archive(idea.id, kind) }));
   }
@@ -104,7 +106,7 @@ export function useIdeaActions(onChange: (change: IdeaChange) => void) {
           : { text: t('ideas.actions.unpublish'), handler: () => void unpublish(idea) },
       );
     }
-    if (isOwnerView(idea) && 'active' === idea.status) {
+    if (canMarkReceived(idea)) {
       buttons.push({ text: t('ideas.actions.markReceived'), handler: () => void archive(idea) });
     }
     if (canMarkGifted(idea)) {
@@ -122,5 +124,5 @@ export function useIdeaActions(onChange: (change: IdeaChange) => void) {
     await sheet.present();
   }
 
-  return { openSheet, publish, unpublish, remove, archive, unarchive, canMarkGifted };
+  return { openSheet, publish, unpublish, remove, archive, unarchive, canMarkGifted, canMarkReceived };
 }

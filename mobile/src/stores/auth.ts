@@ -60,6 +60,13 @@ export const useAuthStore = defineStore('auth', {
       await this.fetchMe();
     },
 
+    /** Spec §5.15: take over a child profile with the emailed code, then sign in. */
+    async acceptInvitation(email: string, code: string, password: string): Promise<void> {
+      const response = await api.post<LoginResponse>('/auth/managed-invitation/accept', { auth: false, json: { email, code, password } });
+      await tokenStorage.setTokens(response.token, response.refresh_token);
+      await this.fetchMe();
+    },
+
     async forgotPassword(email: string): Promise<void> {
       await api.post('/auth/forgot-password', { auth: false, json: { email } });
     },
@@ -71,7 +78,7 @@ export const useAuthStore = defineStore('auth', {
     async logout(): Promise<void> {
       const refreshToken = await tokenStorage.getRefreshToken();
       try {
-        await api.post('/auth/logout', { json: { refresh_token: refreshToken } });
+        await api.post('/auth/logout', { json: { refresh_token: refreshToken }, acting: false });
       } catch {
         // Best-effort: the local session is cleared either way.
       }
@@ -80,19 +87,19 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async fetchMe(): Promise<void> {
-      this.user = await api.get<User>('/users/me');
+      this.user = await api.get<User>('/users/me', { acting: false });
       applyLocale(this.user.locale);
     },
 
     async updateProfile(patch: Partial<Pick<User, 'displayName' | 'birthDay' | 'birthMonth' | 'birthYear' | 'locale'>>): Promise<void> {
-      this.user = await api.patch<User>('/users/me', { json: patch });
+      this.user = await api.patch<User>('/users/me', { json: patch, acting: false });
       applyLocale(this.user.locale);
     },
 
     async uploadAvatar(file: File): Promise<void> {
       const formData = new FormData();
       formData.append('avatar', file);
-      this.user = await api.post<User>('/users/me/avatar', { formData });
+      this.user = await api.post<User>('/users/me/avatar', { formData, acting: false });
     },
   },
 });

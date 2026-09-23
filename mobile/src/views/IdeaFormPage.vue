@@ -5,7 +5,7 @@
 
       <form class="form" novalidate @submit.prevent="submit">
         <!-- Recipient: only when creating; an idea never changes owner. -->
-        <fieldset v-if="!isEdit" class="block">
+        <fieldset v-if="!isEdit && !activeProfile.isActing" class="block">
           <legend class="label">{{ t('ideaForm.forWhom') }}</legend>
           <div class="recipients" role="radiogroup">
             <button
@@ -165,6 +165,7 @@ import {
 import { ideasApi } from '../services/ideas';
 import { useAuthStore } from '../stores/auth';
 import { useFriendsStore } from '../stores/friends';
+import { useActiveProfileStore } from '../stores/activeProfile';
 import { useOccasionsStore } from '../stores/occasions';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { colorIndex } from '../utils/colorIndex';
@@ -182,13 +183,16 @@ const ionRouter = useIonRouter();
 const auth = useAuthStore();
 const friendsStore = useFriendsStore();
 const occasionsStore = useOccasionsStore();
+const activeProfile = useActiveProfileStore();
 const { describe } = useErrorMessage();
 
 const editId = route.params.id ? String(route.params.id) : null;
 const isEdit = null !== editId;
 const existing = ref<Idea | null>(null);
 
-const ownerId = ref(String(route.query.ownerId ?? auth.user?.id ?? ''));
+/** "Moi": the active child when managing one (its own ideas only, spec §11 décision 25). */
+const selfId = computed(() => activeProfile.activeId ?? auth.user?.id ?? '');
+const ownerId = ref(String(activeProfile.activeId ?? route.query.ownerId ?? auth.user?.id ?? ''));
 const url = ref('');
 const title = ref('');
 const priceAmount = ref('');
@@ -208,13 +212,17 @@ const removeExistingImage = ref(false);
 const recipients = computed(() => [
   { id: auth.user?.id ?? '', name: auth.user?.displayName ?? '', avatarUrl: auth.user?.avatarUrl ?? null, isMe: true },
   ...friendsStore.friends.map((f) => ({ id: f.user.id, name: f.user.displayName, avatarUrl: f.user.avatarUrl, isMe: false })),
+  // A manager may suggest to their children in their own name (spec §5.15).
+  ...activeProfile.children
+    .filter((c) => !c.deletionScheduledAt)
+    .map((c) => ({ id: c.id, name: c.displayName, avatarUrl: c.avatarUrl, isMe: false })),
 ]);
 
-const isSuggestion = computed(() => (isEdit ? existing.value?.view === 'friend' : ownerId.value !== auth.user?.id));
+const isSuggestion = computed(() => (isEdit ? !!existing.value?.isSuggestion && 'owner' !== existing.value?.view : ownerId.value !== selfId.value));
 const recipientName = computed(() => {
   const id = isEdit ? existing.value?.ownerId : ownerId.value;
 
-  return friendsStore.friends.find((f) => f.user.id === id)?.user.displayName ?? '';
+  return recipients.value.find((r) => r.id === id)?.name ?? '';
 });
 
 const screenTitle = computed(() => {

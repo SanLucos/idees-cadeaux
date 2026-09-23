@@ -21,8 +21,8 @@
           <StatusPill v-if="idea.occasion" :icon="calendarOutline">{{ t(`occasions.${idea.occasion}`) }}</StatusPill>
           <StatusPill v-if="'private' === idea.visibility" variant="draft" :icon="lockClosedOutline">{{ t('ideas.visibleToYouOnly') }}</StatusPill>
           <StatusPill v-if="'archived' === idea.status" variant="success">{{ t(`ideas.archived.${idea.archiveKind}`) }}</StatusPill>
-          <!-- Friend view only: the owner view carries no author at all. -->
-          <template v-if="'friend' === idea.view && idea.author">
+          <!-- Friend and manager views only: the owner view carries no author at all. -->
+          <template v-if="'owner' !== idea.view && idea.author">
             <StatusPill v-if="idea.isSuggestion" variant="suggestion">
               {{ idea.isMine ? t('ideas.suggestedByMe') : t('ideas.suggestedBy', { name: idea.author.displayName }) }}
             </StatusPill>
@@ -47,7 +47,7 @@
           <ion-button v-if="idea.canEdit && 'private' === idea.visibility" expand="block" @click="actions.publish(idea)">
             {{ t('ideas.actions.publish') }}
           </ion-button>
-          <ion-button v-if="'owner' === idea.view && 'active' === idea.status" class="ic-button-surface" expand="block" @click="actions.archive(idea)">
+          <ion-button v-if="actions.canMarkReceived(idea)" class="ic-button-surface" expand="block" @click="actions.archive(idea)">
             <ion-icon slot="start" :icon="checkmarkDoneOutline" />
             {{ t('ideas.actions.markReceived') }}
           </ion-button>
@@ -88,6 +88,7 @@ import { useIdeaActions } from '../composables/useIdeaActions';
 import { colorIndex } from '../utils/colorIndex';
 import { formatPrice } from '../utils/price';
 import { useFriendsStore } from '../stores/friends';
+import { useActiveProfileStore } from '../stores/activeProfile';
 import EmptyState from '../components/EmptyState.vue';
 import IdeaSecretZone from '../components/IdeaSecretZone.vue';
 import StatusPill from '../components/StatusPill.vue';
@@ -112,14 +113,34 @@ const actions = useIdeaActions((change) => {
 
 const friendsStore = useFriendsStore();
 
-/** Friend view of a published idea: the API sent its hidden half (`reservation` key present, even if null). */
-const hasSecretZone = computed(() => !!idea.value && 'friend' === idea.value.view && 'reservation' in idea.value);
+const activeProfile = useActiveProfileStore();
+
+/**
+ * The API sent the idea's hidden half (`reservation` key present, even
+ * if null): friend view, or manager view of a child's list. Not while
+ * acting as a child on someone else's idea: interactions are never made
+ * in a child's name (spec §11 décision 25).
+ */
+const hasSecretZone = computed(() => {
+  const i = idea.value;
+  if (!i || !('reservation' in i)) return false;
+
+  return 'manager' === i.view || ('friend' === i.view && !activeProfile.isActing);
+});
 const ownerName = computed(
-  () => friendsStore.friends.find((f) => f.user.id === idea.value?.ownerId)?.user.displayName ?? null,
+  () =>
+    friendsStore.friends.find((f) => f.user.id === idea.value?.ownerId)?.user.displayName
+    ?? activeProfile.children.find((c) => c.id === idea.value?.ownerId)?.displayName
+    ?? null,
 );
 
-const backHref = computed(() => (idea.value && 'friend' === idea.value.view ? `/tabs/friends/${idea.value.ownerId}` : '/tabs/list'));
-const hasActions = computed(() => !!idea.value && (idea.value.canEdit || idea.value.canUnarchive || 'owner' === idea.value.view));
+const backHref = computed(() => {
+  const i = idea.value;
+  if (!i || 'owner' === i.view || (activeProfile.activeId === i.ownerId)) return '/tabs/list';
+
+  return 'manager' === i.view ? `/profile/children/${i.ownerId}` : `/tabs/friends/${i.ownerId}`;
+});
+const hasActions = computed(() => !!idea.value && (idea.value.canEdit || idea.value.canUnarchive || !!idea.value.canMarkGifted));
 const price = computed(() => (idea.value ? formatPrice(idea.value.priceAmount, idea.value.priceCurrency, locale.value) : null));
 const heroStyle = computed(() => {
   const index = colorIndex(id, 5);

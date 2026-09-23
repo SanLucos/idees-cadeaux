@@ -81,7 +81,8 @@ export interface Idea {
   archiveKind: IdeaArchiveKind | null;
   createdAt: string;
   updatedAt: string;
-  view: 'owner' | 'friend';
+  /** 'manager': a child profile's list read by its manager (spec §5.15). */
+  view: 'owner' | 'friend' | 'manager';
   canEdit: boolean;
   canUnarchive: boolean;
   isSuggestion?: boolean;

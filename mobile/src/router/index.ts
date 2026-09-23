@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useActiveProfileStore } from '../stores/activeProfile';
 
 const routes: Array<RouteRecordRaw> = [
   { path: '/', redirect: '/tabs/list' },
@@ -73,6 +74,24 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true, requiresOnboarding: true },
   },
   {
+    path: '/profile/children/new',
+    name: 'ChildNew',
+    component: () => import('../views/ChildFormPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/profile/children/:id',
+    name: 'Child',
+    component: () => import('../views/ChildPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/invitation',
+    name: 'Invitation',
+    component: () => import('../views/auth/InvitationPage.vue'),
+    meta: { guest: true },
+  },
+  {
     path: '/profile/edit',
     name: 'ProfileEdit',
     component: () => import('../views/ProfileEditPage.vue'),
@@ -84,6 +103,8 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
+
+let childrenLoaded = false;
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore();
@@ -102,6 +123,17 @@ router.beforeEach(async (to) => {
   }
   if ('Onboarding' === to.name && auth.user?.isOnboarded) {
     return { name: 'MyList' };
+  }
+
+  // Restore the active child profile before any screen loads its data,
+  // so the first request already carries the right X-Acting-As.
+  const activeProfile = useActiveProfileStore();
+  if (auth.isAuthenticated && auth.user?.isOnboarded && !childrenLoaded) {
+    childrenLoaded = true;
+    await activeProfile.fetchChildren().catch(() => activeProfile.switchTo(null));
+  }
+  if (!auth.isAuthenticated) {
+    childrenLoaded = false;
   }
 
   return true;

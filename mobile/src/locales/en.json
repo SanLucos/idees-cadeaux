@@ -167,7 +167,10 @@
     "settings": {
       "title": "Settings",
       "language": "Language"
-    }
+    },
+    "activeProfile": "Active profile:",
+    "orOthers": "or {names}",
+    "chooseActive": "Active profile"
   },
   "common": {
     "cancel": "Cancel",
@@ -255,6 +258,20 @@
     },
     "reaction": {
       "own_idea": "You can't like your own idea."
+    },
+    "acting_as": {
+      "forbidden": "You can't act as this profile.",
+      "not_allowed": "This isn't possible on behalf of a child.",
+      "invalid": "Invalid active profile."
+    },
+    "managed_profile": {
+      "consent_required": "Parental consent is required.",
+      "limit_reached": "Limit of 10 child profiles reached.",
+      "deletion_scheduled": "This profile is being deleted."
+    },
+    "invitation": {
+      "invalid": "Invalid or expired code.",
+      "email_mismatch": "Sign in with the address that received the invitation."
     }
   },
   "locales": {
@@ -460,5 +477,46 @@
       "title": "Close the contribution?",
       "message": "Nobody will be able to chip in or change their share any more."
     }
+  },
+  "acting": {
+    "listOf": "{name}'s list",
+    "friendsOf": "{name}'s friends",
+    "managerBand": "Manager view: you also see what {name}'s friends are secretly planning."
+  },
+  "children": {
+    "title": "My children",
+    "create": "Create a child profile",
+    "createTitle": "New child profile",
+    "createIntro": "A child profile has no email or password: you manage its list, profile and friends. Its friends are adults.",
+    "consent": "I hold parental authority for this child and consent to creating their profile.",
+    "createSubmit": "Create profile",
+    "managedByYou": "Managed by you",
+    "managedBy": "managed by {name}",
+    "notFound": "This profile doesn't exist or isn't yours to manage.",
+    "manageList": "Manage {name}'s list",
+    "details": "Details",
+    "backToMe": "Back to my profile ({name})",
+    "attachTitle": "Attach an email",
+    "attachExplain": "{name} will be able to sign in with this email and take over their profile (ideas, friends, sizes). You'll lose access, and you'll become friends.",
+    "sendInvitation": "Send the invitation",
+    "resendInvitation": "Send a new invitation",
+    "invitationSent": "Invitation sent.",
+    "invitationPending": "Invitation sent to {email}, valid until {date}.",
+    "dangerZone": "Deletion",
+    "delete": "Delete this profile",
+    "deleteConfirm": {
+      "title": "Delete {name}'s profile?",
+      "message": "The profile will be deleted in 14 days, with its ideas and everything attached. You can cancel until then."
+    },
+    "deletionOn": "Will be deleted on {date}",
+    "cancelDeletion": "Cancel deletion"
+  },
+  "invitation": {
+    "link": "I have an invitation",
+    "title": "I have an invitation",
+    "intro": "Someone is handing over a profile they managed for you. Enter the email and code you received, then choose a password.",
+    "code": "Code from the email",
+    "password": "Password",
+    "submit": "Take over my profile"
   }
 }

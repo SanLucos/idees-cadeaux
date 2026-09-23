@@ -6,8 +6,10 @@
       </ion-refresher>
 
       <ScreenHeader>
-        <template #kicker>{{ t('myList.hello', { name: auth.user?.displayName ?? '' }) }}</template>
-        {{ t('myList.title') }}
+        <template #kicker>
+          {{ acting ? t('acting.listOf', { name: acting.displayName }) : t('myList.hello', { name: auth.user?.displayName ?? '' }) }}
+        </template>
+        {{ acting ? acting.displayName : t('myList.title') }}
         <template #end>
           <ion-button class="ic-round-button" :aria-label="t('myList.search')" @click="toggleSearch">
             <ion-icon slot="icon-only" :icon="searchOutline" />
@@ -36,7 +38,10 @@
         </ion-segment-button>
       </ion-segment>
 
-      <div v-if="showSurpriseBanner" class="surprise-banner" role="note">
+      <!-- Vue gestionnaire (spec §5.15): what the child's friends do shows here, in plum. -->
+      <SecretBand v-if="acting" class="manager-band">{{ t('acting.managerBand', { name: acting.displayName }) }}</SecretBand>
+
+      <div v-if="showSurpriseBanner && !acting" class="surprise-banner" role="note">
         <ion-icon :icon="giftOutline" aria-hidden="true" />
         <p><strong>{{ t('myList.surprise.title') }}</strong> {{ t('myList.surprise.body') }}</p>
         <ion-button fill="clear" class="surprise-banner__close" :aria-label="t('myList.surprise.dismiss')" @click="dismissBanner">
@@ -61,8 +66,23 @@
       </router-link>
 
       <div class="ic-stack">
-        <IdeaCard v-for="idea in ideas" :key="idea.id" :idea="idea" actions @actions="actions.openSheet" />
+        <IdeaCard v-for="idea in ideas" :key="idea.id" :idea="idea" actions @actions="actions.openSheet">
+          <!-- Empty in the owner view: it carries no hidden field. -->
+          <template #pills><InteractionPills :idea="idea" /></template>
+        </IdeaCard>
       </div>
+
+      <template v-if="acting && 'published' === tab && suggestions.length">
+        <SectionTitle :icon="eyeOffOutline" variant="secret">{{ t('friendList.suggestions', { count: suggestions.length }) }}</SectionTitle>
+        <div class="ic-stack">
+          <IdeaCard v-for="idea in suggestions" :key="idea.id" :idea="idea">
+            <template #pills>
+              <StatusPill variant="suggestion">{{ t('ideas.suggestedBy', { name: idea.author?.displayName }) }}</StatusPill>
+              <InteractionPills :idea="idea" />
+            </template>
+          </IdeaCard>
+        </div>
+      </template>
 
       <EmptyState v-if="loaded && !ideas.length" :icon="giftOutline">
         {{ t(filtered ? 'myList.empty.filtered' : `myList.empty.${tab}`) }}
@@ -79,9 +99,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { chevronForward, closeOutline, giftOutline, lockClosedOutline, searchOutline, swapVerticalOutline } from 'ionicons/icons';
+import { chevronForward, closeOutline, eyeOffOutline, giftOutline, lockClosedOutline, searchOutline, swapVerticalOutline } from 'ionicons/icons';
 import {
   actionSheetController,
   IonButton,
@@ -101,6 +121,11 @@ import {
   type RefresherCustomEvent,
 } from '@ionic/vue';
 import { useAuthStore } from '../stores/auth';
+import { useActiveProfileStore } from '../stores/activeProfile';
+import InteractionPills from '../components/InteractionPills.vue';
+import SecretBand from '../components/SecretBand.vue';
+import SectionTitle from '../components/SectionTitle.vue';
+import StatusPill from '../components/StatusPill.vue';
 import { ideasApi } from '../services/ideas';
 import { useIdeaActions } from '../composables/useIdeaActions';
 import EmptyState from '../components/EmptyState.vue';
@@ -113,6 +138,10 @@ const BANNER_KEY = 'ic.surpriseBannerDismissed';
 
 const { t } = useI18n();
 const auth = useAuthStore();
+const activeProfile = useActiveProfileStore();
+/** The child whose list this is, when managing one (X-Acting-As). */
+const acting = computed(() => activeProfile.active);
+const suggestions = ref<Idea[]>([]);
 
 const tab = ref<'published' | 'drafts' | 'archived'>('published');
 const occasion = ref<string | null>(null);
@@ -135,6 +164,8 @@ function query(): IdeaListQuery {
   return {
     status: 'archived' === tab.value ? 'archived' : 'active',
     visibility: 'archived' === tab.value ? undefined : 'drafts' === tab.value ? 'private' : 'published',
+    // Managing a child: its own ideas here, friends' suggestions in their own section.
+    kind: acting.value ? 'personal' : undefined,
     occasion: occasion.value,
     q: search.value.trim(),
     sort: sort.value,
@@ -152,8 +183,20 @@ async function fetchPage(): Promise<void> {
 
 async function reload(): Promise<void> {
   page.value = 1;
-  await fetchPage();
+  await Promise.all([fetchPage(), fetchSuggestions()]);
 }
+
+async function fetchSuggestions(): Promise<void> {
+  if (!acting.value) {
+    suggestions.value = [];
+
+    return;
+  }
+  const result = await ideasApi.list({ kind: 'suggestion', visibility: 'published', occasion: occasion.value, q: search.value.trim(), sort: sort.value, itemsPerPage: 50 });
+  suggestions.value = result.member;
+}
+
+watch(() => activeProfile.activeId, () => reload());
 
 async function loadMore(event: InfiniteScrollCustomEvent): Promise<void> {
   page.value += 1;
@@ -220,6 +263,10 @@ function dismissBanner(): void {
   padding: 0 0 8px;
   --background: var(--ic-surface);
   --border-radius: var(--ic-radius-field);
+}
+
+.manager-band {
+  margin-top: 14px;
 }
 
 .surprise-banner {

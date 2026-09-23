@@ -167,7 +167,10 @@
     "settings": {
       "title": "Paramètres",
       "language": "Langue"
-    }
+    },
+    "activeProfile": "Profil actif :",
+    "orOthers": "ou {names}",
+    "chooseActive": "Profil actif"
   },
   "common": {
     "cancel": "Annuler",
@@ -255,6 +258,20 @@
     },
     "reaction": {
       "own_idea": "Vous ne pouvez pas aimer votre propre idée."
+    },
+    "acting_as": {
+      "forbidden": "Vous ne pouvez pas agir au nom de ce profil.",
+      "not_allowed": "Cette action n'est pas possible au nom d'un enfant.",
+      "invalid": "Profil actif invalide."
+    },
+    "managed_profile": {
+      "consent_required": "Le consentement parental est obligatoire.",
+      "limit_reached": "Limite de 10 profils enfants atteinte.",
+      "deletion_scheduled": "Ce profil est en cours de suppression."
+    },
+    "invitation": {
+      "invalid": "Code invalide ou expiré.",
+      "email_mismatch": "Connectez-vous avec l'adresse qui a reçu l'invitation."
     }
   },
   "locales": {
@@ -460,5 +477,46 @@
       "title": "Clôturer la cotisation ?",
       "message": "Plus personne ne pourra participer ni modifier sa participation."
     }
+  },
+  "acting": {
+    "listOf": "Liste de {name}",
+    "friendsOf": "Amis de {name}",
+    "managerBand": "Vue gestionnaire : vous voyez aussi ce que les amis de {name} préparent en secret."
+  },
+  "children": {
+    "title": "Mes enfants",
+    "create": "Créer un profil enfant",
+    "createTitle": "Nouveau profil enfant",
+    "createIntro": "Un profil enfant n'a ni email ni mot de passe : c'est vous qui gérez sa liste, son profil et ses amis. Ses amis sont des adultes.",
+    "consent": "Je suis titulaire de l'autorité parentale pour cet enfant et je consens à la création de son profil.",
+    "createSubmit": "Créer le profil",
+    "managedByYou": "Profil géré par vous",
+    "managedBy": "profil géré par {name}",
+    "notFound": "Ce profil n'existe pas ou ne vous est pas rattaché.",
+    "manageList": "Gérer la liste de {name}",
+    "details": "Informations",
+    "backToMe": "Revenir à mon profil ({name})",
+    "attachTitle": "Rattacher un email",
+    "attachExplain": "{name} pourra se connecter avec cet email et reprendre son profil (idées, amis, tailles). Vous n'y aurez plus accès, et vous deviendrez amis.",
+    "sendInvitation": "Envoyer l'invitation",
+    "resendInvitation": "Envoyer une nouvelle invitation",
+    "invitationSent": "Invitation envoyée.",
+    "invitationPending": "Invitation envoyée à {email}, valable jusqu'au {date}.",
+    "dangerZone": "Suppression",
+    "delete": "Supprimer ce profil",
+    "deleteConfirm": {
+      "title": "Supprimer le profil de {name} ?",
+      "message": "Le profil sera supprimé dans 14 jours, avec ses idées et tout ce qui s'y rattache. Vous pouvez annuler d'ici là."
+    },
+    "deletionOn": "Sera supprimé le {date}",
+    "cancelDeletion": "Annuler la suppression"
+  },
+  "invitation": {
+    "link": "J'ai une invitation",
+    "title": "J'ai une invitation",
+    "intro": "Quelqu'un vous confie un profil qu'il gérait pour vous. Saisissez l'email et le code reçus, puis choisissez un mot de passe.",
+    "code": "Code reçu par email",
+    "password": "Mot de passe",
+    "submit": "Reprendre mon profil"
   }
 }
