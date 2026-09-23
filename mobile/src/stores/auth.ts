@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { api } from '../services/api';
 import { tokenStorage } from '../services/tokenStorage';
+import { applyLocale } from '../i18n';
 import type { User } from '../types/user';
 
 interface LoginResponse {
@@ -80,10 +81,12 @@ export const useAuthStore = defineStore('auth', {
 
     async fetchMe(): Promise<void> {
       this.user = await api.get<User>('/users/me');
+      applyLocale(this.user.locale);
     },
 
     async updateProfile(patch: Partial<Pick<User, 'displayName' | 'birthDay' | 'birthMonth' | 'birthYear' | 'locale'>>): Promise<void> {
       this.user = await api.patch<User>('/users/me', { json: patch });
+      applyLocale(this.user.locale);
     },
 
     async uploadAvatar(file: File): Promise<void> {

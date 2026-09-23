@@ -17,12 +17,30 @@ export const useProfileDetailsStore = defineStore('profileDetails', {
   actions: {
     async fetchSizes(): Promise<void> {
       const response = await api.get<HydraCollection<ProfileSize>>('/profile_sizes');
-      this.sizes = response.member;
+      this.sizes = [...response.member].sort((a, b) => a.sortOrder - b.sortOrder);
     },
 
     async addSize(label: string, value: string, note: string | null): Promise<void> {
-      const created = await api.post<ProfileSize>('/profile_sizes', { json: { label, value, note } });
+      const created = await api.post<ProfileSize>('/profile_sizes', {
+        json: { label, value, note, sortOrder: this.sizes.length },
+      });
       this.sizes.push(created);
+    },
+
+    /**
+     * Applies a drag-and-drop move locally, then persists the new
+     * sortOrder of every entry whose position changed.
+     */
+    async moveSize(from: number, to: number): Promise<void> {
+      const sizes = [...this.sizes];
+      const [moved] = sizes.splice(from, 1);
+      sizes.splice(to, 0, moved);
+      const changed = sizes.filter((size, index) => size.sortOrder !== index);
+      sizes.forEach((size, index) => {
+        size.sortOrder = index;
+      });
+      this.sizes = sizes;
+      await Promise.all(changed.map((size) => api.patch(toApiPath(size['@id']), { json: { sortOrder: size.sortOrder } })));
     },
 
     async removeSize(size: ProfileSize): Promise<void> {

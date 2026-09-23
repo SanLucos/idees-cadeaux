@@ -3,10 +3,6 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-title>{{ t('app.name') }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button router-link="/friends">{{ t('nav.friends') }}</ion-button>
-          <ion-button router-link="/profile">{{ t('nav.profile') }}</ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -36,8 +32,6 @@ import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   IonBadge,
-  IonButton,
-  IonButtons,
   IonContent,
   IonHeader,
   IonItem,

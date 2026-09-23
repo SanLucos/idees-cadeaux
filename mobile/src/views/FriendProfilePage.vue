@@ -1,47 +1,26 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ profile ? t('friends.profile.title', { name: profile.displayName }) : '' }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding" v-if="profile">
-      <div class="ion-text-center">
-        <ion-avatar style="width: 96px; height: 96px; margin: 0 auto;">
-          <img v-if="profile.avatarUrl" :src="profile.avatarUrl" alt="" />
-          <ion-icon v-else :icon="personCircleOutline" style="width: 100%; height: 100%;" />
-        </ion-avatar>
-        <h1>{{ profile.displayName }}</h1>
-        <p v-if="profile.birthDay && profile.birthMonth">
-          {{ profile.birthDay }}/{{ profile.birthMonth }}<span v-if="profile.birthYear">/{{ profile.birthYear }}</span>
-        </p>
-      </div>
+    <ion-content>
+      <TopBar :default-href="`/tabs/friends`">{{ profile ? t('friends.profile.title', { name: profile.displayName }) : '' }}</TopBar>
 
-      <h2>{{ t('profile.sizes.title') }}</h2>
-      <p v-if="!sizes.length">{{ t('profile.sizes.empty') }}</p>
-      <ion-list v-else>
-        <ion-item v-for="size in sizes" :key="size['@id']">
-          <ion-label>
-            <h3>{{ size.label }}</h3>
-            <p>{{ size.value }}<span v-if="size.note"> — {{ size.note }}</span></p>
-          </ion-label>
-        </ion-item>
-      </ion-list>
+      <template v-if="profile">
+        <div class="identity">
+          <AppAvatar :id="profile.id" :name="profile.displayName" :url="profile.avatarUrl" :size="72" />
+          <div>
+            <div class="identity__name">{{ profile.displayName }}</div>
+            <div v-if="profile.birthDay && profile.birthMonth" class="ic-muted">
+              {{ t('profile.birthdayOn', { date: formatBirthday(profile.birthDay, profile.birthMonth, locale) }) }}
+            </div>
+          </div>
+        </div>
 
-      <h2>{{ t('profile.preferences.title') }}</h2>
-      <p v-if="!preferences.length">{{ t('profile.preferences.empty') }}</p>
-      <ion-list v-else>
-        <ion-item v-for="pref in preferences" :key="pref['@id']">
-          <ion-label>
-            <h3>{{ pref.label }}</h3>
-            <p>{{ t(`profile.preferences.category_${pref.category}`) }} — {{ pref.value }}</p>
-          </ion-label>
-        </ion-item>
-      </ion-list>
+        <ProfileSizesSection :entries="sizes" />
+        <ProfilePreferencesSection :entries="preferences" />
 
-      <ion-button expand="block" color="danger" fill="outline" class="ion-margin-top" @click="confirmRemove">
-        {{ t('friends.remove') }}
-      </ion-button>
+        <ion-button expand="block" color="danger" fill="clear" class="ion-margin-top" @click="confirmRemove">
+          {{ t('friends.remove') }}
+        </ion-button>
+      </template>
     </ion-content>
   </ion-page>
 </template>
@@ -50,8 +29,12 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { personCircleOutline } from 'ionicons/icons';
-import { alertController, IonAvatar, IonButton, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+import { alertController, IonButton, IonContent, IonPage } from '@ionic/vue';
+import AppAvatar from '../components/AppAvatar.vue';
+import ProfilePreferencesSection from '../components/ProfilePreferencesSection.vue';
+import ProfileSizesSection from '../components/ProfileSizesSection.vue';
+import TopBar from '../components/TopBar.vue';
+import { formatBirthday } from '../utils/birthday';
 import { api } from '../services/api';
 import { useFriendsStore } from '../stores/friends';
 import { useProfileDetailsStore } from '../stores/profileDetails';
@@ -66,7 +49,7 @@ interface FriendProfile {
   birthYear: number | null;
 }
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const friendsStore = useFriendsStore();
@@ -100,7 +83,7 @@ async function confirmRemove(): Promise<void> {
           if (friendship) {
             await friendsStore.remove(friendship.id);
           }
-          router.replace('/friends');
+          router.replace('/tabs/friends');
         },
       },
     ],
@@ -108,3 +91,16 @@ async function confirmRemove(): Promise<void> {
   await alert.present();
 }
 </script>
+
+<style scoped>
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.identity__name {
+  font-family: var(--ic-font-display);
+  font-size: 26px;
+}
+</style>

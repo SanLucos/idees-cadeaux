@@ -88,7 +88,7 @@ async function submit(): Promise<void> {
   error.value = '';
   try {
     await auth.login(email.value, password.value);
-    router.replace('/home');
+    router.replace('/tabs/list');
   } catch (e) {
     error.value = describe(e);
   } finally {

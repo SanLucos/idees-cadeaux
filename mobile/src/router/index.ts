@@ -3,7 +3,7 @@ import { RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
 const routes: Array<RouteRecordRaw> = [
-  { path: '/', redirect: '/home' },
+  { path: '/', redirect: '/tabs/list' },
   { path: '/login', name: 'Login', component: () => import('../views/auth/LoginPage.vue'), meta: { guest: true } },
   { path: '/register', name: 'Register', component: () => import('../views/auth/RegisterPage.vue'), meta: { guest: true } },
   {
@@ -30,29 +30,24 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/OnboardingPage.vue'),
     meta: { requiresAuth: true },
   },
-  { path: '/home', name: 'Home', component: () => import('../views/HomePage.vue'), meta: { requiresAuth: true, requiresOnboarding: true } },
   {
-    path: '/profile',
-    name: 'Profile',
-    component: () => import('../views/ProfilePage.vue'),
+    path: '/tabs/',
+    component: () => import('../views/TabsPage.vue'),
     meta: { requiresAuth: true, requiresOnboarding: true },
+    children: [
+      { path: '', redirect: '/tabs/list' },
+      { path: 'list', name: 'MyList', component: () => import('../views/HomePage.vue') },
+      { path: 'friends', name: 'Friends', component: () => import('../views/FriendsPage.vue') },
+      { path: 'friends/add', name: 'AddFriend', component: () => import('../views/AddFriendPage.vue') },
+      { path: 'friends/:id', name: 'FriendProfile', component: () => import('../views/FriendProfilePage.vue') },
+      { path: 'activity', name: 'Activity', component: () => import('../views/ActivityPage.vue') },
+      { path: 'profile', name: 'Profile', component: () => import('../views/ProfilePage.vue') },
+    ],
   },
   {
-    path: '/friends',
-    name: 'Friends',
-    component: () => import('../views/FriendsPage.vue'),
-    meta: { requiresAuth: true, requiresOnboarding: true },
-  },
-  {
-    path: '/friends/add',
-    name: 'AddFriend',
-    component: () => import('../views/AddFriendPage.vue'),
-    meta: { requiresAuth: true, requiresOnboarding: true },
-  },
-  {
-    path: '/friends/:id',
-    name: 'FriendProfile',
-    component: () => import('../views/FriendProfilePage.vue'),
+    path: '/profile/edit',
+    name: 'ProfileEdit',
+    component: () => import('../views/ProfileEditPage.vue'),
     meta: { requiresAuth: true, requiresOnboarding: true },
   },
 ];
@@ -72,13 +67,13 @@ router.beforeEach(async (to) => {
     return { name: 'Login' };
   }
   if (to.meta.guest && auth.isAuthenticated) {
-    return { name: 'Home' };
+    return { name: 'MyList' };
   }
   if (to.meta.requiresOnboarding && auth.isAuthenticated && !auth.user?.isOnboarded) {
     return { name: 'Onboarding' };
   }
   if ('Onboarding' === to.name && auth.user?.isOnboarded) {
-    return { name: 'Home' };
+    return { name: 'MyList' };
   }
 
   return true;

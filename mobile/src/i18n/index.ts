@@ -10,3 +10,13 @@ export const i18n = createI18n({
   fallbackLocale: 'fr',
   messages: { fr, en },
 });
+
+export const SUPPORTED_LOCALES = ['fr', 'en'] as const;
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+
+/** Follows User.locale (spec §5.14); unknown values keep the current language. */
+export function applyLocale(locale: string | null | undefined): void {
+  if (!locale || !(SUPPORTED_LOCALES as readonly string[]).includes(locale)) return;
+  i18n.global.locale.value = locale as SupportedLocale;
+  document.documentElement.lang = locale;
+}

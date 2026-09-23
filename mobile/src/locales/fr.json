@@ -5,7 +5,10 @@
   "nav": {
     "friends": "Amis",
     "profile": "Profil",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "myList": "Ma liste",
+    "activity": "Activité",
+    "addIdea": "Ajouter une idée"
   },
   "friends": {
     "title": "Amis",
@@ -39,11 +42,22 @@
       "contactsTitle": "Depuis mes contacts",
       "contactsButton": "Importer mes contacts",
       "contactsEmpty": "Aucun contact ne correspond à un compte existant.",
-      "contactsDenied": "Autorisation d'accès aux contacts refusée."
+      "contactsDenied": "Autorisation d'accès aux contacts refusée.",
+      "requested": "Demande envoyée"
     },
     "profile": {
       "title": "Profil de {name}"
-    }
+    },
+    "byEmail": "Par email",
+    "byContacts": "Mes contacts",
+    "incomingTitle": "Demande reçue · {count} | Demandes reçues · {count}",
+    "wantsToBeFriend": "veut devenir votre ami",
+    "friendsTitle": "Mes amis · {count}",
+    "outgoingTitle": "Demandes envoyées",
+    "daysBefore": "J-{days}",
+    "addedViaLink": "Ajouté via votre lien",
+    "ideaCount": "aucune idée | {count} idée | {count} idées",
+    "birthdayOn": "anniversaire le {date}"
   },
   "home": {
     "title": "Accueil",
@@ -112,7 +126,7 @@
     "submit": "Continuer"
   },
   "profile": {
-    "title": "Mon profil",
+    "title": "Profil",
     "pseudoLabel": "Pseudo",
     "birthdayLabel": "Anniversaire",
     "changeAvatar": "Changer l'avatar",
@@ -124,7 +138,21 @@
       "label": "Libellé",
       "value": "Valeur",
       "note": "Note (optionnel)",
-      "empty": "Aucune taille renseignée."
+      "empty": "Aucune taille renseignée.",
+      "suggestions": "Libellés courants",
+      "common": {
+        "shoe": "Pointure",
+        "tshirt": "T-shirt",
+        "sweater": "Pull",
+        "shirt": "Chemise",
+        "trousers": "Pantalon",
+        "jeans": "Jean",
+        "dress": "Robe",
+        "jacket": "Veste",
+        "ring": "Bague",
+        "gloves": "Gants",
+        "beanie": "Bonnet"
+      }
     },
     "preferences": {
       "title": "Préférences",
@@ -135,13 +163,27 @@
       "category_autre": "Autre",
       "label": "Libellé",
       "value": "Valeur",
-      "empty": "Aucune préférence renseignée."
+      "empty": "Aucune préférence renseignée.",
+      "category_gout_plural": "Goûts",
+      "category_marque_plural": "Marques",
+      "category_autre_plural": "Autre"
+    },
+    "edit": "Modifier",
+    "editTitle": "Modifier mon profil",
+    "birthdayOn": "Anniversaire le {date}",
+    "visibleToFriends": "Visibles de vos amis",
+    "settings": {
+      "title": "Paramètres",
+      "language": "Langue"
     }
   },
   "common": {
     "cancel": "Annuler",
     "delete": "Supprimer",
-    "add": "Ajouter"
+    "add": "Ajouter",
+    "close": "Fermer",
+    "back": "Retour",
+    "actionsFor": "Actions pour {name}"
   },
   "errors": {
     "generic": "Une erreur est survenue.",
@@ -176,5 +218,13 @@
       "invalid_image": "Ce fichier n'est pas une image valide.",
       "invalid": "L'envoi du fichier a échoué."
     }
+  },
+  "locales": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "activity": {
+    "title": "Activité",
+    "empty": "Les nouvelles de vos amis apparaîtront ici."
   }
 }

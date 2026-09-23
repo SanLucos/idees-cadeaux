@@ -31,3 +31,7 @@ npm-debug.log*
 /plugins
 /www
 /.env
+
+# Cypress artefacts
+tests/e2e/screenshots/
+tests/e2e/videos/

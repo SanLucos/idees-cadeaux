@@ -5,7 +5,10 @@
   "nav": {
     "friends": "Friends",
     "profile": "Profile",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "myList": "My list",
+    "activity": "Activity",
+    "addIdea": "Add an idea"
   },
   "friends": {
     "title": "Friends",
@@ -39,11 +42,22 @@
       "contactsTitle": "From my contacts",
       "contactsButton": "Import my contacts",
       "contactsEmpty": "No contact matches an existing account.",
-      "contactsDenied": "Contacts access was denied."
+      "contactsDenied": "Contacts access was denied.",
+      "requested": "Request sent"
     },
     "profile": {
       "title": "{name}'s profile"
-    }
+    },
+    "byEmail": "By email",
+    "byContacts": "My contacts",
+    "incomingTitle": "Request received · {count} | Requests received · {count}",
+    "wantsToBeFriend": "wants to be your friend",
+    "friendsTitle": "My friends · {count}",
+    "outgoingTitle": "Sent requests",
+    "daysBefore": "D-{days}",
+    "addedViaLink": "Added via your link",
+    "ideaCount": "no ideas | {count} idea | {count} ideas",
+    "birthdayOn": "birthday on {date}"
   },
   "home": {
     "title": "Home",
@@ -112,7 +126,7 @@
     "submit": "Continue"
   },
   "profile": {
-    "title": "My profile",
+    "title": "Profile",
     "pseudoLabel": "Pseudo",
     "birthdayLabel": "Birthday",
     "changeAvatar": "Change avatar",
@@ -124,7 +138,21 @@
       "label": "Label",
       "value": "Value",
       "note": "Note (optional)",
-      "empty": "No sizes yet."
+      "empty": "No sizes yet.",
+      "suggestions": "Common labels",
+      "common": {
+        "shoe": "Shoe size",
+        "tshirt": "T-shirt",
+        "sweater": "Sweater",
+        "shirt": "Shirt",
+        "trousers": "Trousers",
+        "jeans": "Jeans",
+        "dress": "Dress",
+        "jacket": "Jacket",
+        "ring": "Ring",
+        "gloves": "Gloves",
+        "beanie": "Beanie"
+      }
     },
     "preferences": {
       "title": "Preferences",
@@ -135,13 +163,27 @@
       "category_autre": "Other",
       "label": "Label",
       "value": "Value",
-      "empty": "No preferences yet."
+      "empty": "No preferences yet.",
+      "category_gout_plural": "Tastes",
+      "category_marque_plural": "Brands",
+      "category_autre_plural": "Other"
+    },
+    "edit": "Edit",
+    "editTitle": "Edit my profile",
+    "birthdayOn": "Birthday on {date}",
+    "visibleToFriends": "Visible to your friends",
+    "settings": {
+      "title": "Settings",
+      "language": "Language"
     }
   },
   "common": {
     "cancel": "Cancel",
     "delete": "Delete",
-    "add": "Add"
+    "add": "Add",
+    "close": "Close",
+    "back": "Back",
+    "actionsFor": "Actions for {name}"
   },
   "errors": {
     "generic": "Something went wrong.",
@@ -176,5 +218,13 @@
       "invalid_image": "This file is not a valid image.",
       "invalid": "The upload failed."
     }
+  },
+  "locales": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "activity": {
+    "title": "Activity",
+    "empty": "News from your friends will show up here."
   }
 }

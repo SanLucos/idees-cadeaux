@@ -1,69 +1,117 @@
 <template>
-  <div>
-    <h2>{{ t('profile.preferences.title') }}</h2>
+  <section>
+    <SectionTitle>{{ t('profile.preferences.title') }}</SectionTitle>
 
-    <ion-list v-if="store.preferences.length">
-      <ion-item v-for="pref in store.preferences" :key="pref['@id']">
-        <ion-label>
-          <h3>{{ pref.label }}</h3>
-          <p>{{ t(`profile.preferences.category_${pref.category}`) }} — {{ pref.value }}</p>
-        </ion-label>
-        <ion-button slot="end" fill="clear" color="danger" @click="store.removePreference(pref)">
-          {{ t('common.delete') }}
-        </ion-button>
-      </ion-item>
-    </ion-list>
-    <p v-else>{{ t('profile.preferences.empty') }}</p>
-
-    <form @submit.prevent="add">
-      <ion-item>
-        <ion-select v-model="category" :label="t('profile.preferences.category')" label-placement="stacked">
-          <ion-select-option value="gout">{{ t('profile.preferences.category_gout') }}</ion-select-option>
-          <ion-select-option value="marque">{{ t('profile.preferences.category_marque') }}</ion-select-option>
-          <ion-select-option value="autre">{{ t('profile.preferences.category_autre') }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-item>
-        <ion-input v-model="label" :label="t('profile.preferences.label')" label-placement="stacked" required />
-      </ion-item>
-      <ion-item>
-        <ion-input v-model="value" :label="t('profile.preferences.value')" label-placement="stacked" required />
-      </ion-item>
-      <ion-text color="danger" v-if="error"><p>{{ error }}</p></ion-text>
-      <ion-button expand="block" fill="outline" type="submit" class="ion-margin-top">
+    <div class="ic-card block">
+      <p v-if="!preferences.length" class="ic-muted empty">{{ t('profile.preferences.empty') }}</p>
+      <div v-for="group in groups" :key="group.category" class="group">
+        <h3>{{ t(`profile.preferences.category_${group.category}_plural`) }}</h3>
+        <div class="chips">
+          <ion-chip
+            v-for="pref in group.items"
+            :key="pref['@id']"
+            class="pref-chip"
+           
+            @click="!readonly && openActions(pref)"
+          >
+            {{ chipText(pref) }}
+          </ion-chip>
+        </div>
+      </div>
+      <ion-button v-if="!readonly" fill="clear" class="add" @click="openForm">
+        <ion-icon slot="start" :icon="add" />
         {{ t('profile.preferences.add') }}
       </ion-button>
-    </form>
-  </div>
+    </div>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { IonButton, IonInput, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, IonText } from '@ionic/vue';
+import { add } from 'ionicons/icons';
+import { actionSheetController, IonButton, IonChip, IonIcon, modalController } from '@ionic/vue';
 import { useProfileDetailsStore } from '../stores/profileDetails';
-import { useErrorMessage } from '../composables/useErrorMessage';
-import type { ProfilePreferenceCategory } from '../types/profile';
+import SectionTitle from './SectionTitle.vue';
+import PreferenceFormModal from './PreferenceFormModal.vue';
+import type { ProfilePreference, ProfilePreferenceCategory } from '../types/profile';
+
+const CATEGORIES: ProfilePreferenceCategory[] = ['gout', 'marque', 'autre'];
+
+/** Without `entries`, shows and edits my own preferences; with them, a friend's, read-only. */
+const props = defineProps<{ entries?: ProfilePreference[] }>();
 
 const { t } = useI18n();
 const store = useProfileDetailsStore();
-const { describe } = useErrorMessage();
+const readonly = computed(() => undefined !== props.entries);
+const preferences = computed(() => props.entries ?? store.preferences);
 
-const category = ref<ProfilePreferenceCategory>('gout');
-const label = ref('');
-const value = ref('');
-const error = ref('');
+const groups = computed(() =>
+  CATEGORIES.map((category) => ({ category, items: preferences.value.filter((p) => p.category === category) })).filter(
+    (g) => g.items.length,
+  ),
+);
 
-onMounted(() => store.fetchPreferences());
+onMounted(() => {
+  if (!readonly.value) store.fetchPreferences();
+});
 
-async function add(): Promise<void> {
-  error.value = '';
-  try {
-    await store.addPreference(category.value, label.value, value.value);
-    label.value = '';
-    value.value = '';
-  } catch (e) {
-    error.value = describe(e);
-  }
+function chipText(pref: ProfilePreference): string {
+  return pref.value ? `${pref.label} : ${pref.value}` : pref.label;
+}
+
+async function openForm(): Promise<void> {
+  const modal = await modalController.create({ component: PreferenceFormModal, breakpoints: [0, 0.6, 1], initialBreakpoint: 0.6 });
+  await modal.present();
+}
+
+async function openActions(pref: ProfilePreference): Promise<void> {
+  const sheet = await actionSheetController.create({
+    header: chipText(pref),
+    buttons: [
+      { text: t('common.delete'), role: 'destructive', handler: () => store.removePreference(pref) },
+      { text: t('common.cancel'), role: 'cancel' },
+    ],
+  });
+  await sheet.present();
 }
 </script>
+
+<style scoped>
+.block {
+  padding: 16px 16px 8px;
+}
+
+.empty {
+  margin: 0 0 8px;
+}
+
+.group + .group {
+  margin-top: 12px;
+}
+
+h3 {
+  margin: 0 0 8px;
+  font-family: var(--ic-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ic-text-secondary);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pref-chip {
+  --background: var(--ic-surface-muted);
+  --color: var(--ion-text-color);
+  margin: 0;
+}
+
+.add {
+  margin: 8px 0 0 -8px;
+  font-weight: 700;
+}
+</style>

@@ -1,118 +1,69 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ t('profile.title') }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="logout">{{ t('nav.logout') }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <div class="ion-text-center">
-        <ion-avatar style="width: 96px; height: 96px; margin: 0 auto;">
-          <img v-if="auth.user?.avatarUrl" :src="auth.user.avatarUrl" alt="" />
-          <ion-icon v-else :icon="personCircleOutline" style="width: 100%; height: 100%;" />
-        </ion-avatar>
-        <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden @change="onAvatarChange" />
-        <ion-button fill="clear" size="small" @click="fileInput?.click()">{{ t('profile.changeAvatar') }}</ion-button>
+    <ion-content>
+      <ScreenHeader>{{ t('profile.title') }}</ScreenHeader>
+
+      <div v-if="auth.user" class="identity">
+        <AppAvatar :id="auth.user.id" :name="auth.user.displayName" :url="auth.user.avatarUrl" :size="88" primary />
+        <div class="identity__text">
+          <div class="identity__name">{{ auth.user.displayName }}</div>
+          <div v-if="auth.user.birthDay && auth.user.birthMonth" class="ic-muted">
+            {{ t('profile.birthdayOn', { date: formatBirthday(auth.user.birthDay, auth.user.birthMonth, locale) }) }}
+          </div>
+        </div>
+        <ion-button class="ic-button-surface" router-link="/profile/edit">{{ t('profile.edit') }}</ion-button>
       </div>
 
-      <form @submit.prevent="saveProfile">
-        <ion-list>
-          <ion-item>
-            <ion-input v-model="displayName" :label="t('profile.pseudoLabel')" label-placement="stacked" :minlength="2" :maxlength="30" />
-          </ion-item>
-          <ion-item>
-            <ion-input v-model.number="birthDay" label-placement="stacked" :label="t('onboarding.birthDay')" type="number" :min="1" :max="31" />
-          </ion-item>
-          <ion-item>
-            <ion-input v-model.number="birthMonth" label-placement="stacked" :label="t('onboarding.birthMonth')" type="number" :min="1" :max="12" />
-          </ion-item>
-        </ion-list>
+      <ProfileSizesSection />
+      <ProfilePreferencesSection />
 
-        <ion-text color="danger" v-if="error"><p>{{ error }}</p></ion-text>
-        <ion-text color="success" v-if="saved"><p>{{ t('profile.saved') }}</p></ion-text>
-
-        <ion-button expand="block" type="submit" class="ion-margin-top" :disabled="loading">
-          {{ t('profile.save') }}
-        </ion-button>
-      </form>
-
-      <ProfileSizesSection class="ion-margin-top" />
-      <ProfilePreferencesSection class="ion-margin-top" />
+      <SectionTitle>{{ t('profile.settings.title') }}</SectionTitle>
+      <ion-list class="ic-card-list" lines="inset">
+        <ion-item button @click="chooseLanguage">
+          <ion-icon slot="start" :icon="globeOutline" aria-hidden="true" />
+          <ion-label>{{ t('profile.settings.language') }}</ion-label>
+          <ion-note slot="end">{{ t(`locales.${locale}`) }}</ion-note>
+        </ion-item>
+        <ion-item button @click="logout">
+          <ion-icon slot="start" :icon="logOutOutline" aria-hidden="true" />
+          <ion-label>{{ t('nav.logout') }}</ion-label>
+        </ion-item>
+      </ion-list>
+      <div class="bottom-space" />
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { personCircleOutline } from 'ionicons/icons';
-import {
-  IonAvatar,
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonInput,
-  IonItem,
-  IonList,
-  IonPage,
-  IonText,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/vue';
+import { globeOutline, logOutOutline } from 'ionicons/icons';
+import { actionSheetController, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPage } from '@ionic/vue';
 import { useAuthStore } from '../stores/auth';
-import { useErrorMessage } from '../composables/useErrorMessage';
-import ProfileSizesSection from '../components/ProfileSizesSection.vue';
+import { SUPPORTED_LOCALES } from '../i18n';
+import { formatBirthday } from '../utils/birthday';
+import AppAvatar from '../components/AppAvatar.vue';
 import ProfilePreferencesSection from '../components/ProfilePreferencesSection.vue';
+import ProfileSizesSection from '../components/ProfileSizesSection.vue';
+import ScreenHeader from '../components/ScreenHeader.vue';
+import SectionTitle from '../components/SectionTitle.vue';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
-const { describe } = useErrorMessage();
 
-const displayName = ref(auth.user?.displayName ?? '');
-const birthDay = ref<number | null>(auth.user?.birthDay ?? null);
-const birthMonth = ref<number | null>(auth.user?.birthMonth ?? null);
-const loading = ref(false);
-const saved = ref(false);
-const error = ref('');
-const fileInput = ref<HTMLInputElement>();
+onMounted(() => auth.fetchMe());
 
-onMounted(async () => {
-  await auth.fetchMe();
-  displayName.value = auth.user?.displayName ?? '';
-  birthDay.value = auth.user?.birthDay ?? null;
-  birthMonth.value = auth.user?.birthMonth ?? null;
-});
-
-async function saveProfile(): Promise<void> {
-  loading.value = true;
-  error.value = '';
-  saved.value = false;
-  try {
-    await auth.updateProfile({ displayName: displayName.value, birthDay: birthDay.value, birthMonth: birthMonth.value });
-    saved.value = true;
-  } catch (e) {
-    error.value = describe(e);
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function onAvatarChange(event: Event): Promise<void> {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-  error.value = '';
-  try {
-    await auth.uploadAvatar(file);
-  } catch (e) {
-    error.value = describe(e);
-  }
+async function chooseLanguage(): Promise<void> {
+  const sheet = await actionSheetController.create({
+    header: t('profile.settings.language'),
+    buttons: [
+      ...SUPPORTED_LOCALES.map((code) => ({ text: t(`locales.${code}`), handler: () => auth.updateProfile({ locale: code }) })),
+      { text: t('common.cancel'), role: 'cancel' },
+    ],
+  });
+  await sheet.present();
 }
 
 async function logout(): Promise<void> {
@@ -120,3 +71,27 @@ async function logout(): Promise<void> {
   router.replace('/login');
 }
 </script>
+
+<style scoped>
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.identity__text {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.identity__name {
+  font-family: var(--ic-font-display);
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.bottom-space {
+  height: 24px;
+}
+</style>

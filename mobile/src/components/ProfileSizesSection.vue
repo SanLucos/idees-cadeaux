@@ -1,65 +1,109 @@
 <template>
-  <div>
-    <h2>{{ t('profile.sizes.title') }}</h2>
+  <section>
+    <SectionTitle>
+      {{ t('profile.sizes.title') }}
+      <template #end>{{ t('profile.visibleToFriends') }}</template>
+    </SectionTitle>
 
-    <ion-list v-if="store.sizes.length">
-      <ion-item v-for="size in store.sizes" :key="size['@id']">
-        <ion-label>
-          <h3>{{ size.label }}</h3>
-          <p>{{ size.value }}<span v-if="size.note"> — {{ size.note }}</span></p>
-        </ion-label>
-        <ion-button slot="end" fill="clear" color="danger" @click="store.removeSize(size)">
-          {{ t('common.delete') }}
-        </ion-button>
+    <ion-list class="ic-card-list" lines="inset">
+      <ion-reorder-group :disabled="readonly" @ion-item-reorder="onReorder">
+        <ion-item v-for="size in sizes" :key="size['@id']">
+          <ion-reorder v-if="!readonly" slot="start" />
+          <ion-label class="size-label">
+            {{ size.label }}
+            <p v-if="size.note">{{ size.note }}</p>
+          </ion-label>
+          <span slot="end" class="size-value">{{ size.value }}</span>
+          <ion-button
+            v-if="!readonly"
+            slot="end"
+            fill="clear"
+            color="medium"
+            :aria-label="t('common.actionsFor', { name: size.label })"
+            @click="openActions(size)"
+          >
+            <ion-icon slot="icon-only" :icon="ellipsisHorizontal" />
+          </ion-button>
+        </ion-item>
+      </ion-reorder-group>
+      <ion-item v-if="!sizes.length && readonly">
+        <ion-label class="ic-muted">{{ t('profile.sizes.empty') }}</ion-label>
+      </ion-item>
+      <ion-item v-if="!readonly" button :detail="false" @click="openForm">
+        <ion-icon slot="start" :icon="add" color="primary" />
+        <ion-label color="primary" class="add-label">{{ t('profile.sizes.add') }}</ion-label>
       </ion-item>
     </ion-list>
-    <p v-else>{{ t('profile.sizes.empty') }}</p>
-
-    <form @submit.prevent="add">
-      <ion-item>
-        <ion-input v-model="label" :label="t('profile.sizes.label')" label-placement="stacked" required />
-      </ion-item>
-      <ion-item>
-        <ion-input v-model="value" :label="t('profile.sizes.value')" label-placement="stacked" required />
-      </ion-item>
-      <ion-item>
-        <ion-input v-model="note" :label="t('profile.sizes.note')" label-placement="stacked" />
-      </ion-item>
-      <ion-text color="danger" v-if="error"><p>{{ error }}</p></ion-text>
-      <ion-button expand="block" fill="outline" type="submit" class="ion-margin-top">
-        {{ t('profile.sizes.add') }}
-      </ion-button>
-    </form>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { IonButton, IonInput, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
+import { add, ellipsisHorizontal } from 'ionicons/icons';
+import {
+  actionSheetController,
+  IonButton,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonReorder,
+  IonReorderGroup,
+  modalController,
+  type ItemReorderEventDetail,
+} from '@ionic/vue';
 import { useProfileDetailsStore } from '../stores/profileDetails';
-import { useErrorMessage } from '../composables/useErrorMessage';
+import SectionTitle from './SectionTitle.vue';
+import SizeFormModal from './SizeFormModal.vue';
+import type { ProfileSize } from '../types/profile';
+
+/** Without `entries`, shows and edits my own sizes; with them, a friend's, read-only. */
+const props = defineProps<{ entries?: ProfileSize[] }>();
 
 const { t } = useI18n();
 const store = useProfileDetailsStore();
-const { describe } = useErrorMessage();
+const readonly = computed(() => undefined !== props.entries);
+const sizes = computed(() => props.entries ?? store.sizes);
 
-const label = ref('');
-const value = ref('');
-const note = ref('');
-const error = ref('');
+onMounted(() => {
+  if (!readonly.value) store.fetchSizes();
+});
 
-onMounted(() => store.fetchSizes());
+async function onReorder(event: CustomEvent<ItemReorderEventDetail>): Promise<void> {
+  const { from, to } = event.detail;
+  // Let the store own the order: complete(false) keeps Ionic from moving the DOM itself.
+  event.detail.complete(false);
+  await store.moveSize(from, to);
+}
 
-async function add(): Promise<void> {
-  error.value = '';
-  try {
-    await store.addSize(label.value, value.value, note.value || null);
-    label.value = '';
-    value.value = '';
-    note.value = '';
-  } catch (e) {
-    error.value = describe(e);
-  }
+async function openForm(): Promise<void> {
+  const modal = await modalController.create({ component: SizeFormModal, breakpoints: [0, 0.75, 1], initialBreakpoint: 0.75 });
+  await modal.present();
+}
+
+async function openActions(size: ProfileSize): Promise<void> {
+  const sheet = await actionSheetController.create({
+    header: `${size.label} : ${size.value}`,
+    buttons: [
+      { text: t('common.delete'), role: 'destructive', handler: () => store.removeSize(size) },
+      { text: t('common.cancel'), role: 'cancel' },
+    ],
+  });
+  await sheet.present();
 }
 </script>
+
+<style scoped>
+.size-label {
+  color: var(--ic-text-secondary);
+}
+
+.size-value {
+  font-weight: 700;
+}
+
+.add-label {
+  font-weight: 700;
+}
+</style>

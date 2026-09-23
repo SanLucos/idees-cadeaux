@@ -31,7 +31,16 @@ import '@ionic/vue/css/display.css';
 
 /* @import '@ionic/vue/css/palettes/dark.always.css'; */
 /* @import '@ionic/vue/css/palettes/dark.class.css'; */
-import '@ionic/vue/css/palettes/dark.system.css';
+// Pas de palette sombre Ionic : l'identité (docs/design) est claire uniquement ;
+// un mode sombre se déclinera depuis theme/variables.css le moment venu.
+// import '@ionic/vue/css/palettes/dark.system.css';
+
+/* Polices embarquées (pas de CDN : l'appli doit fonctionner hors-ligne) */
+import '@fontsource/young-serif/400.css';
+import '@fontsource/figtree/400.css';
+import '@fontsource/figtree/500.css';
+import '@fontsource/figtree/600.css';
+import '@fontsource/figtree/700.css';
 
 /* Theme variables */
 import './theme/variables.css';
