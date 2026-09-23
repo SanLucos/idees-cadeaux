@@ -79,3 +79,9 @@ Aucun secret dans le dépôt (fournir un `.env.example`). Limitation de débit s
 ## Hors périmètre de la v1 (ne pas implémenter)
 
 Paiements réels, blocage et signalement, groupes d'amis, chat, invitation par QR code, recherche par pseudo, invitation de non-inscrits, affiliation, version web complète (seule la page invité en lecture seule existe, 5.16), modération, révélation du donateur après réception, amitiés entre profils enfants, plusieurs gestionnaires par enfant, transfert de gestion, connexion autonome d'un enfant avant rattachement d'un email.
+
+## Design
+- Les maquettes sont dans `docs/design/`. Avant de coder ou de modifier un écran, lire `docs/design/DESIGN.md`, puis la capture (`captures/`) et le HTML de référence (`maquettes/`) de cet écran.
+- Implémenter avec les composants Ionic Vue, les textes via vue-i18n et les couleurs via `src/theme/variables.css` (point de départ : `docs/design/theme/variables.css`). Ne pas recopier le HTML des maquettes.
+- La spécification (`docs/SPECIFICATIONS.md`) prime sur les maquettes. En cas d'écart, poser la question.
+- Zone secrète (prune) : uniquement en vue ami ou gestionnaire, et seulement si l'API renvoie les données. La vue propriétaire n'en montre aucune trace.

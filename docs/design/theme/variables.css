@@ -1,0 +1,91 @@
+/*
+ * Idées Cadeaux: proposition de thème Ionic tirée des maquettes (docs/design).
+ * Identité provisoire: changer ces valeurs suffit pour changer l'identité visuelle (spec § 2).
+ * Polices : Young Serif (titres) et Figtree (texte), à embarquer dans l'app (pas de CDN, usage hors-ligne).
+ */
+:root {
+  /* Polices */
+  --ic-font-display: 'Young Serif', Georgia, serif;
+  --ic-font-body: 'Figtree', 'Helvetica Neue', system-ui, sans-serif;
+  --ion-font-family: var(--ic-font-body);
+
+  /* Fonds et texte */
+  --ion-background-color: #F6F0E6;
+  --ion-background-color-rgb: 246, 240, 230;
+  --ion-text-color: #2B211C;
+  --ion-text-color-rgb: 43, 33, 28;
+  --ion-item-background: #FFFCF7;
+  --ion-card-background: #FFFCF7;
+  --ion-toolbar-background: #F6F0E6;
+  --ion-tab-bar-background: #FFFCF7;
+  --ion-tab-bar-color: #6A5D53;
+  --ion-tab-bar-color-selected: #A94A2A;
+  --ion-border-color: #E4D8C6;
+
+  --ic-surface: #FFFCF7;
+  --ic-surface-muted: #EDE4D6;
+  --ic-text-secondary: #6A5D53;
+  --ic-border: #E4D8C6;
+
+  /* Primaire : terracotta */
+  --ion-color-primary: #A94A2A;
+  --ion-color-primary-rgb: 169, 74, 42;
+  --ion-color-primary-contrast: #FFFCF7;
+  --ion-color-primary-contrast-rgb: 255, 252, 247;
+  --ion-color-primary-shade: #7F3620;
+  --ion-color-primary-tint: #B25C3F;
+  --ic-primary-soft: #F5E1D6;
+
+  /* Succès : sauge */
+  --ion-color-success: #3D6A4C;
+  --ion-color-success-rgb: 61, 106, 76;
+  --ion-color-success-contrast: #FFFCF7;
+  --ion-color-success-contrast-rgb: 255, 252, 247;
+  --ion-color-success-shade: #365E43;
+  --ion-color-success-tint: #50795E;
+  --ic-success-soft: #DEEADF;
+
+  /* Danger */
+  --ion-color-danger: #9E2F2F;
+  --ion-color-danger-rgb: 158, 47, 47;
+  --ion-color-danger-contrast: #FFFCF7;
+  --ion-color-danger-contrast-rgb: 255, 252, 247;
+  --ion-color-danger-shade: #8B2929;
+  --ion-color-danger-tint: #A84444;
+
+  /* Sombre (boutons secondaires pleins) */
+  --ion-color-dark: #2B211C;
+  --ion-color-dark-rgb: 43, 33, 28;
+  --ion-color-dark-contrast: #FFFCF7;
+  --ion-color-dark-contrast-rgb: 255, 252, 247;
+  --ion-color-dark-shade: #261D19;
+  --ion-color-dark-tint: #403733;
+
+  /* Secret : prune, éléments invisibles du propriétaire (DESIGN.md § 3) */
+  --ion-color-secret: #5E3F6E;
+  --ion-color-secret-rgb: 94, 63, 110;
+  --ion-color-secret-contrast: #FFFCF7;
+  --ion-color-secret-contrast-rgb: 255, 252, 247;
+  --ion-color-secret-shade: #533761;
+  --ion-color-secret-tint: #6E527D;
+  --ic-secret-soft: #EFE6F2;
+  --ic-secret-border: #A488B2;
+  --ic-secret-zone: #FBF7FC;
+
+  /* Formes */
+  --ic-radius-card: 16px;
+  --ic-radius-block: 20px;
+  --ic-radius-field: 12px;
+  --ic-radius-button: 14px;
+  --ic-gutter: 20px;
+}
+
+/* Couleur personnalisée utilisable via color="secret" */
+.ion-color-secret {
+  --ion-color-base: var(--ion-color-secret);
+  --ion-color-base-rgb: var(--ion-color-secret-rgb);
+  --ion-color-contrast: var(--ion-color-secret-contrast);
+  --ion-color-contrast-rgb: var(--ion-color-secret-contrast-rgb);
+  --ion-color-shade: var(--ion-color-secret-shade);
+  --ion-color-tint: var(--ion-color-secret-tint);
+}
