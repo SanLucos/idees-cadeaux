@@ -223,8 +223,17 @@ final class SyncService
         $docs = [
             ...array_map($this->ideaNormalizer->normalizeForOwner(...), $owned),
             ...$this->ideaNormalizer->normalizeManyForFriend($friendly, $me),
-            ...$this->ideaNormalizer->normalizeManyForManager($managed, $me),
         ];
+        // A child's list is only edited while acting as the child (X-Acting-As):
+        // compute canEdit / isMine from the child's side, exactly as the API
+        // answers when acting. Interactions stay the manager's (humanBehind).
+        $byChild = [];
+        foreach ($managed as $idea) {
+            $byChild[$idea->getOwner()->getId()->toRfc4122()][] = $idea;
+        }
+        foreach ($byChild as $ideasOfChild) {
+            array_push($docs, ...$this->ideaNormalizer->normalizeManyForManager($ideasOfChild, $ideasOfChild[0]->getOwner()));
+        }
 
         return array_map(static fn (array $d) => $d + ['_version' => $entries[$d['id']]['version']], $docs);
     }
