@@ -72,6 +72,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $deletionScheduledAt = null;
 
+    /**
+     * Managed profiles only (spec §5.15, §5.13): when the manager ticked
+     * "je suis titulaire de l'autorité parentale" at creation.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $parentalConsentAt = null;
+
     public function __construct(
         UserType $type,
         ?string $displayName = null,
@@ -105,6 +112,38 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
     public function isManaged(): bool
     {
         return UserType::Managed === $this->type;
+    }
+
+    /** Spec §5.15: `$manager` is this managed profile's one manager. */
+    public function isManagedBy(self $manager): bool
+    {
+        return $this->isManaged() && $this->managedBy === $manager;
+    }
+
+    public static function createManaged(self $manager, string $displayName, ?Uuid $id = null): self
+    {
+        $child = new self(UserType::Managed, $displayName, $manager->getLocale(), $manager->getTimezone(), $id);
+        $child->managedBy = $manager;
+        $child->parentalConsentAt = new \DateTimeImmutable();
+
+        return $child;
+    }
+
+    public function getParentalConsentAt(): ?\DateTimeImmutable
+    {
+        return $this->parentalConsentAt;
+    }
+
+    /**
+     * Spec §5.15 "rattacher un email": the profile becomes an autonomous
+     * account, keeps everything, and its manager's access ends.
+     */
+    public function convertToAutonomous(string $email): void
+    {
+        $this->type = UserType::Regular;
+        $this->managedBy = null;
+        $this->email = $email;
+        $this->emailVerifiedAt = new \DateTimeImmutable();
     }
 
     public function getEmail(): ?string

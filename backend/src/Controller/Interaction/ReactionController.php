@@ -51,7 +51,7 @@ final class ReactionController
             }
         }
 
-        return new JsonResponse($this->ideaNormalizer->normalizeForFriend($idea, $me));
+        return new JsonResponse($this->ideaNormalizer->normalizeFor($idea, $me));
     }
 
     #[Route('/api/ideas/{id}/reaction', name: 'reactions_unlike', methods: ['DELETE'], requirements: ['id' => Requirement::UUID])]
@@ -63,6 +63,6 @@ final class ReactionController
         $this->reactions->findOneFor($idea, $me)?->markDeleted();
         $this->em->flush();
 
-        return new JsonResponse($this->ideaNormalizer->normalizeForFriend($idea, $me));
+        return new JsonResponse($this->ideaNormalizer->normalizeFor($idea, $me));
     }
 }

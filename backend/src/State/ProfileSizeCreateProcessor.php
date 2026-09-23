@@ -12,7 +12,7 @@ use App\Entity\User;
 use App\Exception\ApiProblemException;
 use App\Repository\ProfileSizeRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\SecurityBundle\Security;
+use App\Security\ActingContext;
 
 /**
  * @implements ProcessorInterface<ProfileSizeInput, ProfileSize>
@@ -22,7 +22,7 @@ final class ProfileSizeCreateProcessor implements ProcessorInterface
     private const int MAX_PER_USER = 100;
 
     public function __construct(
-        private readonly Security $security,
+        private readonly ActingContext $acting,
         private readonly ProfileSizeRepository $repository,
         private readonly EntityManagerInterface $em,
     ) {
@@ -30,7 +30,7 @@ final class ProfileSizeCreateProcessor implements ProcessorInterface
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): ProfileSize
     {
-        $user = $this->security->getUser();
+        $user = $this->acting->actor();
         if (!$user instanceof User) {
             throw new ApiProblemException('auth.required', 'Authentication required.', 401);
         }

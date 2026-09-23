@@ -10,7 +10,7 @@ use App\Repository\FriendshipRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use App\Security\Attribute\ActingUser;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -26,7 +26,7 @@ final class CancelFriendRequestController
     }
 
     #[Route('/api/friendships/{id}/cancel', name: 'friendship_cancel', methods: ['POST'])]
-    public function __invoke(string $id, #[CurrentUser] User $me): JsonResponse
+    public function __invoke(string $id, #[ActingUser] User $me): JsonResponse
     {
         if (!Uuid::isValid($id)) {
             throw new ApiProblemException('resource.not_found', 'Friend request not found.', 404);

@@ -31,6 +31,13 @@ use App\Repository\ReservationRepository;
  * (a friend's personal idea) is a plain 403: its existence is no secret
  * to someone who can already read it.
  *
+ * Manager view (spec §5.15, the one exception to the règle d'or): a
+ * managed profile's list is read by its manager — acting as the child
+ * or not — with everything on it: friends' published suggestions and
+ * every interaction, plus the child's own drafts. Friends' private
+ * drafts stay their author's alone (règle 2), and pledge amounts keep
+ * their rule (règle 3).
+ *
  * Interactions (reservation, contribution and pledges, comments,
  * reactions — spec §5.7–5.10) exist for whoever sees the idea except
  * its owner, and only on a published idea. For the owner every
@@ -45,11 +52,32 @@ final class IdeaAccess
     ) {
     }
 
+    /**
+     * Whether `$viewer` reads `$owner`'s list as its manager: the manager
+     * themselves, or the managed profile when acting as it (a managed
+     * profile never has a session of its own).
+     */
+    public static function readsAsManager(User $owner, User $viewer): bool
+    {
+        return $owner->isManaged() && ($viewer === $owner || $owner->isManagedBy($viewer));
+    }
+
+    /** The adult behind a request: the manager when acting as a managed profile. */
+    public static function humanBehind(User $viewer): User
+    {
+        return $viewer->isManaged() ? ($viewer->getManagedBy() ?? $viewer) : $viewer;
+    }
+
     public function canView(Idea $idea, User $viewer): bool
     {
         $owner = $idea->getOwner();
+        $author = $idea->getAuthor();
 
-        if ($idea->getAuthor() === $viewer) {
+        if (self::readsAsManager($owner, $viewer)) {
+            return $idea->isPublished() || $author === $owner || $author === self::humanBehind($viewer);
+        }
+
+        if ($author === $viewer) {
             return $owner === $viewer || !$idea->isPublished() || $this->friendships->areFriends($viewer, $owner);
         }
 
@@ -150,6 +178,15 @@ final class IdeaAccess
         }
     }
 
+    /**
+     * Who may write a suggestion for `$owner` (spec §5.4, §5.15): their
+     * friends, and their manager in their own name.
+     */
+    public function canSuggestTo(User $owner, User $author): bool
+    {
+        return $owner->isManagedBy($author) || $this->friendships->areFriends($author, $owner);
+    }
+
     /** Spec §5.4: "seul celui qui a archivé peut annuler l'archivage". */
     public function assertCanUnarchive(Idea $idea, User $viewer): void
     {
@@ -161,12 +198,15 @@ final class IdeaAccess
     }
 
     /**
-     * Whether `$viewer` looks at `$owner`'s list as its owner (vue
-     * propriétaire: own ideas only, never a suggestion) or as a friend.
-     * Null: neither — the list doesn't exist for them.
+     * Whether `$viewer` looks at `$owner`'s list as its manager, its
+     * owner (vue propriétaire: own ideas only, never a suggestion) or a
+     * friend. Null: none of these — the list doesn't exist for them.
      */
     public function listViewFor(User $owner, User $viewer): ?string
     {
+        if (self::readsAsManager($owner, $viewer)) {
+            return 'manager';
+        }
         if ($owner === $viewer) {
             return 'owner';
         }

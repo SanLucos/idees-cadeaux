@@ -34,6 +34,8 @@ final class UserNormalizer
             'locale' => $user->getLocale(),
             'isOnboarded' => $user->isOnboarded(),
             'emailVerified' => null !== $user->getEmailVerifiedAt(),
+            'type' => $user->getType()->value,
+            'managedBy' => $this->managerOf($user),
         ];
     }
 
@@ -49,7 +51,18 @@ final class UserNormalizer
             'birthDay' => $user->getBirthDay(),
             'birthMonth' => $user->getBirthMonth(),
             'birthYear' => $user->getBirthYear(),
+            'managedBy' => $this->managerOf($user),
         ];
+    }
+
+    /**
+     * @return array{id: string, displayName: string|null}|null
+     */
+    private function managerOf(User $user): ?array
+    {
+        $manager = $user->isManaged() ? $user->getManagedBy() : null;
+
+        return null !== $manager ? ['id' => $manager->getId()->toRfc4122(), 'displayName' => $manager->getDisplayName()] : null;
     }
 
     private function avatarUrl(User $user): ?string

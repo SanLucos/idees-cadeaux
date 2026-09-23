@@ -11,8 +11,9 @@ use ApiPlatform\Metadata\Operation;
 use App\Entity\OwnedEntityInterface;
 use App\Entity\User;
 use App\Repository\FriendshipRepository;
+use App\Repository\UserRepository;
+use App\Security\ActingContext;
 use Doctrine\ORM\QueryBuilder;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Uid\Uuid;
 
@@ -34,8 +35,9 @@ use Symfony\Component\Uid\Uuid;
 final class VisibleToOwnerOrFriendsExtension implements QueryCollectionExtensionInterface, QueryItemExtensionInterface
 {
     public function __construct(
-        private readonly Security $security,
+        private readonly ActingContext $acting,
         private readonly FriendshipRepository $friendships,
+        private readonly UserRepository $users,
         private readonly RequestStack $requestStack,
     ) {
     }
@@ -69,7 +71,7 @@ final class VisibleToOwnerOrFriendsExtension implements QueryCollectionExtension
         $requested = Uuid::fromString($requestedUserId);
         $isSelf = $requested->equals($user->getId());
 
-        if (!$isSelf && !\in_array($requestedUserId, $this->friendships->findAcceptedFriendIds($user), true)) {
+        if (!$isSelf && !\in_array($requestedUserId, $this->visibleOwnerIds($user), true)) {
             // Not self, not a friend: same empty result as a non-existent
             // user id — never reveals whether that account exists.
             $queryBuilder->andWhere('1 = 0');
@@ -92,7 +94,7 @@ final class VisibleToOwnerOrFriendsExtension implements QueryCollectionExtension
         }
 
         $alias = $queryBuilder->getRootAliases()[0];
-        $friendIds = $this->friendships->findAcceptedFriendIds($user);
+        $friendIds = $this->visibleOwnerIds($user);
 
         if ([] === $friendIds) {
             $this->restrictTo($queryBuilder, $alias, $user->getId());
@@ -106,9 +108,26 @@ final class VisibleToOwnerOrFriendsExtension implements QueryCollectionExtension
             ->setParameter('visible_to_current_user_friends', $friendIds);
     }
 
+    /**
+     * Friends, plus — for a manager not acting — their managed profiles
+     * (spec §5.15: the manager sees everything about the child).
+     *
+     * @return string[]
+     */
+    private function visibleOwnerIds(User $user): array
+    {
+        $ids = $this->friendships->findAcceptedFriendIds($user);
+        foreach ($this->users->findBy(['managedBy' => $user]) as $child) {
+            $ids[] = $child->getId()->toRfc4122();
+        }
+
+        return $ids;
+    }
+
     private function requireUser(QueryBuilder $queryBuilder): ?User
     {
-        $user = $this->security->getUser();
+        // The acting profile (X-Acting-As) when there is one.
+        $user = $this->acting->actor();
         if ($user instanceof User) {
             return $user;
         }

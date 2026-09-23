@@ -54,6 +54,14 @@ class Friendship implements TimestampableInterface, SoftDeletableInterface
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $removedBy = null;
 
+    /**
+     * Spec §5.15/§6: the manager who acted for a managed requester
+     * ("au nom de [enfant]"), for display and audit.
+     */
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?User $onBehalfOfManager = null;
+
     public function __construct(User $requester, User $addressee, FriendshipOrigin $origin = FriendshipOrigin::Request)
     {
         $this->initializeId();
@@ -63,6 +71,25 @@ class Friendship implements TimestampableInterface, SoftDeletableInterface
         $this->status = FriendshipStatus::Pending;
         $this->origin = $origin;
         $this->expiresAt = $this->getCreatedAt()->modify('+30 days');
+    }
+
+    public function getOnBehalfOfManager(): ?User
+    {
+        return $this->onBehalfOfManager;
+    }
+
+    public function setOnBehalfOfManager(?User $manager): void
+    {
+        $this->onBehalfOfManager = $manager;
+    }
+
+    /** Spec §5.15: rattachement → friendship with the former manager, created accepted. */
+    public static function createAccepted(User $a, User $b, FriendshipOrigin $origin): self
+    {
+        $friendship = new self($a, $b, $origin);
+        $friendship->accept();
+
+        return $friendship;
     }
 
     public function getRequester(): User

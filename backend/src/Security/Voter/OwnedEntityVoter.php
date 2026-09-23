@@ -6,6 +6,7 @@ namespace App\Security\Voter;
 
 use App\Entity\OwnedEntityInterface;
 use App\Entity\User;
+use App\Security\ActingContext;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
@@ -20,6 +21,10 @@ final class OwnedEntityVoter extends Voter
 {
     public const string OWNER = 'OWNER';
 
+    public function __construct(private readonly ActingContext $acting)
+    {
+    }
+
     protected function supports(string $attribute, mixed $subject): bool
     {
         return self::OWNER === $attribute && $subject instanceof OwnedEntityInterface;
@@ -31,7 +36,8 @@ final class OwnedEntityVoter extends Voter
             return false;
         }
 
-        $user = $token->getUser();
+        // The acting profile (X-Acting-As) owns what it writes.
+        $user = $this->acting->actor();
 
         return $user instanceof User && $user === $subject->getUser();
     }

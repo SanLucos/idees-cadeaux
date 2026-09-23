@@ -6,6 +6,7 @@ namespace App\Serializer;
 
 use App\Entity\Idea;
 use App\Entity\User;
+use App\Security\IdeaAccess;
 
 /**
  * Spec §4 "Conséquences techniques" 1: distinct serialisation views.
@@ -17,7 +18,12 @@ use App\Entity\User;
  *   a draft) sees, plus the hidden interactions from
  *   InteractionNormalizer on a published idea.
  *
- * The manager view (lot 4 bis) and guest view (lot 7 bis) come later.
+ * - normalizeForManager(): a managed profile's list as read by its
+ *   manager (spec §5.15): everything the friend view has, on every
+ *   idea of the list; interactions are computed for the manager as a
+ *   person (pledge amounts keep règle 3).
+ *
+ * The guest view (lot 7 bis) comes later.
  */
 final class IdeaNormalizer
 {
@@ -87,6 +93,55 @@ final class IdeaNormalizer
             ['canMarkGifted' => $isMine && $idea->isSuggestion() && !$idea->isArchived()],
             $interactions,
         );
+    }
+
+    /**
+     * @param Idea[] $ideas all on one managed profile's list
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function normalizeManyForManager(array $ideas, User $viewer): array
+    {
+        $human = IdeaAccess::humanBehind($viewer);
+        $interactions = $this->interactions->summarize($ideas, $human);
+
+        return array_values(array_map(function (Idea $idea) use ($viewer, $interactions): array {
+            $author = $idea->getAuthor();
+            $isMine = $author === $viewer;
+
+            return array_merge(
+                $this->publicFields($idea) + [
+                    'view' => 'manager',
+                    'isSuggestion' => $idea->isSuggestion(),
+                    'isMine' => $isMine,
+                    'author' => [
+                        'id' => $author->getId()->toRfc4122(),
+                        'displayName' => $author->getDisplayName(),
+                        'avatarUrl' => $this->url($author->getAvatarPath()),
+                    ],
+                    'canEdit' => $isMine,
+                    'canUnarchive' => $idea->isArchived() && $idea->getArchivedBy() === $viewer,
+                ],
+                ['canMarkGifted' => $isMine && $idea->isSuggestion() && !$idea->isArchived()],
+                $interactions[$idea->getId()->toRfc4122()] ?? [],
+            );
+        }, $ideas));
+    }
+
+    /**
+     * The view `$viewer` gets of one idea they may see.
+     *
+     * @return array<string, mixed>
+     */
+    public function normalizeFor(Idea $idea, User $viewer): array
+    {
+        if (IdeaAccess::readsAsManager($idea->getOwner(), $viewer)) {
+            return $this->normalizeManyForManager([$idea], $viewer)[0];
+        }
+
+        return $idea->getOwner() === $viewer && !$idea->isSuggestion()
+            ? $this->normalizeForOwner($idea)
+            : $this->normalizeForFriend($idea, $viewer);
     }
 
     /**

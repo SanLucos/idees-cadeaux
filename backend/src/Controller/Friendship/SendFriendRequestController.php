@@ -11,12 +11,13 @@ use App\Entity\User;
 use App\Exception\ApiProblemException;
 use App\Repository\FriendshipRepository;
 use App\Repository\UserRepository;
+use App\Security\ActingContext;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use App\Security\Attribute\ActingUser;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -40,13 +41,16 @@ final class SendFriendRequestController
         private readonly EntityManagerInterface $em,
         #[Autowire(service: 'limiter.friend_request')]
         private readonly RateLimiterFactory $rateLimiter,
+        private readonly ActingContext $acting,
     ) {
     }
 
     #[Route('/api/friendships', name: 'friendship_send', methods: ['POST'])]
-    public function __invoke(Request $request, #[CurrentUser] User $me): JsonResponse
+    public function __invoke(Request $request, #[ActingUser] User $me): JsonResponse
     {
-        $limit = $this->rateLimiter->create($me->getId()->toRfc4122())->consume();
+        // Keyed on the adult behind the request: acting as several
+        // children must not multiply the quota.
+        $limit = $this->rateLimiter->create(($this->acting->human() ?? $me)->getId()->toRfc4122())->consume();
         if (!$limit->isAccepted()) {
             throw new ApiProblemException('request.rate_limited', 'Too many friend requests.', 429);
         }
@@ -65,8 +69,7 @@ final class SendFriendRequestController
                 throw new ApiProblemException('validation.email_invalid', 'A valid email is required.', 422);
             }
 
-            // Managed profiles (spec §5.15) are excluded from email search —
-            // moot until lot 4 bis creates any, but the filter costs nothing now.
+            // Managed profiles (spec §5.15) are excluded from email search.
             $this->tryCreateRequestToUser($me, $this->users->findOneBy(['email' => $email, 'type' => UserType::Regular]));
         }
 
@@ -75,7 +78,9 @@ final class SendFriendRequestController
 
     private function tryCreateRequestToUser(User $me, ?User $target): void
     {
-        if (null === $target || $target === $me) {
+        // Spec §5.15: nobody can ask a managed profile to be their friend,
+        // and a managed profile only befriends adults. Same silent answer.
+        if (null === $target || $target === $me || $target->isManaged()) {
             return;
         }
 
@@ -101,7 +106,12 @@ final class SendFriendRequestController
             }
         }
 
-        $this->em->persist(new Friendship($me, $target));
+        $request = new Friendship($me, $target);
+        if ($me->isManaged()) {
+            // "au nom de [enfant]" (spec §5.15).
+            $request->setOnBehalfOfManager($this->acting->human());
+        }
+        $this->em->persist($request);
         $this->em->flush();
     }
 }

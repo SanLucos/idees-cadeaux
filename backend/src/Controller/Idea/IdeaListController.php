@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use App\Security\Attribute\ActingUser;
 
 /**
  * Idea lists (spec §5.4 "Consultation", §7 `GET /users/{id}/ideas`).
@@ -39,9 +39,14 @@ final class IdeaListController
      * "Ma liste" (Publiées / Brouillons / Archives).
      */
     #[Route('/api/users/me/ideas', name: 'ideas_mine', methods: ['GET'], priority: 10)]
-    public function mine(Request $request, #[CurrentUser] User $me): JsonResponse
+    public function mine(Request $request, #[ActingUser] User $me): JsonResponse
     {
         $filter = IdeaListFilter::fromRequest($request);
+
+        if ($me->isManaged()) {
+            // Acting as a child: its manager reads its list in full (spec §5.15).
+            return $this->managerView($me, $me, $filter);
+        }
 
         return new JsonResponse(
             $this->page($this->ideas->findOwnerView($me, $filter), $filter, fn (array $ideas) => array_map($this->normalizer->normalizeForOwner(...), $ideas))
@@ -54,13 +59,16 @@ final class IdeaListController
      * who isn't me or a friend gets the same 404 as an unknown id.
      */
     #[Route('/api/users/{id}/ideas', name: 'ideas_of_user', methods: ['GET'], requirements: ['id' => Requirement::UUID])]
-    public function ofUser(string $id, Request $request, #[CurrentUser] User $me): JsonResponse
+    public function ofUser(string $id, Request $request, #[ActingUser] User $me): JsonResponse
     {
         $owner = $this->users->find($id);
         $view = null !== $owner ? $this->access->listViewFor($owner, $me) : null;
 
         if ('owner' === $view) {
             return $this->mine($request, $me);
+        }
+        if ('manager' === $view) {
+            return $this->managerView($owner, $me, IdeaListFilter::fromRequest($request));
         }
         if ('friend' !== $view) {
             throw new HiddenResourceException();
@@ -78,14 +86,25 @@ final class IdeaListController
      * recipient so the client can group them.
      */
     #[Route('/api/ideas/private', name: 'ideas_private', methods: ['GET'], priority: 10)]
-    public function private(#[CurrentUser] User $me): JsonResponse
+    public function private(#[ActingUser] User $me): JsonResponse
     {
         return new JsonResponse(array_map(function (Idea $idea) use ($me): array {
             $owner = $idea->getOwner();
-            $data = $owner === $me ? $this->normalizer->normalizeForOwner($idea) : $this->normalizer->normalizeForFriend($idea, $me);
+            $data = $this->normalizer->normalizeFor($idea, $me);
 
             return $data + ['recipient' => ['id' => $owner->getId()->toRfc4122(), 'displayName' => $owner->getDisplayName()]];
         }, $this->ideas->findPrivateByAuthor($me)));
+    }
+
+    private function managerView(User $child, User $viewer, IdeaListFilter $filter): JsonResponse
+    {
+        return new JsonResponse(
+            $this->page(
+                $this->ideas->findManagerView($child, IdeaAccess::humanBehind($viewer), $filter),
+                $filter,
+                fn (array $ideas) => $this->normalizer->normalizeManyForManager($ideas, $viewer),
+            ) + ['counts' => $this->ideas->countOwnerView($child)],
+        );
     }
 
     /**

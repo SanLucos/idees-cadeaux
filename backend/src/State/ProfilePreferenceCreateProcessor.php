@@ -11,7 +11,7 @@ use App\Entity\ProfilePreference;
 use App\Entity\User;
 use App\Exception\ApiProblemException;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\SecurityBundle\Security;
+use App\Security\ActingContext;
 
 /**
  * @implements ProcessorInterface<ProfilePreferenceInput, ProfilePreference>
@@ -19,14 +19,14 @@ use Symfony\Bundle\SecurityBundle\Security;
 final class ProfilePreferenceCreateProcessor implements ProcessorInterface
 {
     public function __construct(
-        private readonly Security $security,
+        private readonly ActingContext $acting,
         private readonly EntityManagerInterface $em,
     ) {
     }
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): ProfilePreference
     {
-        $user = $this->security->getUser();
+        $user = $this->acting->actor();
         if (!$user instanceof User) {
             throw new ApiProblemException('auth.required', 'Authentication required.', 401);
         }

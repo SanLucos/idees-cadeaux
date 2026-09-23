@@ -69,6 +69,32 @@ class IdeaRepository extends ServiceEntityRepository
     }
 
     /**
+     * Vue gestionnaire (spec §5.15): a managed profile's whole list —
+     * the child's ideas (drafts included), friends' published
+     * suggestions, and the manager's own drafts for the child. Never
+     * a friend's private draft (règle 2).
+     *
+     * @return Paginator<Idea>
+     */
+    public function findManagerView(User $child, User $manager, IdeaListFilter $filter): Paginator
+    {
+        $qb = $this->createQueryBuilder('i')
+            ->andWhere('i.owner = :child')
+            ->andWhere('i.visibility = :published OR i.author = :child OR i.author = :manager')
+            ->setParameter('child', $child->getId(), 'uuid')
+            ->setParameter('manager', $manager->getId(), 'uuid')
+            ->setParameter('published', IdeaVisibility::Published);
+
+        if ('personal' === $filter->kind) {
+            $qb->andWhere('i.author = i.owner');
+        } elseif ('suggestion' === $filter->kind) {
+            $qb->andWhere('i.author != i.owner');
+        }
+
+        return $this->paginate($this->applyFilter($qb, $filter), $filter);
+    }
+
+    /**
      * Every private idea I wrote, for myself or for friends (spec §5.4
      * "un écran « Privées » liste tous mes brouillons").
      *

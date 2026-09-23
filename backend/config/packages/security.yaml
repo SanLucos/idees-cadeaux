@@ -56,7 +56,7 @@ security:
 
     access_control:
         - { path: ^/api/health, roles: PUBLIC_ACCESS }
-        - { path: ^/api/auth/(register|login|refresh|verify-email|forgot-password|reset-password|social)(/|$), roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/(register|login|refresh|verify-email|forgot-password|reset-password|social|managed-invitation)(/|$), roles: PUBLIC_ACCESS }
         - { path: ^/api/(docs|contexts|errors|validation_errors|\.well-known)(/|\.|$), roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: ROLE_USER }
 

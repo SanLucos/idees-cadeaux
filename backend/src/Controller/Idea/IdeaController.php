@@ -10,7 +10,6 @@ use App\Entity\Idea;
 use App\Entity\User;
 use App\Exception\ApiProblemException;
 use App\Exception\HiddenResourceException;
-use App\Repository\FriendshipRepository;
 use App\Repository\IdeaRepository;
 use App\Repository\UserRepository;
 use App\Security\IdeaAccess;
@@ -25,7 +24,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use App\Security\Attribute\ActingUser;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -38,7 +37,6 @@ final class IdeaController
     public function __construct(
         private readonly IdeaRepository $ideas,
         private readonly UserRepository $users,
-        private readonly FriendshipRepository $friendships,
         private readonly IdeaAccess $access,
         private readonly IdeaNormalizer $normalizer,
         private readonly IdeaFieldsApplier $fields,
@@ -55,7 +53,7 @@ final class IdeaController
      * same create returns the existing idea instead of a duplicate.
      */
     #[Route('/api/ideas', name: 'ideas_create', methods: ['POST'])]
-    public function create(Request $request, #[CurrentUser] User $me): JsonResponse
+    public function create(Request $request, #[ActingUser] User $me): JsonResponse
     {
         $body = self::decode($request);
 
@@ -76,9 +74,13 @@ final class IdeaController
 
         $owner = $me;
         if (isset($body['ownerId']) && $body['ownerId'] !== $me->getId()->toRfc4122()) {
+            if ($me->isManaged()) {
+                // Spec §11 décision 25: no suggestion on behalf of a child.
+                throw new ApiProblemException('acting_as.not_allowed', 'This action is not available on behalf of a managed profile.', 403);
+            }
             $candidate = \is_string($body['ownerId']) && Uuid::isValid($body['ownerId']) ? $this->users->find($body['ownerId']) : null;
             // Not a friend and non-existent answer alike: never reveals an account.
-            if (null === $candidate || !$this->friendships->areFriends($me, $candidate)) {
+            if (null === $candidate || !$this->access->canSuggestTo($candidate, $me)) {
                 throw new HiddenResourceException();
             }
             $owner = $candidate;
@@ -99,7 +101,7 @@ final class IdeaController
     }
 
     #[Route('/api/ideas/{id}', name: 'ideas_show', methods: ['GET'], requirements: ['id' => Requirement::UUID])]
-    public function show(string $id, #[CurrentUser] User $me): JsonResponse
+    public function show(string $id, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
         $this->access->assertCanView($idea, $me);
@@ -108,7 +110,7 @@ final class IdeaController
     }
 
     #[Route('/api/ideas/{id}', name: 'ideas_update', methods: ['PATCH'], requirements: ['id' => Requirement::UUID])]
-    public function update(string $id, Request $request, #[CurrentUser] User $me): JsonResponse
+    public function update(string $id, Request $request, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
         $this->access->assertCanEdit($idea, $me);
@@ -120,7 +122,7 @@ final class IdeaController
     }
 
     #[Route('/api/ideas/{id}', name: 'ideas_delete', methods: ['DELETE'], requirements: ['id' => Requirement::UUID])]
-    public function delete(string $id, #[CurrentUser] User $me): Response
+    public function delete(string $id, #[ActingUser] User $me): Response
     {
         $idea = $this->find($id);
         $this->access->assertCanEdit($idea, $me);
@@ -138,12 +140,12 @@ final class IdeaController
      * its author but can't be published any more.
      */
     #[Route('/api/ideas/{id}/publish', name: 'ideas_publish', methods: ['POST'], requirements: ['id' => Requirement::UUID])]
-    public function publish(string $id, #[CurrentUser] User $me): JsonResponse
+    public function publish(string $id, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
         $this->access->assertCanEdit($idea, $me);
 
-        if ($idea->isSuggestion() && !$this->friendships->areFriends($me, $idea->getOwner())) {
+        if ($idea->isSuggestion() && !$this->access->canSuggestTo($idea->getOwner(), $me)) {
             throw new ApiProblemException('idea.friendship_required', 'You are no longer friends with this person.', 422);
         }
 
@@ -159,7 +161,7 @@ final class IdeaController
      * good. Notifying whoever had interacted arrives with lot 5.
      */
     #[Route('/api/ideas/{id}/unpublish', name: 'ideas_unpublish', methods: ['POST'], requirements: ['id' => Requirement::UUID])]
-    public function unpublish(string $id, #[CurrentUser] User $me): JsonResponse
+    public function unpublish(string $id, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
         $this->access->assertCanEdit($idea, $me);
@@ -172,7 +174,7 @@ final class IdeaController
     }
 
     #[Route('/api/ideas/{id}/archive', name: 'ideas_archive', methods: ['POST'], requirements: ['id' => Requirement::UUID])]
-    public function archive(string $id, Request $request, #[CurrentUser] User $me): JsonResponse
+    public function archive(string $id, Request $request, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
         $kind = IdeaArchiveKind::tryFrom((string) (self::decode($request)['kind'] ?? ''));
@@ -196,7 +198,7 @@ final class IdeaController
     }
 
     #[Route('/api/ideas/{id}/unarchive', name: 'ideas_unarchive', methods: ['POST'], requirements: ['id' => Requirement::UUID])]
-    public function unarchive(string $id, #[CurrentUser] User $me): JsonResponse
+    public function unarchive(string $id, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
         $this->access->assertCanUnarchive($idea, $me);
@@ -208,7 +210,7 @@ final class IdeaController
     }
 
     #[Route('/api/ideas/{id}/image', name: 'ideas_image_upload', methods: ['POST'], requirements: ['id' => Requirement::UUID])]
-    public function uploadImage(string $id, Request $request, #[CurrentUser] User $me): JsonResponse
+    public function uploadImage(string $id, Request $request, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
         $this->access->assertCanEdit($idea, $me);
@@ -225,7 +227,7 @@ final class IdeaController
     }
 
     #[Route('/api/ideas/{id}/image', name: 'ideas_image_delete', methods: ['DELETE'], requirements: ['id' => Requirement::UUID])]
-    public function deleteImage(string $id, #[CurrentUser] User $me): JsonResponse
+    public function deleteImage(string $id, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
         $this->access->assertCanEdit($idea, $me);
@@ -242,9 +244,7 @@ final class IdeaController
      */
     private function view(Idea $idea, User $me): array
     {
-        return $idea->getOwner() === $me && !$idea->isSuggestion()
-            ? $this->normalizer->normalizeForOwner($idea)
-            : $this->normalizer->normalizeForFriend($idea, $me);
+        return $this->normalizer->normalizeFor($idea, $me);
     }
 
     private function find(string $id): Idea

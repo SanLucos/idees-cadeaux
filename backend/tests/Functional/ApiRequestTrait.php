@@ -16,14 +16,17 @@ trait ApiRequestTrait
     /**
      * @param array<string, mixed>|null $json
      */
-    protected function call(string $token, string $method, string $path, ?array $json = null): int
+    protected function call(string $token, string $method, string $path, ?array $json = null, ?string $actingAs = null): int
     {
-        $options = ['auth_bearer' => $token];
+        $options = ['auth_bearer' => $token, 'headers' => []];
         if (null !== $json) {
             $options['json'] = $json;
             if ('PATCH' === $method) {
-                $options['headers'] = ['Content-Type' => 'application/merge-patch+json'];
+                $options['headers']['Content-Type'] = 'application/merge-patch+json';
             }
+        }
+        if (null !== $actingAs) {
+            $options['headers']['X-Acting-As'] = $actingAs;
         }
 
         $response = static::createClient()->request($method, $path, $options);
@@ -40,9 +43,9 @@ trait ApiRequestTrait
      *
      * @return array<mixed>
      */
-    protected function expect(int $status, string $token, string $method, string $path, ?array $json = null): array
+    protected function expect(int $status, string $token, string $method, string $path, ?array $json = null, ?string $actingAs = null): array
     {
-        $actual = $this->call($token, $method, $path, $json);
+        $actual = $this->call($token, $method, $path, $json, $actingAs);
         self::assertSame($status, $actual, \sprintf('%s %s → %d: %s', $method, $path, $actual, json_encode($this->body)));
 
         return $this->body;

@@ -11,3 +11,11 @@ reset_password:
   intro: "Utilisez le code ci-dessous pour choisir un nouveau mot de passe :"
   expiry: "Ce code expire dans 15 minutes."
   ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email."
+
+managed_invitation:
+  subject: "%manager% vous confie le profil de %profile%"
+  heading: "Bonjour !"
+  intro: "%manager% gérait jusqu'ici le profil de %profile% et vous propose de le reprendre à votre nom. Voici votre code :"
+  how: "Dans l'application, choisissez « J'ai une invitation » sur l'écran de connexion, puis saisissez cette adresse email, ce code et un mot de passe. Le profil, ses idées et ses amis deviennent les vôtres ; %manager% n'y aura plus accès."
+  expiry: "Ce code est valable 7 jours."
+  ignore: "Si vous ne vous attendiez pas à ce message, ignorez-le : rien ne se passera."

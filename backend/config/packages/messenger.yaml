@@ -11,6 +11,7 @@ framework:
         routing:
             Symfony\Component\Mailer\Messenger\SendEmailMessage: async
             App\Message\SendVerificationCodeEmail: async
+            App\Message\SendManagedProfileInvitationEmail: async
 
 when@test:
     framework:

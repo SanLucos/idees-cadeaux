@@ -206,7 +206,7 @@ final class ContributionController
 
         return new JsonResponse(
             $this->normalizer->contribution($contribution, $pledges, $me)
-            + ['idea' => $this->ideaNormalizer->normalizeForFriend($contribution->getIdea(), $me)],
+            + ['idea' => $this->ideaNormalizer->normalizeFor($contribution->getIdea(), $me)],
             $status,
         );
     }

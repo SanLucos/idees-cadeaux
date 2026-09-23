@@ -58,7 +58,7 @@ final class ReservationController
                 throw new ApiProblemException('request.conflict', 'This id is already used.', 409);
             }
 
-            return new JsonResponse($this->ideaNormalizer->normalizeForFriend($idea, $me));
+            return new JsonResponse($this->ideaNormalizer->normalizeFor($idea, $me));
         }
 
         try {
@@ -81,7 +81,7 @@ final class ReservationController
             throw $this->alreadyReserved($this->reservations->findActiveByIdeas([$idea->getId()->toRfc4122()])[$idea->getId()->toRfc4122()] ?? null);
         }
 
-        return new JsonResponse($this->ideaNormalizer->normalizeForFriend($idea, $me), $created ? 201 : 200);
+        return new JsonResponse($this->ideaNormalizer->normalizeFor($idea, $me), $created ? 201 : 200);
     }
 
     /** Spec §5.7: only the reserver cancels. */
@@ -93,7 +93,7 @@ final class ReservationController
         $reservation->markDeleted();
         $this->em->flush();
 
-        return new JsonResponse($this->ideaNormalizer->normalizeForFriend($reservation->getIdea(), $me));
+        return new JsonResponse($this->ideaNormalizer->normalizeFor($reservation->getIdea(), $me));
     }
 
     /**
@@ -119,7 +119,7 @@ final class ReservationController
 
         // Same shape as ContributionController's responses.
         return new JsonResponse(
-            $this->normalizer->contribution($contribution, [], $me) + ['idea' => $this->ideaNormalizer->normalizeForFriend($idea, $me)],
+            $this->normalizer->contribution($contribution, [], $me) + ['idea' => $this->ideaNormalizer->normalizeFor($idea, $me)],
             201,
         );
     }

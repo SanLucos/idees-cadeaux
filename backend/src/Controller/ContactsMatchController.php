@@ -11,7 +11,7 @@ use App\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use App\Security\Attribute\ActingUser;
 
 /**
  * POST /api/contacts/match (spec §5.3): the device hashes its
@@ -29,7 +29,7 @@ final class ContactsMatchController
     }
 
     #[Route('/api/contacts/match', name: 'contacts_match', methods: ['POST'])]
-    public function __invoke(Request $request, #[CurrentUser] User $me): JsonResponse
+    public function __invoke(Request $request, #[ActingUser] User $me): JsonResponse
     {
         $body = json_decode($request->getContent(), true);
         $hashes = \is_array($body) ? ($body['hashedEmails'] ?? null) : null;

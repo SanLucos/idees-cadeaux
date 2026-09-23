@@ -10,12 +10,13 @@ use App\Repository\FriendshipRepository;
 use App\Repository\UserRepository;
 use App\Serializer\UserNormalizer;
 use App\Service\AvatarUploadService;
+use App\Service\ProfileFields;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use App\Security\Attribute\ActingUser;
 
 final class UserController
 {
@@ -29,7 +30,7 @@ final class UserController
     }
 
     #[Route('/api/users/me', name: 'users_me_get', methods: ['GET'])]
-    public function me(#[CurrentUser] User $user): JsonResponse
+    public function me(#[ActingUser] User $user): JsonResponse
     {
         return new JsonResponse($this->normalizer->normalize($user));
     }
@@ -42,11 +43,11 @@ final class UserController
      * exist at all.
      */
     #[Route('/api/users/{id}', name: 'users_show', methods: ['GET'], requirements: ['id' => Requirement::UUID])]
-    public function show(string $id, #[CurrentUser] User $me): JsonResponse
+    public function show(string $id, #[ActingUser] User $me): JsonResponse
     {
         $target = $this->users->find($id);
 
-        if (null === $target || (($target !== $me) && !$this->friendships->areFriends($me, $target))) {
+        if (null === $target || (($target !== $me) && !$target->isManagedBy($me) && !$this->friendships->areFriends($me, $target))) {
             throw new ApiProblemException('resource.not_found', 'User not found.', 404);
         }
 
@@ -58,7 +59,7 @@ final class UserController
      * pseudo (2–30 chars), birthday (day+month together, year optional).
      */
     #[Route('/api/users/me', name: 'users_me_patch', methods: ['PATCH'])]
-    public function update(Request $request, #[CurrentUser] User $user): JsonResponse
+    public function update(Request $request, #[ActingUser] User $user): JsonResponse
     {
         $body = json_decode($request->getContent(), true);
         if (!\is_array($body)) {
@@ -66,30 +67,10 @@ final class UserController
         }
 
         if (\array_key_exists('displayName', $body)) {
-            $displayName = trim((string) $body['displayName']);
-            if (mb_strlen($displayName) < 2 || mb_strlen($displayName) > 30) {
-                throw new ApiProblemException('validation.display_name_invalid', 'Pseudo must be 2 to 30 characters.', 422);
-            }
-            $user->setDisplayName($displayName);
+            $user->setDisplayName(ProfileFields::displayName($body['displayName']));
         }
 
-        if (\array_key_exists('birthDay', $body) || \array_key_exists('birthMonth', $body) || \array_key_exists('birthYear', $body)) {
-            $day = $body['birthDay'] ?? $user->getBirthDay();
-            $month = $body['birthMonth'] ?? $user->getBirthMonth();
-            $year = \array_key_exists('birthYear', $body) ? $body['birthYear'] : $user->getBirthYear();
-
-            if (null === $day && null === $month && null === $year) {
-                $user->setBirthDate(null, null, null);
-            } else {
-                if (!self::isValidDayMonth($day, $month)) {
-                    throw new ApiProblemException('validation.birth_date_invalid', 'birthDay and birthMonth are both required together and must be valid.', 422);
-                }
-                if (null !== $year && (!\is_int($year) || $year < 1900 || $year > (int) date('Y'))) {
-                    throw new ApiProblemException('validation.birth_date_invalid', 'birthYear is out of range.', 422);
-                }
-                $user->setBirthDate((int) $day, (int) $month, null !== $year ? (int) $year : null);
-            }
-        }
+        ProfileFields::applyBirthDate($user, $body);
 
         if (\array_key_exists('locale', $body)) {
             $locale = (string) $body['locale'];
@@ -105,7 +86,7 @@ final class UserController
     }
 
     #[Route('/api/users/me/avatar', name: 'users_me_avatar', methods: ['POST'])]
-    public function uploadAvatar(Request $request, #[CurrentUser] User $user): JsonResponse
+    public function uploadAvatar(Request $request, #[ActingUser] User $user): JsonResponse
     {
         $file = $request->files->get('avatar');
         if (null === $file) {
@@ -117,14 +98,5 @@ final class UserController
         $this->em->flush();
 
         return new JsonResponse($this->normalizer->normalize($user));
-    }
-
-    private static function isValidDayMonth(mixed $day, mixed $month): bool
-    {
-        if (!\is_int($day) || !\is_int($month)) {
-            return false;
-        }
-
-        return $month >= 1 && $month <= 12 && $day >= 1 && $day <= 31;
     }
 }

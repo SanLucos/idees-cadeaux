@@ -11,3 +11,11 @@ reset_password:
   intro: "Use the code below to choose a new password:"
   expiry: "This code expires in 15 minutes."
   ignore: "If you didn't request this, you can safely ignore this email."
+
+managed_invitation:
+  subject: "%manager% is handing %profile%'s profile over to you"
+  heading: "Hello!"
+  intro: "%manager% has been managing %profile%'s profile and invites you to take it over. Here is your code:"
+  how: "In the app, choose “I have an invitation” on the sign-in screen, then enter this email address, this code and a password. The profile, its ideas and its friends become yours; %manager% will no longer have access."
+  expiry: "This code is valid for 7 days."
+  ignore: "If you weren't expecting this message, ignore it: nothing will happen."

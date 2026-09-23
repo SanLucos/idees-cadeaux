@@ -10,7 +10,7 @@ use App\Repository\IdeaRepository;
 use App\Serializer\FriendshipNormalizer;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use App\Security\Attribute\ActingUser;
 
 final class FriendshipListController
 {
@@ -22,7 +22,7 @@ final class FriendshipListController
     }
 
     #[Route('/api/friendships', name: 'friendship_list_accepted', methods: ['GET'])]
-    public function friends(#[CurrentUser] User $me): JsonResponse
+    public function friends(#[ActingUser] User $me): JsonResponse
     {
         $friendships = $this->friendships->findAccepted($me);
         $counts = $this->ideas->countFriendVisibleByOwner(
@@ -37,7 +37,7 @@ final class FriendshipListController
     }
 
     #[Route('/api/friendships/incoming', name: 'friendship_list_incoming', methods: ['GET'])]
-    public function incoming(#[CurrentUser] User $me): JsonResponse
+    public function incoming(#[ActingUser] User $me): JsonResponse
     {
         return $this->respond($this->friendships->findPendingIncoming($me), $me);
     }
@@ -47,7 +47,7 @@ final class FriendshipListController
      * as pending/expired by FriendshipNormalizer (CLAUDE.md règle 4).
      */
     #[Route('/api/friendships/outgoing', name: 'friendship_list_outgoing', methods: ['GET'])]
-    public function outgoing(#[CurrentUser] User $me): JsonResponse
+    public function outgoing(#[ActingUser] User $me): JsonResponse
     {
         return $this->respond($this->friendships->findOutgoingVisible($me), $me);
     }
