@@ -10,6 +10,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 final class ProfilePreferenceInput
 {
+    /** Client-generated UUID (CLAUDE.md règle 9). Not `id`: API Platform would read that as an update. */
+    #[Groups(['profile_preference:write'])]
+    #[Assert\Uuid]
+    public ?string $clientId = null;
+
     #[Groups(['profile_preference:write'])]
     public ProfilePreferenceCategory $category = ProfilePreferenceCategory::Other;
 

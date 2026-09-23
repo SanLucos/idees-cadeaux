@@ -102,4 +102,28 @@ final class ProfileSizeAndPreferenceVisibilityTest extends AuthTestCase
         ]);
         self::assertResponseStatusCodeSame(404);
     }
+
+    public function testAClientIdMakesCreatesReplayableButNeverLetsAnotherUserTakeTheId(): void
+    {
+        $this->registerAndVerify('replay-owner@example.com');
+        $ownerToken = $this->login('replay-owner@example.com');
+        $id = '0190a1b2-0000-7000-8000-000000005001';
+
+        foreach ([1, 2] as $attempt) {
+            static::createClient()->request('POST', '/api/profile_sizes', [
+                'auth_bearer' => $ownerToken,
+                'json' => ['clientId' => $id, 'label' => 'Pointure', 'value' => '42'],
+            ]);
+            self::assertResponseIsSuccessful();
+        }
+        self::assertSame(1, static::createClient()->request('GET', '/api/profile_sizes', ['auth_bearer' => $ownerToken])->toArray()['totalItems']);
+
+        $this->registerAndVerify('replay-intruder@example.com');
+        $intruder = $this->login('replay-intruder@example.com');
+        $response = static::createClient()->request('POST', '/api/profile_sizes', [
+            'auth_bearer' => $intruder,
+            'json' => ['clientId' => $id, 'label' => 'x', 'value' => 'y'],
+        ]);
+        self::assertSame(409, $response->getStatusCode(), 'someone else\'s id is never taken over');
+    }
 }

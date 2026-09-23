@@ -18,6 +18,7 @@ use App\Repository\ProfileSizeRepository;
 use App\State\ProfileSizeCreateProcessor;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * A free "label + value" entry (e.g. "Pointure : 42"), spec §5.2.
@@ -68,9 +69,9 @@ class ProfileSize implements TimestampableInterface, SoftDeletableInterface, Own
     #[ORM\Column]
     private int $sortOrder = 0;
 
-    public function __construct(User $user, string $label, string $value, ?string $note = null, int $sortOrder = 0)
+    public function __construct(User $user, string $label, string $value, ?string $note = null, int $sortOrder = 0, ?Uuid $id = null)
     {
-        $this->initializeId();
+        $this->initializeId($id);
         $this->initializeTimestamps();
         $this->user = $user;
         $this->label = $label;

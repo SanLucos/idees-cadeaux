@@ -19,6 +19,7 @@ use App\Repository\ProfilePreferenceRepository;
 use App\State\ProfilePreferenceCreateProcessor;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * A free preference entry ("goût", "marque", "autre"), spec §5.2.
@@ -64,9 +65,9 @@ class ProfilePreference implements TimestampableInterface, SoftDeletableInterfac
     #[ORM\Column(length: 200)]
     private string $value;
 
-    public function __construct(User $user, ProfilePreferenceCategory $category, string $label, string $value)
+    public function __construct(User $user, ProfilePreferenceCategory $category, string $label, string $value, ?Uuid $id = null)
     {
-        $this->initializeId();
+        $this->initializeId($id);
         $this->initializeTimestamps();
         $this->user = $user;
         $this->category = $category;
