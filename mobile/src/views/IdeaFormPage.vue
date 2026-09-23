@@ -301,7 +301,7 @@ function fields(): IdeaInput {
 async function confirmUnpublish(idea: Idea): Promise<boolean> {
   const alert = await alertController.create({
     header: t('ideas.unpublishConfirm.title'),
-    message: 'owner' === idea.view ? t('ideas.unpublishConfirm.owner') : t('ideas.unpublishConfirm.author'),
+    message: 'owner' === idea.view ? t('ideas.unpublishConfirm.owner') : t('ideas.unpublishConfirm.authorNothing'),
     buttons: [
       { text: t('common.cancel'), role: 'cancel' },
       { text: t('ideas.actions.unpublish'), role: 'confirm' },

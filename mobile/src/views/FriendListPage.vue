@@ -42,7 +42,9 @@
 
         <SectionTitle>{{ t('friendList.theirIdeas', { count: personal.totalItems }) }}</SectionTitle>
         <div class="ic-stack">
-          <IdeaCard v-for="idea in personal.items" :key="idea.id" :idea="idea" />
+          <IdeaCard v-for="idea in personal.items" :key="idea.id" :idea="idea">
+            <template #pills><InteractionPills :idea="idea" /></template>
+          </IdeaCard>
         </div>
         <EmptyState v-if="loaded && !personal.items.length">{{ t('friendList.empty.personal', { name: profile.displayName }) }}</EmptyState>
         <ion-button v-if="personal.items.length < personal.totalItems" fill="clear" expand="block" @click="more(personal)">
@@ -57,6 +59,7 @@
                 <StatusPill variant="suggestion">
                   {{ idea.isMine ? t('ideas.suggestedByMe') : t('ideas.suggestedBy', { name: idea.author?.displayName }) }}
                 </StatusPill>
+                <InteractionPills :idea="idea" />
               </template>
             </IdeaCard>
           </div>
@@ -125,6 +128,7 @@ import { daysUntilBirthday, formatBirthday } from '../utils/birthday';
 import AppAvatar from '../components/AppAvatar.vue';
 import EmptyState from '../components/EmptyState.vue';
 import IdeaCard from '../components/IdeaCard.vue';
+import InteractionPills from '../components/InteractionPills.vue';
 import OccasionChips from '../components/OccasionChips.vue';
 import SecretBand from '../components/SecretBand.vue';
 import SectionTitle from '../components/SectionTitle.vue';

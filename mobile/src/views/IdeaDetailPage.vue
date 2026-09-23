@@ -51,7 +51,7 @@
             <ion-icon slot="start" :icon="checkmarkDoneOutline" />
             {{ t('ideas.actions.markReceived') }}
           </ion-button>
-          <ion-button v-if="actions.canMarkGifted(idea)" class="ic-button-surface" expand="block" @click="actions.archive(idea)">
+          <ion-button v-if="!hasSecretZone && actions.canMarkGifted(idea)" class="ic-button-surface" expand="block" @click="actions.archive(idea)">
             <ion-icon slot="start" :icon="archiveOutline" />
             {{ t('ideas.actions.markGifted') }}
           </ion-button>
@@ -59,6 +59,8 @@
             {{ t('ideas.actions.unarchive') }}
           </ion-button>
         </div>
+
+        <IdeaSecretZone v-if="hasSecretZone" :idea="idea" :owner-name="ownerName" @update="idea = $event" />
       </article>
     </ion-content>
   </ion-page>
@@ -85,7 +87,9 @@ import { ideasApi } from '../services/ideas';
 import { useIdeaActions } from '../composables/useIdeaActions';
 import { colorIndex } from '../utils/colorIndex';
 import { formatPrice } from '../utils/price';
+import { useFriendsStore } from '../stores/friends';
 import EmptyState from '../components/EmptyState.vue';
+import IdeaSecretZone from '../components/IdeaSecretZone.vue';
 import StatusPill from '../components/StatusPill.vue';
 import TopBar from '../components/TopBar.vue';
 import type { Idea } from '../types/idea';
@@ -106,6 +110,14 @@ const actions = useIdeaActions((change) => {
   }
 });
 
+const friendsStore = useFriendsStore();
+
+/** Friend view of a published idea: the API sent its hidden half (`reservation` key present, even if null). */
+const hasSecretZone = computed(() => !!idea.value && 'friend' === idea.value.view && 'reservation' in idea.value);
+const ownerName = computed(
+  () => friendsStore.friends.find((f) => f.user.id === idea.value?.ownerId)?.user.displayName ?? null,
+);
+
 const backHref = computed(() => (idea.value && 'friend' === idea.value.view ? `/tabs/friends/${idea.value.ownerId}` : '/tabs/list'));
 const hasActions = computed(() => !!idea.value && (idea.value.canEdit || idea.value.canUnarchive || 'owner' === idea.value.view));
 const price = computed(() => (idea.value ? formatPrice(idea.value.priceAmount, idea.value.priceCurrency, locale.value) : null));
@@ -116,6 +128,7 @@ const heroStyle = computed(() => {
 });
 
 onIonViewWillEnter(async () => {
+  if (!friendsStore.friends.length) void friendsStore.fetchFriends();
   try {
     idea.value = await ideasApi.get(id);
   } catch (e) {

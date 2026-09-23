@@ -208,7 +208,10 @@
       "idea_occasion_invalid": "Unknown occasion.",
       "idea_visibility_invalid": "Invalid visibility.",
       "image_required": "Choose an image.",
-      "invalid_filter": "Invalid filter."
+      "invalid_filter": "Invalid filter.",
+      "pledge_amount_invalid": "The amount must be greater than zero.",
+      "contribution_target_invalid": "The goal must be a positive amount.",
+      "comment_body_invalid": "A comment is 1 to 1000 characters."
     },
     "request": {
       "rate_limited": "Too many requests, try again later.",
@@ -232,7 +235,26 @@
       "friendship_required": "You're no longer friends: this suggestion can't be published any more.",
       "archive_forbidden": "You can't archive this idea.",
       "unarchive_forbidden": "Only whoever archived it can put it back on the list.",
-      "already_archived": "This idea is already archived."
+      "already_archived": "This idea is already archived.",
+      "not_published": "A private idea has no interactions.",
+      "archived": "This idea is archived."
+    },
+    "reservation": {
+      "already_reserved": "Already reserved by {reservedBy}.",
+      "contribution_open": "A contribution is already open: chip in there instead.",
+      "not_yours": "Only whoever reserved can do this."
+    },
+    "contribution": {
+      "idea_reserved": "This idea is already reserved.",
+      "already_open": "A contribution already exists.",
+      "not_initiator": "Only whoever started it manages the contribution.",
+      "closed": "This contribution was closed in the meantime."
+    },
+    "comment": {
+      "not_yours": "Only its author can change this comment."
+    },
+    "reaction": {
+      "own_idea": "You can't like your own idea."
     }
   },
   "locales": {
@@ -314,7 +336,12 @@
     "unpublishConfirm": {
       "title": "Make private?",
       "owner": "Your friends won't see it any more. Any interactions of theirs on this idea will be deleted.",
-      "author": "Friends won't see it any more. Reservations, comments, reactions and contributions on this idea will be deleted."
+      "authorDetail": "Friends won't see it any more, and this will be deleted: {items}.",
+      "authorNothing": "Friends won't see it any more.",
+      "lostReservation": "{name}'s reservation",
+      "lostContribution": "the contribution | the contribution and its share | the contribution and its {count} shares",
+      "lostComments": "no comments | {count} comment | {count} comments",
+      "lostLikes": "no likes | {count} like | {count} likes"
     },
     "deleteConfirm": {
       "title": "Delete this idea?",
@@ -371,5 +398,67 @@
     "publishIdea": "Publish idea",
     "publishSuggestion": "Publish suggestion",
     "saveDraft": "Save draft"
+  },
+  "secret": {
+    "zoneTitle": "Between friends · invisible to {name}"
+  },
+  "interactions": {
+    "you": "you",
+    "youCapital": "You",
+    "reserve": "I'll give it",
+    "contributeTogether": "Chip in together",
+    "youGiveIt": "You're giving it",
+    "reservedBy": "Reserved by {name}",
+    "reservedByMe": "Reserved by you",
+    "cancelReservation": "Cancel my reservation",
+    "openToOthers": "Open it to others",
+    "convertConfirm": {
+      "title": "Open it to others?",
+      "message": "Your reservation becomes a group contribution that you start. Your friends can chip in."
+    },
+    "contributionBy": "Contribution started by {name}",
+    "contributionClosed": "closed",
+    "remaining": "{amount} to go",
+    "outOf": "of {amount}",
+    "seeContribution": "See the contribution",
+    "contributionProgress": "Contribution · {total} / {target}",
+    "contributionTotal": "Contribution · {total}",
+    "like": "Like · {count}",
+    "likes": "no likes | {count} like | {count} likes",
+    "comments": "no comments | {count} comment | {count} comments",
+    "commentsTitle": "Comments · {count}",
+    "addComment": "Add a comment…",
+    "send": "Send",
+    "edited": "edited",
+    "editComment": "Edit comment",
+    "justNow": "just now"
+  },
+  "contribution": {
+    "title": "Contribution",
+    "subtitle": "{title} · for {name}",
+    "notFound": "This contribution doesn't exist or is no longer available.",
+    "secretBand": "{name} sees neither this contribution nor who's in it.",
+    "closedNote": "Contribution closed: shares can no longer change.",
+    "totalDeclared": "Total declared",
+    "remaining": "Still to cover",
+    "goalReached": "Goal reached 🎉",
+    "participants": "Participants · {count}",
+    "noParticipants": "Nobody has chipped in yet.",
+    "initiator": "Started it",
+    "yourShare": "Your share",
+    "privateAmount": "private amount",
+    "declarativeTitle": "Declared amounts only.",
+    "declarativeBody": "No payment goes through the app. Each amount is visible only to whoever declared it and to {name}, who started it.",
+    "myShare": "My share",
+    "declareShare": "Declare my share",
+    "updateShare": "Update my share",
+    "withdrawShare": "Withdraw my share",
+    "editTarget": "Change the goal",
+    "editTargetHint": "Leave empty for no goal.",
+    "close": "Close the contribution",
+    "closeConfirm": {
+      "title": "Close the contribution?",
+      "message": "Nobody will be able to chip in or change their share any more."
+    }
   }
 }

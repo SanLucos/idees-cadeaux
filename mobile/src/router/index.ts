@@ -67,6 +67,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true, requiresOnboarding: true },
   },
   {
+    path: '/contributions/:id',
+    name: 'Contribution',
+    component: () => import('../views/ContributionPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
     path: '/profile/edit',
     name: 'ProfileEdit',
     component: () => import('../views/ProfileEditPage.vue'),

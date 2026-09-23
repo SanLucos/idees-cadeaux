@@ -13,7 +13,8 @@ export function useErrorMessage() {
     if (error instanceof ApiError) {
       const key = `errors.${error.code}`;
       if (te(key)) {
-        return t(key);
+        // Extra problem+json members (e.g. `reservedBy`) fill the message's placeholders.
+        return t(key, error.extra);
       }
     }
 

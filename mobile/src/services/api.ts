@@ -7,6 +7,8 @@ export class ApiError extends Error {
     public readonly status: number,
     public readonly code: string,
     public readonly detail: string,
+    /** Extra problem+json members, e.g. `reservedBy` on reservation.already_reserved. */
+    public readonly extra: Record<string, unknown> = {},
   ) {
     super(detail);
   }
@@ -76,7 +78,7 @@ async function rawRequest<T>(method: string, path: string, options: RequestOptio
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new ApiError(response.status, payload.code ?? 'request.failed', payload.detail ?? response.statusText);
+    throw new ApiError(response.status, payload.code ?? 'request.failed', payload.detail ?? response.statusText, payload);
   }
 
   return payload as T;
@@ -107,6 +109,7 @@ async function request<T>(method: string, path: string, options: RequestOptions 
 export const api = {
   get: <T>(path: string, options?: RequestOptions) => request<T>('GET', path, options),
   post: <T>(path: string, options?: RequestOptions) => request<T>('POST', path, options),
+  put: <T>(path: string, options?: RequestOptions) => request<T>('PUT', path, options),
   patch: <T>(path: string, options?: RequestOptions) => request<T>('PATCH', path, options),
   delete: <T>(path: string, options?: RequestOptions) => request<T>('DELETE', path, options),
 };

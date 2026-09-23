@@ -208,7 +208,10 @@
       "idea_occasion_invalid": "Occasion inconnue.",
       "idea_visibility_invalid": "Visibilité invalide.",
       "image_required": "Choisissez une image.",
-      "invalid_filter": "Filtre invalide."
+      "invalid_filter": "Filtre invalide.",
+      "pledge_amount_invalid": "Le montant doit être supérieur à zéro.",
+      "contribution_target_invalid": "L'objectif doit être un montant positif.",
+      "comment_body_invalid": "Un commentaire fait entre 1 et 1000 caractères."
     },
     "request": {
       "rate_limited": "Trop de demandes, réessayez plus tard.",
@@ -232,7 +235,26 @@
       "friendship_required": "Vous n'êtes plus amis : cette suggestion ne peut plus être publiée.",
       "archive_forbidden": "Vous ne pouvez pas archiver cette idée.",
       "unarchive_forbidden": "Seule la personne qui l'a archivée peut la remettre dans la liste.",
-      "already_archived": "Cette idée est déjà archivée."
+      "already_archived": "Cette idée est déjà archivée.",
+      "not_published": "Une idée privée n'a pas d'interactions.",
+      "archived": "Cette idée est archivée."
+    },
+    "reservation": {
+      "already_reserved": "Déjà réservé par {reservedBy}.",
+      "contribution_open": "Une cotisation est déjà ouverte : participez-y plutôt.",
+      "not_yours": "Seule la personne qui a réservé peut faire cela."
+    },
+    "contribution": {
+      "idea_reserved": "Cette idée est déjà réservée.",
+      "already_open": "Une cotisation existe déjà.",
+      "not_initiator": "Seul l'initiateur gère la cotisation.",
+      "closed": "Cette cotisation a été clôturée entre-temps."
+    },
+    "comment": {
+      "not_yours": "Seul l'auteur peut modifier ce commentaire."
+    },
+    "reaction": {
+      "own_idea": "Vous ne pouvez pas aimer votre propre idée."
     }
   },
   "locales": {
@@ -314,7 +336,12 @@
     "unpublishConfirm": {
       "title": "Repasser en privé ?",
       "owner": "Vos amis ne la verront plus. Leurs éventuelles interactions sur cette idée seront supprimées.",
-      "author": "Les amis ne la verront plus. Les réservations, commentaires, réactions et cotisations sur cette idée seront supprimés."
+      "authorDetail": "Les amis ne la verront plus, et ceci sera supprimé : {items}.",
+      "authorNothing": "Les amis ne la verront plus.",
+      "lostReservation": "la réservation de {name}",
+      "lostContribution": "la cotisation | la cotisation et sa participation | la cotisation et ses {count} participations",
+      "lostComments": "aucun commentaire | {count} commentaire | {count} commentaires",
+      "lostLikes": "aucun j'aime | {count} j'aime | {count} j'aime"
     },
     "deleteConfirm": {
       "title": "Supprimer cette idée ?",
@@ -371,5 +398,67 @@
     "publishIdea": "Publier l'idée",
     "publishSuggestion": "Publier la suggestion",
     "saveDraft": "Enregistrer le brouillon"
+  },
+  "secret": {
+    "zoneTitle": "Entre amis · invisible pour {name}"
+  },
+  "interactions": {
+    "you": "vous",
+    "youCapital": "Vous",
+    "reserve": "Je l'offre",
+    "contributeTogether": "Cotiser à plusieurs",
+    "youGiveIt": "Vous l'offrez",
+    "reservedBy": "Réservé par {name}",
+    "reservedByMe": "Réservé par vous",
+    "cancelReservation": "Annuler ma réservation",
+    "openToOthers": "Ouvrir à plusieurs",
+    "convertConfirm": {
+      "title": "Ouvrir à plusieurs ?",
+      "message": "Votre réservation devient une cotisation dont vous êtes l'initiateur. Vos amis pourront y participer."
+    },
+    "contributionBy": "Cotisation ouverte par {name}",
+    "contributionClosed": "clôturée",
+    "remaining": "reste {amount}",
+    "outOf": "sur {amount}",
+    "seeContribution": "Voir la cotisation",
+    "contributionProgress": "Cotisation · {total} / {target}",
+    "contributionTotal": "Cotisation · {total}",
+    "like": "J'aime · {count}",
+    "likes": "aucun j'aime | {count} j'aime | {count} j'aime",
+    "comments": "aucun commentaire | {count} commentaire | {count} commentaires",
+    "commentsTitle": "Commentaires · {count}",
+    "addComment": "Ajouter un commentaire…",
+    "send": "Envoyer",
+    "edited": "modifié",
+    "editComment": "Modifier le commentaire",
+    "justNow": "à l'instant"
+  },
+  "contribution": {
+    "title": "Cotisation",
+    "subtitle": "{title} · pour {name}",
+    "notFound": "Cette cotisation n'existe pas ou n'est plus disponible.",
+    "secretBand": "{name} ne voit ni cette cotisation, ni ses participants.",
+    "closedNote": "Cotisation clôturée : les participations ne peuvent plus changer.",
+    "totalDeclared": "Total déclaré",
+    "remaining": "Reste à couvrir",
+    "goalReached": "Objectif atteint 🎉",
+    "participants": "Participants · {count}",
+    "noParticipants": "Personne n'a encore participé.",
+    "initiator": "Initiateur",
+    "yourShare": "Votre participation",
+    "privateAmount": "montant privé",
+    "declarativeTitle": "Montants déclaratifs.",
+    "declarativeBody": "Aucun paiement ne passe par l'application. Chaque montant n'est visible que de son auteur et de {name}, l'initiateur.",
+    "myShare": "Ma participation",
+    "declareShare": "Déclarer ma participation",
+    "updateShare": "Mettre à jour ma participation",
+    "withdrawShare": "Retirer ma participation",
+    "editTarget": "Modifier l'objectif",
+    "editTargetHint": "Laissez vide pour une cotisation sans objectif.",
+    "close": "Clôturer la cotisation",
+    "closeConfirm": {
+      "title": "Clôturer la cotisation ?",
+      "message": "Plus personne ne pourra participer ni modifier sa participation."
+    }
   }
 }

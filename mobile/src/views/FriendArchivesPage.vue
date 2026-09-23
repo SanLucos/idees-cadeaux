@@ -5,10 +5,11 @@
 
       <div class="ic-stack">
         <IdeaCard v-for="idea in ideas" :key="idea.id" :idea="idea" :actions="idea.canUnarchive || idea.canEdit" @actions="actions.openSheet">
-          <template v-if="idea.isSuggestion" #pills>
-            <StatusPill variant="suggestion">
+          <template #pills>
+            <StatusPill v-if="idea.isSuggestion" variant="suggestion">
               {{ idea.isMine ? t('ideas.suggestedByMe') : t('ideas.suggestedBy', { name: idea.author?.displayName }) }}
             </StatusPill>
+            <InteractionPills :idea="idea" />
           </template>
         </IdeaCard>
       </div>
@@ -31,6 +32,7 @@ import { ideasApi } from '../services/ideas';
 import { useIdeaActions } from '../composables/useIdeaActions';
 import EmptyState from '../components/EmptyState.vue';
 import IdeaCard from '../components/IdeaCard.vue';
+import InteractionPills from '../components/InteractionPills.vue';
 import StatusPill from '../components/StatusPill.vue';
 import TopBar from '../components/TopBar.vue';
 import type { Idea } from '../types/idea';

@@ -8,6 +8,56 @@ export interface IdeaAuthor {
   avatarUrl: string | null;
 }
 
+export interface PersonRef {
+  id: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+}
+
+export interface Reservation {
+  id: string;
+  user: PersonRef;
+  isMine: boolean;
+  createdAt: string;
+}
+
+/** `amount` is only present for its author and the initiator (CLAUDE.md règle 3). */
+export interface ContributionParticipant {
+  user: PersonRef;
+  isMe: boolean;
+  isInitiator: boolean;
+  amount?: string;
+}
+
+export interface Contribution {
+  id: string;
+  ideaId: string;
+  status: 'open' | 'closed';
+  initiator: PersonRef;
+  isInitiator: boolean;
+  targetAmount: string | null;
+  currency: string;
+  totalAmount: string;
+  remainingAmount: string | null;
+  goalReached: boolean;
+  participantCount: number;
+  participants: ContributionParticipant[];
+  myPledge: string | null;
+  closedAt: string | null;
+  /** Present on /contributions responses. */
+  idea?: Idea;
+}
+
+export interface Comment {
+  id: string;
+  ideaId: string;
+  author: PersonRef;
+  isMine: boolean;
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+}
+
 /**
  * Both server views (spec §4). The owner view never carries `author`,
  * `isSuggestion` or `isMine`, and from lot 4 never any hidden
@@ -37,6 +87,16 @@ export interface Idea {
   isSuggestion?: boolean;
   isMine?: boolean;
   author?: IdeaAuthor;
+  canMarkGifted?: boolean;
+  /**
+   * Hidden interactions (lot 4): only in the friend view of a published
+   * idea. Absent keys mean "nothing to show" — never "hide it".
+   */
+  reservation?: Reservation | null;
+  contribution?: Contribution | null;
+  reactions?: { count: number; likedByMe: boolean };
+  commentCount?: number;
+  canReact?: boolean;
 }
 
 export interface PrivateIdea extends Idea {

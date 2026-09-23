@@ -40,7 +40,8 @@ export function useIdeaActions(onChange: (change: IdeaChange) => void) {
   }
 
   const isOwnerView = (idea: Idea) => 'owner' === idea.view;
-  const canMarkGifted = (idea: Idea) => !isOwnerView(idea) && idea.isSuggestion && idea.isMine && 'active' === idea.status;
+  // Author, reserver or contribution initiator (spec §5.4): the server decides.
+  const canMarkGifted = (idea: Idea) => !isOwnerView(idea) && !!idea.canMarkGifted;
 
   function publish(idea: Idea): Promise<void> {
     return run(async () => ({ type: 'updated', idea: await ideasApi.publish(idea.id) }));
@@ -48,11 +49,23 @@ export function useIdeaActions(onChange: (change: IdeaChange) => void) {
 
   /**
    * Spec §5.4: the owner only ever gets a generic warning (règle d'or:
-   * no count, no detail); a suggestion's author may be told more once
-   * lot 4 brings interactions.
+   * no count, no detail); the suggestion's author sees the detail of
+   * what will go, from the hidden fields the API sent them.
    */
+  function authorWarning(idea: Idea): string {
+    const lost: string[] = [];
+    if (idea.reservation) lost.push(t('ideas.unpublishConfirm.lostReservation', { name: idea.reservation.user.displayName }));
+    if ('open' === idea.contribution?.status) {
+      lost.push(t('ideas.unpublishConfirm.lostContribution', { count: idea.contribution.participantCount }, idea.contribution.participantCount));
+    }
+    if (idea.commentCount) lost.push(t('ideas.unpublishConfirm.lostComments', { count: idea.commentCount }, idea.commentCount));
+    if (idea.reactions?.count) lost.push(t('ideas.unpublishConfirm.lostLikes', { count: idea.reactions.count }, idea.reactions.count));
+
+    return lost.length ? t('ideas.unpublishConfirm.authorDetail', { items: lost.join(', ') }) : t('ideas.unpublishConfirm.authorNothing');
+  }
+
   async function unpublish(idea: Idea): Promise<void> {
-    const message = isOwnerView(idea) ? t('ideas.unpublishConfirm.owner') : t('ideas.unpublishConfirm.author');
+    const message = isOwnerView(idea) ? t('ideas.unpublishConfirm.owner') : authorWarning(idea);
     if (!(await confirm(t('ideas.unpublishConfirm.title'), message, t('ideas.actions.unpublish')))) return;
 
     await run(async () => ({ type: 'updated', idea: await ideasApi.unpublish(idea.id) }));

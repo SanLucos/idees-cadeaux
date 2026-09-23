@@ -11,9 +11,9 @@ import { IonIcon } from '@ionic/vue';
 /**
  * DESIGN.md § 6. `suggestion` is the dashed plum pill — secret
  * convention, friend view only; `draft` the neutral "visible de vous
- * seul" one; lot 4 adds `reserved` and `contribution`.
+ * seul" one; `success` for "réservé", `secret` (plum) for a contribution.
  */
-withDefaults(defineProps<{ variant?: 'neutral' | 'suggestion' | 'draft' | 'success'; icon?: string }>(), {
+withDefaults(defineProps<{ variant?: 'neutral' | 'suggestion' | 'draft' | 'success' | 'secret'; icon?: string }>(), {
   variant: 'neutral',
   icon: undefined,
 });
@@ -49,6 +49,11 @@ withDefaults(defineProps<{ variant?: 'neutral' | 'suggestion' | 'draft' | 'succe
 .status-pill--draft {
   border: 1px dashed var(--ic-border);
   color: var(--ic-text-secondary);
+}
+
+.status-pill--secret {
+  background: var(--ic-secret-soft);
+  color: var(--ion-color-secret);
 }
 
 .status-pill--success {

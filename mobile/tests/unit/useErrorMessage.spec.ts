@@ -20,4 +20,10 @@ describe('useErrorMessage', () => {
     const [{ describe: describeError }] = withSetup(() => useErrorMessage())
     expect(describeError(new Error('network down'))).toBe('Une erreur est survenue.')
   })
+
+  test('fills placeholders from the problem+json extra members', () => {
+    const [{ describe: describeError }] = withSetup(() => useErrorMessage())
+    const error = new ApiError(409, 'reservation.already_reserved', 'Already reserved.', { reservedBy: 'Hugo' })
+    expect(describeError(error)).toBe('Déjà réservé par Hugo.')
+  })
 })
