@@ -7,10 +7,9 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Exception\ApiProblemException;
 use App\Exception\HiddenResourceException;
-use App\Repository\IdeaRepository;
 use App\Repository\ManagedProfileInvitationRepository;
 use App\Repository\UserRepository;
-use App\Serializer\UserNormalizer;
+use App\Serializer\ManagedProfileNormalizer;
 use App\Service\ManagedProfileInvitations;
 use App\Service\ProfileFields;
 use Doctrine\ORM\EntityManagerInterface;
@@ -32,10 +31,9 @@ final class ManagedProfileController
 
     public function __construct(
         private readonly UserRepository $users,
-        private readonly IdeaRepository $ideas,
         private readonly ManagedProfileInvitationRepository $invitations,
         private readonly ManagedProfileInvitations $invitationService,
-        private readonly UserNormalizer $userNormalizer,
+        private readonly ManagedProfileNormalizer $normalizer,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -172,16 +170,7 @@ final class ManagedProfileController
      */
     private function normalize(User $child): array
     {
-        $invitation = $this->invitations->findForProfile($child);
-
-        return $this->userNormalizer->normalizeForFriend($child) + [
-            'ideaCount' => $this->ideas->countOwnerView($child)['published'],
-            'parentalConsentAt' => $child->getParentalConsentAt()?->format(\DATE_ATOM),
-            'deletionScheduledAt' => $child->getDeletionScheduledAt()?->format(\DATE_ATOM),
-            'invitation' => null !== $invitation && $invitation->isUsable()
-                ? ['email' => $invitation->getEmail(), 'expiresAt' => $invitation->getExpiresAt()->format(\DATE_ATOM)]
-                : null,
-        ];
+        return $this->normalizer->normalize($child);
     }
 
     /**

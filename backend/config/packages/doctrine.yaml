@@ -8,6 +8,9 @@ doctrine:
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        # Tables written with plain SQL, outside the ORM mapping: keep
+        # doctrine:migrations:diff / schema:validate from touching them.
+        schema_filter: '~^(?!idempotency_record$)~'
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
