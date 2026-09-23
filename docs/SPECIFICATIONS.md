@@ -374,6 +374,10 @@ Tous les points ouverts ont été traités et toutes les hypothèses validées.
 17. ✅ **Tranché (lot 3) — suggestion publiée après un retrait d'ami** : son auteur n'y a plus accès du tout, lecture comprise (404) ; elle reste visible des amis restants du propriétaire, et toujours invisible de lui. Ses brouillons pour l'ex-ami restent lisibles par lui mais ne peuvent plus être publiés (5.3, 5.4).
 18. ✅ **Tranché (lot 3) — compteur « N idées » de la liste d'amis** : idées personnelles publiées et suggestions publiées des amis, actives uniquement, jamais de brouillon. Sans fuite : un propriétaire ne voit jamais son propre compteur.
 19. ✅ **Tranché (lot 3) — codes des occasions** : codes techniques en anglais (`birthday`, `christmas`, `new_year`…), libellés traduits côté client (`occasions.<code>`).
+20. ✅ **Tranché (lot 4) — réaction sur sa propre suggestion** : impossible. « Ses propres idées » (5.9) couvre les idées qu'on a écrites, suggestions comprises (code `reaction.own_idea`).
+21. ✅ **Tranché (lot 4) — historique de cotisation** : sans cotisation ouverte, la fiche et la liste (vue ami) montrent la dernière cotisation clôturée (total, participants). Elle n'empêche ni réservation ni nouvelle cotisation (5.7).
+22. ✅ **Tranché (lot 4) — suppression « définitive » des interactions** : suppression logique immédiate (irrécupérable pour les utilisateurs, propagée aux appareils par tombstones), puis effacement physique par une tâche quotidienne 30 jours après, aligné sur la rotation des sauvegardes. Concerne réservations, commentaires, réactions, cotisations et participations, quelle que soit la cause (retour en privé, annulation, retrait d'ami). Conséquence pour le lot 6 : un curseur `/sync` plus vieux que 30 jours impose une resynchronisation complète.
+23. ✅ **Tranché (lot 4) — routes « à moi »** : `PUT|DELETE /ideas/{id}/reaction` (mon j'aime) et `PUT|DELETE /contributions/{id}/pledge` (ma participation), bascules idempotentes sans identifiant à suivre côté client. Les autres ressources du lot 4 suivent le style du §7 (`/reservations`, `/contributions`, `/comments`).
 
 ---
 
