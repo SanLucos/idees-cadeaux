@@ -92,6 +92,18 @@ const routes: Array<RouteRecordRaw> = [
     meta: { guest: true },
   },
   {
+    path: '/settings/notifications',
+    name: 'NotificationSettings',
+    component: () => import('../views/NotificationSettingsPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/onboarding/notifications',
+    name: 'NotificationConsent',
+    component: () => import('../views/NotificationConsentPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
     path: '/profile/edit',
     name: 'ProfileEdit',
     component: () => import('../views/ProfileEditPage.vue'),

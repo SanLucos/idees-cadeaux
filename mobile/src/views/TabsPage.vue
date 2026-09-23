@@ -21,6 +21,9 @@
         <ion-tab-button tab="activity" href="/tabs/activity">
           <ion-icon :icon="notificationsOutline" aria-hidden="true" />
           <ion-label>{{ t('nav.activity') }}</ion-label>
+          <ion-badge v-if="notifications.unreadCount" :aria-label="t('activity.unreadCount', { count: notifications.unreadCount })">
+            {{ notifications.unreadCount > 99 ? '99+' : notifications.unreadCount }}
+          </ion-badge>
         </ion-tab-button>
         <ion-tab-button tab="profile" href="/tabs/profile">
           <ion-icon :icon="personOutline" aria-hidden="true" />
@@ -32,11 +35,32 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { IonButton, IonIcon, IonLabel, IonPage, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from '@ionic/vue';
+import { App } from '@capacitor/app';
+import type { PluginListenerHandle } from '@capacitor/core';
+import { IonBadge, IonButton, IonIcon, IonLabel, IonPage, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from '@ionic/vue';
+import { useNotificationsStore } from '../stores/notifications';
+import { push } from '../services/push';
+import { usePushConsent } from '../composables/usePushConsent';
 import { add, giftOutline, notificationsOutline, peopleOutline, personOutline } from 'ionicons/icons';
 
 const { t } = useI18n();
+const notifications = useNotificationsStore();
+const pushConsent = usePushConsent();
+let resumeListener: PluginListenerHandle | null = null;
+
+onMounted(async () => {
+  notifications.startPolling();
+  // Spec §5.11: the push token is (re)registered at each sign-in / start.
+  void push.register(pushConsent.onOpen);
+  resumeListener = await App.addListener('resume', () => void notifications.refreshCount());
+});
+
+onUnmounted(() => {
+  notifications.stopPolling();
+  void resumeListener?.remove();
+});
 </script>
 
 <style scoped>
@@ -56,6 +80,13 @@ ion-tab-button {
 
 ion-tab-button.tab-selected {
   font-weight: 700;
+}
+
+ion-tab-button ion-badge {
+  --background: var(--ion-color-primary);
+  --color: var(--ion-color-primary-contrast);
+  min-width: 18px;
+  font-size: 11px;
 }
 
 ion-tab-button ion-icon {

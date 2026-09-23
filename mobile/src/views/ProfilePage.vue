@@ -47,6 +47,10 @@
 
         <SectionTitle>{{ t('profile.settings.title') }}</SectionTitle>
         <ion-list class="ic-card-list" lines="inset">
+          <ion-item button router-link="/settings/notifications" detail>
+            <ion-icon slot="start" :icon="notificationsOutline" aria-hidden="true" />
+            <ion-label>{{ t('notificationSettings.title') }}</ion-label>
+          </ion-item>
           <ion-item button @click="chooseLanguage">
             <ion-icon slot="start" :icon="globeOutline" aria-hidden="true" />
             <ion-label>{{ t('profile.settings.language') }}</ion-label>
@@ -71,10 +75,12 @@
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { add, chevronDown, globeOutline, logOutOutline } from 'ionicons/icons';
+import { add, chevronDown, globeOutline, logOutOutline, notificationsOutline } from 'ionicons/icons';
 import { actionSheetController, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPage } from '@ionic/vue';
 import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
+import { useNotificationsStore } from '../stores/notifications';
+import { push } from '../services/push';
 import { SUPPORTED_LOCALES } from '../i18n';
 import { formatBirthday } from '../utils/birthday';
 import AppAvatar from '../components/AppAvatar.vue';
@@ -88,6 +94,7 @@ const { t, locale } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
 const activeProfile = useActiveProfileStore();
+const notifications = useNotificationsStore();
 
 /** Whoever the screen is about: me, or the active child. */
 const current = computed(() => {
@@ -145,6 +152,9 @@ async function chooseLanguage(): Promise<void> {
 
 async function logout(): Promise<void> {
   activeProfile.reset();
+  // While still signed in: this device must stop receiving the account's pushes.
+  await push.unregister();
+  notifications.stopPolling();
   await auth.logout();
   router.replace('/login');
 }

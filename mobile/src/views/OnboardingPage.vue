@@ -76,7 +76,7 @@ async function submit(): Promise<void> {
       birthMonth: birthMonth.value,
       birthYear: birthYear.value,
     });
-    router.replace('/tabs/list');
+    router.replace('/onboarding/notifications');
   } catch (e) {
     error.value = describe(e);
   } finally {

@@ -214,7 +214,10 @@
       "invalid_filter": "Invalid filter.",
       "pledge_amount_invalid": "The amount must be greater than zero.",
       "contribution_target_invalid": "The goal must be a positive amount.",
-      "comment_body_invalid": "A comment is 1 to 1000 characters."
+      "comment_body_invalid": "A comment is 1 to 1000 characters.",
+      "birthday_reminders_invalid": "Up to 3 reminders, 0 to 30 days before.",
+      "notification_settings_invalid": "Invalid notification setting.",
+      "device_token_invalid": "Unrecognised device."
     },
     "request": {
       "rate_limited": "Too many requests, try again later.",
@@ -280,7 +283,34 @@
   },
   "activity": {
     "title": "Activity",
-    "empty": "News from your friends will show up here."
+    "empty": "News from your friends will show up here.",
+    "markAllRead": "Mark all read",
+    "settings": "Notification settings",
+    "unread": "Unread",
+    "unreadCount": "{count} unread",
+    "for": "For {name}",
+    "groups": {
+      "today": "Today",
+      "week": "This week",
+      "earlier": "Earlier"
+    },
+    "items": {
+      "friend_request_received": "{actor} sent you a friend request.",
+      "friend_request_received_managed": "{actor} (managed by {manager}) sent you a friend request.",
+      "friend_request_accepted": "{actor} accepted your friend request.",
+      "friend_joined_via_link": "{actor} became your friend through your share link.",
+      "share_link_suspended": "Your share link is suspended: too many friends added in 24 h.",
+      "idea_published": "{actor} published a new idea: “{idea}”.",
+      "suggestion_published": "{actor} published a suggestion for {owner}.",
+      "idea_reserved": "{actor} reserved “{idea}” for {owner}.",
+      "comment_added": "{actor} commented on “{idea}” for {owner}.",
+      "contribution_opened": "{actor} started a contribution for “{idea}” for {owner}.",
+      "pledge_added": "{actor} chipped in for “{idea}”.",
+      "contribution_goal_reached": "The contribution for “{idea}” reached its goal.",
+      "suggestion_gifted": "{actor} marked “{idea}” as given.",
+      "idea_unpublished": "{actor} made “{idea}” private again: what you had done on it was deleted.",
+      "birthday_reminder": "It's {friend}'s birthday today! | {friend}'s birthday is tomorrow. Have a look at their list. | {friend}'s birthday is in {days} days. Have a look at their list."
+    }
   },
   "occasions": {
     "birthday": "Birthday",
@@ -518,5 +548,57 @@
     "code": "Code from the email",
     "password": "Password",
     "submit": "Take over my profile"
+  },
+  "consent": {
+    "title": "Stay in the loop",
+    "intro": "The app can let you know when something concerns you:",
+    "examples": {
+      "friends": "a friend request, a new friend;",
+      "coordination": "a reservation, comment or contribution on an idea you're involved in;",
+      "birthdays": "a friend's upcoming birthday."
+    },
+    "secret": "You'll never be told what your friends are planning for you.",
+    "push": "Push notifications",
+    "pushHint": "On this phone. The system will ask for permission.",
+    "email": "Emails",
+    "emailHint": "To your sign-in address, one-click unsubscribe.",
+    "continue": "Continue",
+    "later": "Later",
+    "changeLater": "You can change your mind anytime in Profile › Notifications.",
+    "denied": "Notifications are blocked by the system: allow them in your phone's settings."
+  },
+  "notificationSettings": {
+    "title": "Notifications",
+    "channels": "Channels",
+    "inAppAlways": "The app's Activity centre is always on; tune it per type below.",
+    "consentedOn": "Accepted on {date}",
+    "birthdays": "Birthday reminders",
+    "birthdaysHint": "Before a friend's birthday, around 9 a.m. Up to 3 reminders.",
+    "birthdaysOff": "No birthday reminders.",
+    "delay": "On the day | The day before | {days} days before",
+    "addDelay": "Add a reminder",
+    "addDelayHint": "How many days before (0 to 30)?",
+    "byType": "By type",
+    "channel": {
+      "in_app": "App",
+      "push": "Push",
+      "email": "Email"
+    },
+    "types": {
+      "friend_request_received": "Friend request received",
+      "friend_request_accepted": "Friend request accepted",
+      "friend_joined_via_link": "New friend via your link",
+      "share_link_suspended": "Share link suspended",
+      "idea_published": "A friend's new idea",
+      "suggestion_published": "New suggestion for a friend",
+      "idea_reserved": "Idea reserved",
+      "comment_added": "New comment",
+      "contribution_opened": "Contribution started",
+      "pledge_added": "New share",
+      "contribution_goal_reached": "Contribution goal reached",
+      "suggestion_gifted": "Suggestion given",
+      "idea_unpublished": "Idea made private",
+      "birthday_reminder": "Birthday reminder"
+    }
   }
 }

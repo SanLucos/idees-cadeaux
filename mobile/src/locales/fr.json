@@ -214,7 +214,10 @@
       "invalid_filter": "Filtre invalide.",
       "pledge_amount_invalid": "Le montant doit être supérieur à zéro.",
       "contribution_target_invalid": "L'objectif doit être un montant positif.",
-      "comment_body_invalid": "Un commentaire fait entre 1 et 1000 caractères."
+      "comment_body_invalid": "Un commentaire fait entre 1 et 1000 caractères.",
+      "birthday_reminders_invalid": "Jusqu'à 3 rappels, de 0 à 30 jours avant.",
+      "notification_settings_invalid": "Réglage de notification invalide.",
+      "device_token_invalid": "Appareil non reconnu."
     },
     "request": {
       "rate_limited": "Trop de demandes, réessayez plus tard.",
@@ -280,7 +283,34 @@
   },
   "activity": {
     "title": "Activité",
-    "empty": "Les nouvelles de vos amis apparaîtront ici."
+    "empty": "Les nouvelles de vos amis apparaîtront ici.",
+    "markAllRead": "Tout marquer lu",
+    "settings": "Préférences de notification",
+    "unread": "Non lue",
+    "unreadCount": "{count} non lues",
+    "for": "Pour {name}",
+    "groups": {
+      "today": "Aujourd'hui",
+      "week": "Cette semaine",
+      "earlier": "Plus tôt"
+    },
+    "items": {
+      "friend_request_received": "{actor} vous a envoyé une demande d'ami.",
+      "friend_request_received_managed": "{actor} (profil géré par {manager}) vous a envoyé une demande d'ami.",
+      "friend_request_accepted": "{actor} a accepté votre demande d'ami.",
+      "friend_joined_via_link": "{actor} est devenu votre ami via votre lien de partage.",
+      "share_link_suspended": "Votre lien de partage est suspendu : trop d'amis ajoutés en 24 h.",
+      "idea_published": "{actor} a publié une nouvelle idée : « {idea} ».",
+      "suggestion_published": "{actor} a publié une suggestion pour {owner}.",
+      "idea_reserved": "{actor} a réservé « {idea} » pour {owner}.",
+      "comment_added": "{actor} a commenté « {idea} » pour {owner}.",
+      "contribution_opened": "{actor} a ouvert une cotisation sur « {idea} » pour {owner}.",
+      "pledge_added": "{actor} participe à la cotisation pour « {idea} ».",
+      "contribution_goal_reached": "La cotisation pour « {idea} » a atteint son objectif.",
+      "suggestion_gifted": "{actor} a marqué « {idea} » comme offert.",
+      "idea_unpublished": "{actor} a repassé « {idea} » en privé : ce que vous y aviez fait a été supprimé.",
+      "birthday_reminder": "C'est l'anniversaire de {friend} aujourd'hui ! | Anniversaire de {friend} demain. Jetez un œil à sa liste. | Anniversaire de {friend} dans {days} jours. Jetez un œil à sa liste."
+    }
   },
   "occasions": {
     "birthday": "Anniversaire",
@@ -518,5 +548,57 @@
     "code": "Code reçu par email",
     "password": "Mot de passe",
     "submit": "Reprendre mon profil"
+  },
+  "consent": {
+    "title": "Restez au courant",
+    "intro": "L'application peut vous prévenir quand quelque chose vous concerne :",
+    "examples": {
+      "friends": "une demande d'ami, un nouvel ami ;",
+      "coordination": "une réservation, un commentaire ou une cotisation sur une idée où vous êtes impliqué ;",
+      "birthdays": "l'anniversaire d'un ami qui approche."
+    },
+    "secret": "Vous ne serez jamais prévenu de ce que vos amis préparent pour vous.",
+    "push": "Notifications push",
+    "pushHint": "Sur ce téléphone. Le système vous demandera l'autorisation.",
+    "email": "Emails",
+    "emailHint": "À votre adresse de connexion, désinscription en un clic.",
+    "continue": "Continuer",
+    "later": "Plus tard",
+    "changeLater": "Vous pourrez changer d'avis à tout moment dans Profil › Notifications.",
+    "denied": "Les notifications sont refusées par le système : autorisez-les dans les réglages du téléphone."
+  },
+  "notificationSettings": {
+    "title": "Notifications",
+    "channels": "Canaux",
+    "inAppAlways": "Le centre Activité de l'application est toujours actif ; réglez-le par type ci-dessous.",
+    "consentedOn": "Accepté le {date}",
+    "birthdays": "Rappels d'anniversaire",
+    "birthdaysHint": "Avant l'anniversaire d'un ami, vers 9 h. Jusqu'à 3 rappels.",
+    "birthdaysOff": "Aucun rappel d'anniversaire.",
+    "delay": "Le jour même | La veille | {days} jours avant",
+    "addDelay": "Ajouter un rappel",
+    "addDelayHint": "Combien de jours avant (0 à 30) ?",
+    "byType": "Par type",
+    "channel": {
+      "in_app": "Appli",
+      "push": "Push",
+      "email": "Email"
+    },
+    "types": {
+      "friend_request_received": "Demande d'ami reçue",
+      "friend_request_accepted": "Demande d'ami acceptée",
+      "friend_joined_via_link": "Nouvel ami via votre lien",
+      "share_link_suspended": "Lien de partage suspendu",
+      "idea_published": "Nouvelle idée d'un ami",
+      "suggestion_published": "Nouvelle suggestion pour un ami",
+      "idea_reserved": "Idée réservée",
+      "comment_added": "Nouveau commentaire",
+      "contribution_opened": "Cotisation ouverte",
+      "pledge_added": "Nouvelle participation",
+      "contribution_goal_reached": "Objectif de cotisation atteint",
+      "suggestion_gifted": "Suggestion offerte",
+      "idea_unpublished": "Idée repassée en privé",
+      "birthday_reminder": "Rappel d'anniversaire"
+    }
   }
 }
