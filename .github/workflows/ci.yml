@@ -32,8 +32,8 @@ jobs:
       JWT_PASSPHRASE: ci-passphrase
       MAILER_DSN: null://null
       # No MinIO service in CI (services: can't run its custom start
-      # command reliably); avatar upload is covered by manual testing
-      # against docker-compose's minio, not by the automated suite.
+      # command reliably): the test env stores uploads on local disk
+      # instead (config/packages/flysystem.yaml, when@test).
       STORAGE_ENDPOINT: http://localhost:9000
       STORAGE_PUBLIC_BASE_URL: http://localhost:9000/idees-cadeaux
       STORAGE_BUCKET: idees-cadeaux

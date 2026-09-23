@@ -70,6 +70,21 @@ abstract class AuthTestCase extends ApiTestCase
         return $response->toArray()['token'];
     }
 
+    /**
+     * Two crossed requests resolve into an accepted friendship (the
+     * second one accepts the first — see FriendshipTest).
+     */
+    protected function befriend(string $tokenA, string $emailA, string $tokenB, string $emailB): void
+    {
+        static::createClient()->request('POST', '/api/friendships', ['auth_bearer' => $tokenA, 'json' => ['email' => $emailB]]);
+        static::createClient()->request('POST', '/api/friendships', ['auth_bearer' => $tokenB, 'json' => ['email' => $emailA]]);
+    }
+
+    protected function userId(string $token): string
+    {
+        return static::createClient()->request('GET', '/api/users/me', ['auth_bearer' => $token])->toArray()['id'];
+    }
+
     protected function lastCodeFor(string $email, VerificationCodePurpose $purpose): string
     {
         /** @var InMemoryTransport $transport */
