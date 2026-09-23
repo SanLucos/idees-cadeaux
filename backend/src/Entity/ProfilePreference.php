@@ -36,6 +36,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Delete(security: "is_granted('OWNER', object)"),
     ],
     normalizationContext: ['groups' => ['profile_preference:read']],
+    order: ['createdAt' => 'ASC'],
+    paginationItemsPerPage: 100,
     denormalizationContext: ['groups' => ['profile_preference:write']],
 )]
 #[ORM\Entity(repositoryClass: ProfilePreferenceRepository::class)]

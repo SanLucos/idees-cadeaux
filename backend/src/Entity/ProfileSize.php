@@ -35,6 +35,9 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Delete(security: "is_granted('OWNER', object)"),
     ],
     normalizationContext: ['groups' => ['profile_size:read']],
+    order: ['sortOrder' => 'ASC', 'createdAt' => 'ASC'],
+    // The whole list fits on one page: capped at 100 per user (spec §5.2).
+    paginationItemsPerPage: 100,
     denormalizationContext: ['groups' => ['profile_size:write']],
 )]
 #[ORM\Entity(repositoryClass: ProfileSizeRepository::class)]

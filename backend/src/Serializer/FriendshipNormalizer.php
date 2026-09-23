@@ -36,20 +36,30 @@ final class FriendshipNormalizer
             'direction' => $friendship->getRequester() === $viewer ? 'outgoing' : 'incoming',
             'createdAt' => $friendship->getCreatedAt()->format(\DATE_ATOM),
             'respondedAt' => $isMasked ? null : $friendship->getRespondedAt()?->format(\DATE_ATOM),
-            'user' => $this->summarize($other),
+            'user' => $this->summarize($other, FriendshipStatus::Accepted === $friendship->getStatus()),
         ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function summarize(User $user): array
+    private function summarize(User $user, bool $isFriend): array
     {
-        return [
+        $summary = [
             'id' => $user->getId()->toRfc4122(),
             'displayName' => $user->getDisplayName(),
             'avatarUrl' => null !== $user->getAvatarPath() ? $this->storagePublicBaseUrl.'/'.$user->getAvatarPath() : null,
         ];
+
+        // Spec §4: a pending request only ever shows pseudo + avatar;
+        // the birthday (for the friends list's "J-x" pill) is a
+        // friend-only profile field.
+        if ($isFriend) {
+            $summary['birthDay'] = $user->getBirthDay();
+            $summary['birthMonth'] = $user->getBirthMonth();
+        }
+
+        return $summary;
     }
 
     private function displayStatusFor(Friendship $friendship, User $viewer): FriendshipStatus

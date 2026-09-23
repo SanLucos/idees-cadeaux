@@ -83,4 +83,29 @@ final class FriendshipVisibilityTest extends AuthTestCase
         $friendProfileData = $friendProfile->toArray();
         self::assertArrayNotHasKey('email', $friendProfileData, 'a friend\'s profile view never includes email (spec §4)');
     }
+
+    public function testBirthdayIsOnlyInTheSummaryOnceFriendsNeverOnAPendingRequest(): void
+    {
+        $requesterToken = $this->registerVerifyAndLogin('fv-bday-req@example.com');
+        $addresseeToken = $this->registerVerifyAndLogin('fv-bday-add@example.com');
+
+        static::createClient()->request('PATCH', '/api/users/me', [
+            'auth_bearer' => $requesterToken,
+            'headers' => ['Content-Type' => 'application/merge-patch+json'],
+            'json' => ['displayName' => 'Req', 'birthDay' => 4, 'birthMonth' => 10],
+        ]);
+        static::createClient()->request('POST', '/api/friendships', [
+            'auth_bearer' => $requesterToken,
+            'json' => ['email' => 'fv-bday-add@example.com'],
+        ]);
+
+        $incoming = static::createClient()->request('GET', '/api/friendships/incoming', ['auth_bearer' => $addresseeToken])->toArray();
+        self::assertArrayNotHasKey('birthDay', $incoming[0]['user'], 'a pending request shows pseudo and avatar only (spec §4)');
+
+        static::createClient()->request('POST', "/api/friendships/{$incoming[0]['id']}/accept", ['auth_bearer' => $addresseeToken]);
+
+        $friends = static::createClient()->request('GET', '/api/friendships', ['auth_bearer' => $addresseeToken])->toArray();
+        self::assertSame(4, $friends[0]['user']['birthDay']);
+        self::assertSame(10, $friends[0]['user']['birthMonth']);
+    }
 }
