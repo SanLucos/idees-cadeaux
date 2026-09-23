@@ -36,13 +36,35 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true, requiresOnboarding: true },
     children: [
       { path: '', redirect: '/tabs/list' },
-      { path: 'list', name: 'MyList', component: () => import('../views/HomePage.vue') },
+      { path: 'list', name: 'MyList', component: () => import('../views/MyListPage.vue') },
+      { path: 'list/private', name: 'PrivateIdeas', component: () => import('../views/PrivateIdeasPage.vue') },
       { path: 'friends', name: 'Friends', component: () => import('../views/FriendsPage.vue') },
       { path: 'friends/add', name: 'AddFriend', component: () => import('../views/AddFriendPage.vue') },
-      { path: 'friends/:id', name: 'FriendProfile', component: () => import('../views/FriendProfilePage.vue') },
+      { path: 'friends/:id', name: 'FriendList', component: () => import('../views/FriendListPage.vue') },
+      { path: 'friends/:id/profile', name: 'FriendProfile', component: () => import('../views/FriendProfilePage.vue') },
+      { path: 'friends/:id/archives', name: 'FriendArchives', component: () => import('../views/FriendArchivesPage.vue') },
       { path: 'activity', name: 'Activity', component: () => import('../views/ActivityPage.vue') },
       { path: 'profile', name: 'Profile', component: () => import('../views/ProfilePage.vue') },
     ],
+  },
+  // Full-screen pages, outside the tab bar (as on the FicheIdee and NouvelleIdee mock-ups).
+  {
+    path: '/ideas/new',
+    name: 'IdeaNew',
+    component: () => import('../views/IdeaFormPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/ideas/:id',
+    name: 'IdeaDetail',
+    component: () => import('../views/IdeaDetailPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/ideas/:id/edit',
+    name: 'IdeaEdit',
+    component: () => import('../views/IdeaFormPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
   },
   {
     path: '/profile/edit',

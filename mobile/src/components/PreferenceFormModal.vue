@@ -9,7 +9,7 @@
   </ion-header>
   <ion-content>
     <form class="form" @submit.prevent="submit">
-      <ion-segment v-model="category" class="ic-segment">
+      <ion-segment v-model="category" class="ic-segment" mode="ios">
         <ion-segment-button v-for="c in CATEGORIES" :key="c" :value="c">
           <ion-label>{{ t(`profile.preferences.category_${c}`) }}</ion-label>
         </ion-segment-button>

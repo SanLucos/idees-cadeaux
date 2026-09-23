@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content>
-      <TopBar :default-href="`/tabs/friends`">{{ profile ? t('friends.profile.title', { name: profile.displayName }) : '' }}</TopBar>
+      <TopBar :default-href="`/tabs/friends/${userId}`">{{ profile ? t('friends.profile.title', { name: profile.displayName }) : '' }}</TopBar>
 
       <template v-if="profile">
         <div class="identity">

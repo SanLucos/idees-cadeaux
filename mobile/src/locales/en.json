@@ -59,14 +59,6 @@
     "ideaCount": "no ideas | {count} idea | {count} ideas",
     "birthdayOn": "birthday on {date}"
   },
-  "home": {
-    "title": "Home",
-    "welcome": "Hello {name}!",
-    "apiStatusLabel": "API status",
-    "apiStatusOk": "Connected",
-    "apiStatusError": "Unreachable",
-    "apiStatusChecking": "Checking…"
-  },
   "auth": {
     "email": "Email",
     "password": "Password",
@@ -183,7 +175,10 @@
     "add": "Add",
     "close": "Close",
     "back": "Back",
-    "actionsFor": "Actions for {name}"
+    "actionsFor": "Actions for {name}",
+    "save": "Save",
+    "showMore": "Show more",
+    "moreActions": "More actions"
   },
   "errors": {
     "generic": "Something went wrong.",
@@ -204,10 +199,21 @@
       "display_name_invalid": "Pseudo must be 2 to 30 characters.",
       "birth_date_invalid": "Birth day and month must be set together.",
       "invalid_body": "Invalid request.",
-      "hashed_emails_invalid": "No contacts to compare."
+      "hashed_emails_invalid": "No contacts to compare.",
+      "idea_title_invalid": "A title is required (120 characters max).",
+      "idea_url_invalid": "The link must start with http:// or https://.",
+      "idea_price_invalid": "Invalid price: a positive amount, two decimals at most.",
+      "idea_currency_invalid": "Invalid currency.",
+      "idea_note_invalid": "The note is 2000 characters max.",
+      "idea_occasion_invalid": "Unknown occasion.",
+      "idea_visibility_invalid": "Invalid visibility.",
+      "image_required": "Choose an image.",
+      "invalid_filter": "Invalid filter."
     },
     "request": {
-      "rate_limited": "Too many requests, try again later."
+      "rate_limited": "Too many requests, try again later.",
+      "conflict": "This action conflicts with another one.",
+      "invalid": "Invalid request."
     },
     "profile_size": {
       "limit_reached": "Limit of 100 sizes reached."
@@ -217,6 +223,16 @@
       "invalid_type": "Only JPEG, PNG and WebP images are accepted.",
       "invalid_image": "This file is not a valid image.",
       "invalid": "The upload failed."
+    },
+    "resource": {
+      "not_found": "Not found or no longer available."
+    },
+    "idea": {
+      "forbidden": "Only the author can change this idea.",
+      "friendship_required": "You're no longer friends: this suggestion can't be published any more.",
+      "archive_forbidden": "You can't archive this idea.",
+      "unarchive_forbidden": "Only whoever archived it can put it back on the list.",
+      "already_archived": "This idea is already archived."
     }
   },
   "locales": {
@@ -226,5 +242,134 @@
   "activity": {
     "title": "Activity",
     "empty": "News from your friends will show up here."
+  },
+  "occasions": {
+    "birthday": "Birthday",
+    "christmas": "Christmas",
+    "new_year": "New Year",
+    "birth": "Birth",
+    "baptism": "Baptism / communion",
+    "engagement": "Engagement",
+    "wedding": "Wedding",
+    "housewarming": "Housewarming",
+    "valentines_day": "Valentine's Day",
+    "mothers_day": "Mother's Day",
+    "fathers_day": "Father's Day",
+    "graduation": "Graduation",
+    "farewell": "Farewell / retirement",
+    "thanks": "Thank you"
+  },
+  "myList": {
+    "hello": "Hello {name}",
+    "title": "My list",
+    "search": "Search my list",
+    "searchPlaceholder": "Title or note…",
+    "tabs": {
+      "published": "Published · {count}",
+      "drafts": "Drafts · {count}",
+      "archived": "Archive"
+    },
+    "surprise": {
+      "title": "The surprise is safe.",
+      "body": "Your friends reserve and coordinate in secret: you'll never see who gives what.",
+      "dismiss": "Hide this message"
+    },
+    "allDrafts": "All my drafts, including for friends",
+    "empty": {
+      "published": "Your list is empty. Add a first idea: your friends will see it.",
+      "drafts": "No drafts. A private idea is visible to you only.",
+      "archived": "No archived ideas. Mark an idea as received to file it here.",
+      "filtered": "No idea matches these filters."
+    }
+  },
+  "ideas": {
+    "new": "New idea",
+    "count": "no ideas | {count} idea | {count} ideas",
+    "filterByOccasion": "Filter by occasion",
+    "allOccasions": "All",
+    "sort": {
+      "title": "Sort",
+      "recent": "Most recent",
+      "price_asc": "Price, low to high",
+      "price_desc": "Price, high to low"
+    },
+    "visibleToYouOnly": "Visible to you only",
+    "suggestedBy": "Suggested by {name}",
+    "suggestedByMe": "Suggested by you",
+    "ideaOf": "{name}'s idea",
+    "productLink": "See the product page",
+    "notFound": "This idea doesn't exist or is no longer available.",
+    "archived": {
+      "received": "Received",
+      "gifted": "Given"
+    },
+    "actions": {
+      "edit": "Edit",
+      "publish": "Publish",
+      "unpublish": "Make private",
+      "markReceived": "Mark as received",
+      "markGifted": "Mark as given",
+      "unarchive": "Put back on the list"
+    },
+    "unpublishConfirm": {
+      "title": "Make private?",
+      "owner": "Your friends won't see it any more. Any interactions of theirs on this idea will be deleted.",
+      "author": "Friends won't see it any more. Reservations, comments, reactions and contributions on this idea will be deleted."
+    },
+    "deleteConfirm": {
+      "title": "Delete this idea?",
+      "message": "“{title}” will be deleted for good."
+    }
+  },
+  "friendList": {
+    "sizesAndTastes": "Sizes and tastes",
+    "suggest": "Suggest",
+    "secretBand": "Reservations, suggestions, contributions and comments stay invisible to {name}.",
+    "birthdayIn": "tomorrow | in {days} day | in {days} days",
+    "birthdayToday": "today",
+    "theirIdeas": "Their ideas · {count}",
+    "suggestions": "Friends' suggestions · {count}",
+    "myDrafts": "My drafts for {name}",
+    "archives": "List archive",
+    "empty": {
+      "personal": "{name} hasn't published any idea yet. Suggest one!",
+      "archives": "No archived ideas."
+    }
+  },
+  "privateIdeas": {
+    "title": "Private",
+    "intro": "Your drafts are visible to you only. Publish them whenever you like.",
+    "forMe": "For me",
+    "forFriend": "For {name}",
+    "empty": "No drafts for now."
+  },
+  "ideaForm": {
+    "editTitle": "Edit idea",
+    "newSuggestion": "New suggestion",
+    "forWhom": "For whom?",
+    "me": "Me",
+    "suggestionBand": "This is a suggestion: {name} will never know.",
+    "link": "Link",
+    "title": "Title",
+    "price": "Price",
+    "currency": "Currency",
+    "image": "Image",
+    "addImage": "Add",
+    "changeImage": "Change",
+    "removeImage": "Remove image",
+    "note": "Note",
+    "notePlaceholder": "Colour, size, where to find it…",
+    "occasion": "Occasion (optional)",
+    "noOccasion": "None",
+    "seeAllOccasions": "See all {count}",
+    "visibility": "Visibility",
+    "published": "Published",
+    "publishedHintOwn": "Visible to your friends.",
+    "publishedHintSuggestion": "Visible to {name}'s friends. Never to {name}.",
+    "private": "Private draft",
+    "privateHint": "Visible to you only, to publish later.",
+    "publishIdea": "Publish idea",
+    "publishSuggestion": "Publish suggestion",
+    "saveDraft": "Save draft"
   }
 }

@@ -59,14 +59,6 @@
     "ideaCount": "aucune idée | {count} idée | {count} idées",
     "birthdayOn": "anniversaire le {date}"
   },
-  "home": {
-    "title": "Accueil",
-    "welcome": "Bonjour {name} !",
-    "apiStatusLabel": "État de l'API",
-    "apiStatusOk": "Connectée",
-    "apiStatusError": "Injoignable",
-    "apiStatusChecking": "Vérification…"
-  },
   "auth": {
     "email": "Email",
     "password": "Mot de passe",
@@ -183,7 +175,10 @@
     "add": "Ajouter",
     "close": "Fermer",
     "back": "Retour",
-    "actionsFor": "Actions pour {name}"
+    "actionsFor": "Actions pour {name}",
+    "save": "Enregistrer",
+    "showMore": "Afficher plus",
+    "moreActions": "Plus d'actions"
   },
   "errors": {
     "generic": "Une erreur est survenue.",
@@ -204,10 +199,21 @@
       "display_name_invalid": "Le pseudo doit contenir entre 2 et 30 caractères.",
       "birth_date_invalid": "Jour et mois de naissance doivent être renseignés ensemble.",
       "invalid_body": "Requête invalide.",
-      "hashed_emails_invalid": "Aucun contact à comparer."
+      "hashed_emails_invalid": "Aucun contact à comparer.",
+      "idea_title_invalid": "Le titre est obligatoire (120 caractères max).",
+      "idea_url_invalid": "Le lien doit commencer par http:// ou https://.",
+      "idea_price_invalid": "Prix invalide : un montant positif, deux décimales au plus.",
+      "idea_currency_invalid": "Devise invalide.",
+      "idea_note_invalid": "La note fait 2000 caractères au plus.",
+      "idea_occasion_invalid": "Occasion inconnue.",
+      "idea_visibility_invalid": "Visibilité invalide.",
+      "image_required": "Choisissez une image.",
+      "invalid_filter": "Filtre invalide."
     },
     "request": {
-      "rate_limited": "Trop de demandes, réessayez plus tard."
+      "rate_limited": "Trop de demandes, réessayez plus tard.",
+      "conflict": "Cette action entre en conflit avec une autre.",
+      "invalid": "Requête invalide."
     },
     "profile_size": {
       "limit_reached": "Limite de 100 tailles atteinte."
@@ -217,6 +223,16 @@
       "invalid_type": "Seules les images JPEG, PNG et WebP sont acceptées.",
       "invalid_image": "Ce fichier n'est pas une image valide.",
       "invalid": "L'envoi du fichier a échoué."
+    },
+    "resource": {
+      "not_found": "Introuvable ou plus disponible."
+    },
+    "idea": {
+      "forbidden": "Seul l'auteur peut modifier cette idée.",
+      "friendship_required": "Vous n'êtes plus amis : cette suggestion ne peut plus être publiée.",
+      "archive_forbidden": "Vous ne pouvez pas archiver cette idée.",
+      "unarchive_forbidden": "Seule la personne qui l'a archivée peut la remettre dans la liste.",
+      "already_archived": "Cette idée est déjà archivée."
     }
   },
   "locales": {
@@ -226,5 +242,134 @@
   "activity": {
     "title": "Activité",
     "empty": "Les nouvelles de vos amis apparaîtront ici."
+  },
+  "occasions": {
+    "birthday": "Anniversaire",
+    "christmas": "Noël",
+    "new_year": "Fête de fin d'année",
+    "birth": "Naissance",
+    "baptism": "Baptême / communion",
+    "engagement": "Fiançailles",
+    "wedding": "Mariage",
+    "housewarming": "Pendaison de crémaillère",
+    "valentines_day": "Saint-Valentin",
+    "mothers_day": "Fête des mères",
+    "fathers_day": "Fête des pères",
+    "graduation": "Diplôme",
+    "farewell": "Départ / retraite",
+    "thanks": "Remerciement"
+  },
+  "myList": {
+    "hello": "Bonjour {name}",
+    "title": "Ma liste",
+    "search": "Rechercher dans ma liste",
+    "searchPlaceholder": "Titre ou note…",
+    "tabs": {
+      "published": "Publiées · {count}",
+      "drafts": "Brouillons · {count}",
+      "archived": "Archives"
+    },
+    "surprise": {
+      "title": "La surprise est préservée.",
+      "body": "Vos amis réservent et se coordonnent en secret : vous ne verrez jamais qui offre quoi.",
+      "dismiss": "Masquer ce message"
+    },
+    "allDrafts": "Tous mes brouillons, y compris pour mes amis",
+    "empty": {
+      "published": "Votre liste est vide. Ajoutez une première idée : vos amis la verront.",
+      "drafts": "Aucun brouillon. Une idée privée n'est visible que de vous.",
+      "archived": "Aucune idée archivée. Marquez une idée comme reçue pour l'y ranger.",
+      "filtered": "Aucune idée ne correspond à ces filtres."
+    }
+  },
+  "ideas": {
+    "new": "Nouvelle idée",
+    "count": "aucune idée | {count} idée | {count} idées",
+    "filterByOccasion": "Filtrer par occasion",
+    "allOccasions": "Toutes",
+    "sort": {
+      "title": "Trier",
+      "recent": "Plus récentes",
+      "price_asc": "Prix croissant",
+      "price_desc": "Prix décroissant"
+    },
+    "visibleToYouOnly": "Visible de vous seul",
+    "suggestedBy": "Suggérée par {name}",
+    "suggestedByMe": "Suggérée par vous",
+    "ideaOf": "Idée de {name}",
+    "productLink": "Voir la page du produit",
+    "notFound": "Cette idée n'existe pas ou n'est plus disponible.",
+    "archived": {
+      "received": "Reçue",
+      "gifted": "Offerte"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "publish": "Publier",
+      "unpublish": "Repasser en privé",
+      "markReceived": "Marquer comme reçue",
+      "markGifted": "Marquer « offert »",
+      "unarchive": "Remettre dans la liste"
+    },
+    "unpublishConfirm": {
+      "title": "Repasser en privé ?",
+      "owner": "Vos amis ne la verront plus. Leurs éventuelles interactions sur cette idée seront supprimées.",
+      "author": "Les amis ne la verront plus. Les réservations, commentaires, réactions et cotisations sur cette idée seront supprimés."
+    },
+    "deleteConfirm": {
+      "title": "Supprimer cette idée ?",
+      "message": "« {title} » sera supprimée définitivement."
+    }
+  },
+  "friendList": {
+    "sizesAndTastes": "Tailles et goûts",
+    "suggest": "Suggérer",
+    "secretBand": "Réservations, suggestions, cotisations et commentaires restent invisibles pour {name}.",
+    "birthdayIn": "demain | dans {days} jour | dans {days} jours",
+    "birthdayToday": "aujourd'hui",
+    "theirIdeas": "Ses idées · {count}",
+    "suggestions": "Suggestions des amis · {count}",
+    "myDrafts": "Mes brouillons pour {name}",
+    "archives": "Archives de la liste",
+    "empty": {
+      "personal": "{name} n'a encore publié aucune idée. Suggérez-en une !",
+      "archives": "Aucune idée archivée."
+    }
+  },
+  "privateIdeas": {
+    "title": "Privées",
+    "intro": "Vos brouillons ne sont visibles que de vous. Publiez-les quand vous voulez.",
+    "forMe": "Pour moi",
+    "forFriend": "Pour {name}",
+    "empty": "Aucun brouillon pour le moment."
+  },
+  "ideaForm": {
+    "editTitle": "Modifier l'idée",
+    "newSuggestion": "Nouvelle suggestion",
+    "forWhom": "Pour qui ?",
+    "me": "Moi",
+    "suggestionBand": "C'est une suggestion : {name} n'en saura rien.",
+    "link": "Lien",
+    "title": "Titre",
+    "price": "Prix",
+    "currency": "Devise",
+    "image": "Image",
+    "addImage": "Ajouter",
+    "changeImage": "Changer",
+    "removeImage": "Retirer l'image",
+    "note": "Note",
+    "notePlaceholder": "Couleur, taille, où le trouver…",
+    "occasion": "Occasion (facultatif)",
+    "noOccasion": "Aucune",
+    "seeAllOccasions": "Voir les {count}",
+    "visibility": "Visibilité",
+    "published": "Publiée",
+    "publishedHintOwn": "Visible de vos amis.",
+    "publishedHintSuggestion": "Visible des amis de {name}. Jamais de {name}.",
+    "private": "Brouillon privé",
+    "privateHint": "Visible de vous seul, à publier plus tard.",
+    "publishIdea": "Publier l'idée",
+    "publishSuggestion": "Publier la suggestion",
+    "saveDraft": "Enregistrer le brouillon"
   }
 }
