@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content>
-      <ion-refresher slot="fixed" @ion-refresh="onRefresh">
+      <ion-refresher slot="fixed" @ion-refresh="pullToRefresh">
         <ion-refresher-content />
       </ion-refresher>
 
@@ -118,9 +118,10 @@ import {
   IonRefresherContent,
   onIonViewWillEnter,
   useIonRouter,
-  type RefresherCustomEvent,
 } from '@ionic/vue';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { api } from '../services/api';
+import { repo } from '../offline/repo';
 import { ideasApi } from '../services/ideas';
 import { useFriendsStore } from '../stores/friends';
 import { useIdeaActions } from '../composables/useIdeaActions';
@@ -204,18 +205,15 @@ async function more(s: Section): Promise<void> {
 }
 
 async function load(): Promise<void> {
-  profile.value = await api.get<FriendProfile>(`/users/${userId}`);
+  profile.value = (repo.user(userId) as FriendProfile | null) ?? (await api.get<FriendProfile>(`/users/${userId}`));
   await loadAll();
 }
 
-async function onRefresh(event: RefresherCustomEvent): Promise<void> {
-  await load();
-  event.target.complete();
-}
 
 onIonViewWillEnter(() => {
   load();
 });
+const { pullToRefresh } = useLocalRefresh(loadAll);
 
 async function openMenu(): Promise<void> {
   const sheet = await actionSheetController.create({

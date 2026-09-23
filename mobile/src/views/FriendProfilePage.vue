@@ -36,6 +36,7 @@ import ProfileSizesSection from '../components/ProfileSizesSection.vue';
 import TopBar from '../components/TopBar.vue';
 import { formatBirthday } from '../utils/birthday';
 import { api } from '../services/api';
+import { repo } from '../offline/repo';
 import { useFriendsStore } from '../stores/friends';
 import { useProfileDetailsStore } from '../stores/profileDetails';
 import type { ProfilePreference, ProfileSize } from '../types/profile';
@@ -61,7 +62,7 @@ const sizes = ref<ProfileSize[]>([]);
 const preferences = ref<ProfilePreference[]>([]);
 
 onMounted(async () => {
-  profile.value = await api.get<FriendProfile>(`/users/${userId}`);
+  profile.value = (repo.user(userId) as FriendProfile | null) ?? (await api.get<FriendProfile>(`/users/${userId}`));
   sizes.value = await profileDetails.fetchSizesFor(userId);
   preferences.value = await profileDetails.fetchPreferencesFor(userId);
   if (!friendsStore.friends.length) {

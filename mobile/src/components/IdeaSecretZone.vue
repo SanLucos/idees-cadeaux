@@ -133,6 +133,7 @@ import { ApiError } from '../services/api';
 import { ideasApi } from '../services/ideas';
 import { interactionsApi } from '../services/interactions';
 import { useErrorMessage } from '../composables/useErrorMessage';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { formatPrice } from '../utils/price';
 import { relativeTime } from '../utils/relativeTime';
 import AppAvatar from './AppAvatar.vue';
@@ -171,6 +172,7 @@ async function loadComments(): Promise<void> {
 }
 
 onMounted(loadComments);
+useLocalRefresh(loadComments);
 watch(() => props.idea.commentCount, (count, previous) => {
   if (count !== previous) void loadComments();
 });

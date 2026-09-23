@@ -275,6 +275,15 @@
     "invitation": {
       "invalid": "Invalid or expired code.",
       "email_mismatch": "Sign in with the address that received the invitation."
+    },
+    "offline": "No connection: this needs the network.",
+    "idempotency": {
+      "key_reused": "Action already sent differently.",
+      "key_invalid": "Invalid request."
+    },
+    "sync": {
+      "cursor_invalid": "Sync needs to restart.",
+      "fetch_invalid": "Sync needs to restart."
     }
   },
   "locales": {
@@ -599,6 +608,56 @@
       "suggestion_gifted": "Suggestion given",
       "idea_unpublished": "Idea made private",
       "birthday_reminder": "Birthday reminder"
+    }
+  },
+  "sync": {
+    "title": "Sync",
+    "state": {
+      "synced": "Synced",
+      "syncing": "Syncing…",
+      "pending": "{count} pending | {count} pending | {count} pending",
+      "offline": "Offline",
+      "error": "Needs a look"
+    },
+    "lastSynced": "last synced {time}",
+    "pendingTitle": "Waiting to be sent",
+    "refusedTitle": "Refused by the server",
+    "retry": "Retry",
+    "discard": "Give up",
+    "discardHint": "Giving up restores the server's version on this device.",
+    "nothingPending": "Everything is sent.",
+    "now": "Sync now",
+    "refused": "An action couldn't be saved: {title}",
+    "kinds": {
+      "idea_create": "New idea “{title}”",
+      "idea_update": "Edit of “{title}”",
+      "idea_delete": "Deletion of “{title}”",
+      "idea_publish": "Publishing “{title}”",
+      "idea_unpublish": "Making “{title}” private",
+      "idea_archive_received": "“{title}” marked received",
+      "idea_archive_gifted": "“{title}” marked given",
+      "idea_unarchive": "“{title}” back on the list",
+      "idea_image": "Photo of “{title}”",
+      "reservation_create": "Reserving “{title}”",
+      "reservation_cancel": "Cancelling the reservation of “{title}”",
+      "contribution_open": "Contribution for “{title}”",
+      "contribution_update": "Goal of the “{title}” contribution",
+      "contribution_close": "Closing the “{title}” contribution",
+      "pledge_set": "Share for “{title}”",
+      "pledge_withdraw": "Withdrawing the share for “{title}”",
+      "comment_create": "Comment on “{title}”",
+      "comment_update": "Edited comment",
+      "comment_delete": "Deleted comment",
+      "reaction_like": "Like on “{title}”",
+      "reaction_unlike": "Unlike on “{title}”",
+      "profile_update": "Profile edit",
+      "size_create": "Size “{title}”",
+      "size_update": "Sizes order",
+      "size_delete": "Deleted size",
+      "preference_create": "Preference “{title}”",
+      "preference_delete": "Deleted preference",
+      "notification_read": "Notification read",
+      "notification_readAll": "Notifications read"
     }
   }
 }

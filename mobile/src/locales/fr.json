@@ -275,6 +275,15 @@
     "invitation": {
       "invalid": "Code invalide ou expiré.",
       "email_mismatch": "Connectez-vous avec l'adresse qui a reçu l'invitation."
+    },
+    "offline": "Pas de connexion : cette action demande le réseau.",
+    "idempotency": {
+      "key_reused": "Action déjà envoyée différemment.",
+      "key_invalid": "Requête invalide."
+    },
+    "sync": {
+      "cursor_invalid": "Synchronisation à reprendre.",
+      "fetch_invalid": "Synchronisation à reprendre."
     }
   },
   "locales": {
@@ -599,6 +608,56 @@
       "suggestion_gifted": "Suggestion offerte",
       "idea_unpublished": "Idée repassée en privé",
       "birthday_reminder": "Rappel d'anniversaire"
+    }
+  },
+  "sync": {
+    "title": "Synchronisation",
+    "state": {
+      "synced": "Synchronisé",
+      "syncing": "Synchronisation…",
+      "pending": "{count} en attente | {count} en attente | {count} en attente",
+      "offline": "Hors ligne",
+      "error": "À vérifier"
+    },
+    "lastSynced": "dernière synchro {time}",
+    "pendingTitle": "En attente d'envoi",
+    "refusedTitle": "Refusé par le serveur",
+    "retry": "Réessayer",
+    "discard": "Abandonner",
+    "discardHint": "Abandonner remet la version du serveur sur cet appareil.",
+    "nothingPending": "Tout est envoyé.",
+    "now": "Synchroniser maintenant",
+    "refused": "Une action n'a pas pu être enregistrée : {title}",
+    "kinds": {
+      "idea_create": "Nouvelle idée « {title} »",
+      "idea_update": "Modification de « {title} »",
+      "idea_delete": "Suppression de « {title} »",
+      "idea_publish": "Publication de « {title} »",
+      "idea_unpublish": "Retour en privé de « {title} »",
+      "idea_archive_received": "« {title} » marquée reçue",
+      "idea_archive_gifted": "« {title} » marquée offerte",
+      "idea_unarchive": "« {title} » remise dans la liste",
+      "idea_image": "Photo de « {title} »",
+      "reservation_create": "Réservation de « {title} »",
+      "reservation_cancel": "Annulation de la réservation de « {title} »",
+      "contribution_open": "Cotisation sur « {title} »",
+      "contribution_update": "Objectif de la cotisation « {title} »",
+      "contribution_close": "Clôture de la cotisation « {title} »",
+      "pledge_set": "Participation à « {title} »",
+      "pledge_withdraw": "Retrait de participation à « {title} »",
+      "comment_create": "Commentaire sur « {title} »",
+      "comment_update": "Modification d'un commentaire",
+      "comment_delete": "Suppression d'un commentaire",
+      "reaction_like": "J'aime sur « {title} »",
+      "reaction_unlike": "Retrait du j'aime sur « {title} »",
+      "profile_update": "Modification du profil",
+      "size_create": "Taille « {title} »",
+      "size_update": "Ordre des tailles",
+      "size_delete": "Suppression d'une taille",
+      "preference_create": "Préférence « {title} »",
+      "preference_delete": "Suppression d'une préférence",
+      "notification_read": "Notification lue",
+      "notification_readAll": "Notifications lues"
     }
   }
 }

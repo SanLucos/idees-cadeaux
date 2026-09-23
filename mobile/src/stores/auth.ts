@@ -2,6 +2,9 @@ import { defineStore } from 'pinia';
 import { api } from '../services/api';
 import { tokenStorage } from '../services/tokenStorage';
 import { applyLocale } from '../i18n';
+import { isNetworkError } from '../services/api';
+import { useLocalDb } from '../offline/db';
+import { useSync } from '../offline/sync';
 import type { User } from '../types/user';
 
 interface LoginResponse {
@@ -28,9 +31,16 @@ export const useAuthStore = defineStore('auth', {
         if (accessToken && refreshToken) {
           await this.fetchMe();
         }
-      } catch {
-        await tokenStorage.clear();
-        this.user = null;
+      } catch (e) {
+        // Offline start (spec §8): keep the session and the last known profile.
+        const cached = useLocalDb().get<User>('user', useLocalDb().meta.me);
+        if (isNetworkError(e) && cached) {
+          this.user = cached;
+          applyLocale(cached.locale);
+        } else {
+          await tokenStorage.clear();
+          this.user = null;
+        }
       } finally {
         this.isBootstrapping = false;
       }
@@ -84,16 +94,39 @@ export const useAuthStore = defineStore('auth', {
       }
       await tokenStorage.clear();
       this.user = null;
+      // Nothing of this account stays on the device.
+      await useLocalDb().wipe();
     },
 
     async fetchMe(): Promise<void> {
       this.user = await api.get<User>('/users/me', { acting: false });
       applyLocale(this.user.locale);
+      const db = useLocalDb();
+      if (db.meta.me && db.meta.me !== this.user.id) {
+        // Another account signed in on this device: start from a clean copy.
+        await db.wipe();
+      }
+      await db.setMeta('me', this.user.id);
     },
 
+    /**
+     * Pseudo, birthday, language: applied locally at once and queued
+     * (spec §11 décision 35), so it works offline too.
+     */
     async updateProfile(patch: Partial<Pick<User, 'displayName' | 'birthDay' | 'birthMonth' | 'birthYear' | 'locale'>>): Promise<void> {
-      this.user = await api.patch<User>('/users/me', { json: patch, acting: false });
+      if (!this.user) return;
+      this.user = { ...this.user, ...patch };
       applyLocale(this.user.locale);
+      const db = useLocalDb();
+      if (db.get('user', this.user.id)) await db.patch('user', this.user.id, patch);
+      await useSync().enqueue({
+        method: 'PATCH',
+        path: '/users/me',
+        body: patch,
+        actingAs: null,
+        entities: [{ type: 'user', id: this.user.id }],
+        label: { kind: 'profile.update' },
+      });
     },
 
     async uploadAvatar(file: File): Promise<void> {

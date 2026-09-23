@@ -27,6 +27,16 @@ interface RequestOptions {
    * (interactions, « Mes enfants », their own account).
    */
   acting?: boolean;
+  /** Extra headers (e.g. Idempotency-Key). */
+  headers?: Record<string, string>;
+  /** An explicit X-Acting-As, overriding the active profile (outbox replays). */
+  actingAs?: string | null;
+}
+
+/** Raw outcome of a request that reached the server (see api.send). */
+export interface SendResult {
+  status: number;
+  payload: Record<string, unknown>;
 }
 
 let actingAsProfileId: string | null = null;
@@ -59,12 +69,12 @@ async function doRefresh(): Promise<void> {
   await tokenStorage.setTokens(data.token, data.refresh_token);
 }
 
-async function rawRequest<T>(method: string, path: string, options: RequestOptions): Promise<T> {
+async function perform(method: string, path: string, options: RequestOptions): Promise<SendResult> {
   // application/ld+json, not application/json: API Platform's plain-JSON
   // format drops @id (and wraps collections as a bare array instead of
   // {member: [...]}) — this app relies on @id to address items for
   // PATCH/DELETE, so it needs the full JSON-LD/Hydra shape.
-  const headers: Record<string, string> = { Accept: 'application/ld+json' };
+  const headers: Record<string, string> = { Accept: 'application/ld+json', ...options.headers };
   let body: BodyInit | undefined;
 
   if (options.formData) {
@@ -80,24 +90,27 @@ async function rawRequest<T>(method: string, path: string, options: RequestOptio
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-    if (actingAsProfileId && options.acting !== false) {
-      headers['X-Acting-As'] = actingAsProfileId;
+    const actingAs = undefined !== options.actingAs ? options.actingAs : options.acting !== false ? actingAsProfileId : null;
+    if (actingAs) {
+      headers['X-Acting-As'] = actingAs;
     }
   }
 
+  // A network failure throws here (TypeError): callers treat it as "offline".
   const response = await fetch(`${baseUrl}${path}`, { method, headers, body });
+  const payload = 204 === response.status ? {} : await response.json().catch(() => ({}));
 
-  if (response.status === 204) {
-    return undefined as T;
+  return { status: response.status, payload };
+}
+
+async function rawRequest<T>(method: string, path: string, options: RequestOptions): Promise<T> {
+  const { status, payload } = await perform(method, path, options);
+
+  if (status >= 400) {
+    throw new ApiError(status, (payload.code as string) ?? 'request.failed', (payload.detail as string) ?? '', payload);
   }
 
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new ApiError(response.status, payload.code ?? 'request.failed', payload.detail ?? response.statusText, payload);
-  }
-
-  return payload as T;
+  return (204 === status ? undefined : payload) as T;
 }
 
 /**
@@ -122,7 +135,30 @@ async function request<T>(method: string, path: string, options: RequestOptions 
   }
 }
 
+/**
+ * Like request(), but a 4xx/5xx answer is returned, not thrown: the
+ * outbox needs to tell "the server said no" from "no network" (which
+ * still throws). Refreshes an expired token once.
+ */
+async function send(method: string, path: string, options: RequestOptions = {}): Promise<SendResult> {
+  const result = await perform(method, path, options);
+  if (401 !== result.status || options.auth === false) return result;
+
+  refreshPromise ??= doRefresh().finally(() => {
+    refreshPromise = null;
+  });
+  await refreshPromise;
+
+  return perform(method, path, options);
+}
+
+/** True when an error means "couldn't reach the server" rather than "the server refused". */
+export function isNetworkError(error: unknown): boolean {
+  return error instanceof TypeError;
+}
+
 export const api = {
+  send,
   get: <T>(path: string, options?: RequestOptions) => request<T>('GET', path, options),
   post: <T>(path: string, options?: RequestOptions) => request<T>('POST', path, options),
   put: <T>(path: string, options?: RequestOptions) => request<T>('PUT', path, options),

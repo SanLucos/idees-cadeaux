@@ -1,5 +1,5 @@
 import { useI18n } from 'vue-i18n';
-import { ApiError } from '../services/api';
+import { ApiError, isNetworkError } from '../services/api';
 
 /**
  * Maps a backend problem+json `code` (CLAUDE.md règle 7: stable,
@@ -16,6 +16,11 @@ export function useErrorMessage() {
         // Extra problem+json members (e.g. `reservedBy`) fill the message's placeholders.
         return t(key, error.extra);
       }
+    }
+
+    // Friend requests, child profiles, settings… need the network (spec §11 décision 35).
+    if (isNetworkError(error)) {
+      return t('errors.offline');
     }
 
     return t('errors.generic');

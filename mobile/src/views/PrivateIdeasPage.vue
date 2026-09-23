@@ -29,6 +29,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { lockClosedOutline } from 'ionicons/icons';
 import { IonButton, IonContent, IonPage, onIonViewWillEnter } from '@ionic/vue';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { ideasApi } from '../services/ideas';
 import { useAuthStore } from '../stores/auth';
 import { useIdeaActions } from '../composables/useIdeaActions';
@@ -68,6 +69,7 @@ async function load(): Promise<void> {
 onIonViewWillEnter(() => {
   load();
 });
+useLocalRefresh(load);
 </script>
 
 <style scoped>

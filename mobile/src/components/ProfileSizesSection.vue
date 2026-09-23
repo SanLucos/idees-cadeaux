@@ -54,6 +54,7 @@ import {
   type ItemReorderEventDetail,
 } from '@ionic/vue';
 import { useProfileDetailsStore } from '../stores/profileDetails';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import SectionTitle from './SectionTitle.vue';
 import SizeFormModal from './SizeFormModal.vue';
 import type { ProfileSize } from '../types/profile';
@@ -68,6 +69,9 @@ const sizes = computed(() => props.entries ?? store.sizes);
 
 onMounted(() => {
   if (!readonly.value) store.fetchSizes();
+});
+useLocalRefresh(() => {
+  if (!readonly.value) void store.fetchSizes();
 });
 
 async function onReorder(event: CustomEvent<ItemReorderEventDetail>): Promise<void> {

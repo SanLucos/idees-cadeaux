@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router';
 import { i18n } from './i18n';
+import { openLocalDb } from './offline/runtime';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -45,12 +46,13 @@ import '@fontsource/figtree/700.css';
 /* Theme variables */
 import './theme/variables.css';
 
-const app = createApp(App)
-  .use(IonicVue)
-  .use(createPinia())
-  .use(i18n)
-  .use(router);
+const app = createApp(App).use(IonicVue).use(createPinia()).use(i18n);
 
-router.isReady().then(() => {
-  app.mount('#app');
+// The device database (spec §8) must be open before the first screen —
+// and the session restore — read from it.
+openLocalDb().then(() => {
+  app.use(router);
+  router.isReady().then(() => {
+    app.mount('#app');
+  });
 });

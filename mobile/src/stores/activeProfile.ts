@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import { api, setActingAs } from '../services/api';
+import { api, isNetworkError, setActingAs } from '../services/api';
+import { repo } from '../offline/repo';
 import { uuidv7 } from '../utils/uuidv7';
 import type { ManagedProfile } from '../types/user';
 
@@ -41,7 +42,13 @@ export const useActiveProfileStore = defineStore('activeProfile', {
   },
   actions: {
     async fetchChildren(): Promise<void> {
-      this.children = await api.get<ManagedProfile[]>('/managed-profiles', OWN);
+      try {
+        this.children = await api.get<ManagedProfile[]>('/managed-profiles', OWN);
+      } catch (e) {
+        // Offline: the synced copy (spec §11 décision 33).
+        if (!isNetworkError(e)) throw e;
+        this.children = repo.children();
+      }
       // Restore the last active child if it still exists and isn't being deleted.
       const stored = this.activeId ?? readStoredId();
       const usable = this.children.find((c) => c.id === stored && !c.deletionScheduledAt);

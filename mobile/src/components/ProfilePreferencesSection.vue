@@ -32,6 +32,7 @@ import { useI18n } from 'vue-i18n';
 import { add } from 'ionicons/icons';
 import { actionSheetController, IonButton, IonChip, IonIcon, modalController } from '@ionic/vue';
 import { useProfileDetailsStore } from '../stores/profileDetails';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import SectionTitle from './SectionTitle.vue';
 import PreferenceFormModal from './PreferenceFormModal.vue';
 import type { ProfilePreference, ProfilePreferenceCategory } from '../types/profile';
@@ -54,6 +55,9 @@ const groups = computed(() =>
 
 onMounted(() => {
   if (!readonly.value) store.fetchPreferences();
+});
+useLocalRefresh(() => {
+  if (!readonly.value) void store.fetchPreferences();
 });
 
 function chipText(pref: ProfilePreference): string {

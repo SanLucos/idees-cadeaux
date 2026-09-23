@@ -1,24 +1,31 @@
 import { api } from './api';
+import { repo } from '../offline/repo';
+import { notificationMutations } from '../offline/mutations';
 import type { NotificationPage, NotificationSettings } from '../types/notification';
+
+const PER_PAGE = 30;
 
 /** Always the adult's own centre and settings, never a child's (acting: false). */
 const OWN = { acting: false } as const;
 
 export const notificationsApi = {
-  list(page = 1): Promise<NotificationPage> {
-    return api.get<NotificationPage>(`/notifications?page=${page}`, OWN);
+  /** From the device: the synced centre works offline (spec §8). */
+  async list(page = 1): Promise<NotificationPage> {
+    const all = repo.notifications();
+
+    return { member: all.slice((page - 1) * PER_PAGE, page * PER_PAGE), totalItems: all.length, unreadCount: repo.unreadCount(), page };
   },
 
   async unreadCount(): Promise<number> {
-    return (await api.get<{ unreadCount: number }>('/notifications/unread-count', OWN)).unreadCount;
+    return repo.unreadCount();
   },
 
-  markRead(id: string): Promise<unknown> {
-    return api.post(`/notifications/${id}/read`, OWN);
+  markRead(id: string): Promise<void> {
+    return notificationMutations.markRead(id);
   },
 
-  markAllRead(): Promise<unknown> {
-    return api.post('/notifications/read-all', OWN);
+  markAllRead(): Promise<void> {
+    return notificationMutations.markAllRead();
   },
 
   settings(): Promise<NotificationSettings> {

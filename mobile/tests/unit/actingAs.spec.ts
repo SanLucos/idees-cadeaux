@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { api, setActingAs } from '@/services/api'
 import { interactionsApi } from '@/services/interactions'
 import { useActiveProfileStore } from '@/stores/activeProfile'
+import { useAuthStore } from '@/stores/auth'
+import { useLocalDb } from '@/offline/db'
+import { ideaMutations } from '@/offline/mutations'
 
 vi.mock('@aparajita/capacitor-secure-storage', () => ({
   SecureStorage: {
@@ -38,15 +41,20 @@ describe('X-Acting-As', () => {
     expect(headersOfLastCall()['X-Acting-As']).toBeUndefined()
   })
 
-  test('is never sent for interactions: the manager acts in their own name', async () => {
+  test('queued writes keep their profile: the child\'s list as the child, interactions as the adult', async () => {
+    const auth = useAuthStore()
+    auth.user = { id: 'adult', displayName: 'Luc', avatarUrl: null } as never
+    const db = useLocalDb()
+    await db.put('idea', [{ id: 'friends-idea', ownerId: 'hugo', title: 'Casque', view: 'friend', isSuggestion: false } as never])
     useActiveProfileStore().switchTo(CHILD)
 
-    await interactionsApi.reserve('idea-1')
-    expect(headersOfLastCall()['X-Acting-As']).toBeUndefined()
-    await interactionsApi.pledge('contribution-1', '10')
-    expect(headersOfLastCall()['X-Acting-As']).toBeUndefined()
-    await interactionsApi.like('idea-1')
-    expect(headersOfLastCall()['X-Acting-As']).toBeUndefined()
+    await ideaMutations.create({ title: 'Lego', url: null, priceAmount: null, priceCurrency: 'EUR', note: null, occasion: null })
+    await interactionsApi.reserve('friends-idea')
+
+    const [create, reserve] = db.outbox
+    expect(create.actingAs).toBe(CHILD)
+    expect((create.body as { ownerId: string }).ownerId).toBe(CHILD)
+    expect(reserve.actingAs).toBeNull()
   })
 
   test('is dropped on reset (logout)', async () => {

@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
 import { api } from '../services/api';
+import { repo } from '../offline/repo';
 import type { Occasion } from '../types/idea';
 
-/** Reference list (spec §5.4): fetched once per session. */
+/** Reference list (spec §5.4): from the device once synced, else fetched once. */
 export const useOccasionsStore = defineStore('occasions', {
   state: () => ({
     occasions: [] as Occasion[],
@@ -11,7 +12,8 @@ export const useOccasionsStore = defineStore('occasions', {
   actions: {
     async ensureLoaded(): Promise<void> {
       if (this.loaded) return;
-      this.occasions = await api.get<Occasion[]>('/occasions');
+      const local = repo.occasions();
+      this.occasions = local.length ? local : await api.get<Occasion[]>('/occasions');
       this.loaded = true;
     },
   },

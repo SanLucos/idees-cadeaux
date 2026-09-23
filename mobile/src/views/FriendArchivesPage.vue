@@ -28,6 +28,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { archiveOutline } from 'ionicons/icons';
 import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonPage, onIonViewWillEnter, type InfiniteScrollCustomEvent } from '@ionic/vue';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { ideasApi } from '../services/ideas';
 import { useIdeaActions } from '../composables/useIdeaActions';
 import EmptyState from '../components/EmptyState.vue';
@@ -69,4 +70,5 @@ async function loadMore(event: InfiniteScrollCustomEvent): Promise<void> {
 onIonViewWillEnter(() => {
   reload();
 });
+useLocalRefresh(reload);
 </script>

@@ -82,9 +82,10 @@ import {
   openOutline,
 } from 'ionicons/icons';
 import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue';
-import { ApiError } from '../services/api';
+import { ApiError, isNetworkError } from '../services/api';
 import { ideasApi } from '../services/ideas';
 import { useIdeaActions } from '../composables/useIdeaActions';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { colorIndex } from '../utils/colorIndex';
 import { formatPrice } from '../utils/price';
 import { useFriendsStore } from '../stores/friends';
@@ -148,16 +149,25 @@ const heroStyle = computed(() => {
   return { background: `var(--ic-thumb-bg-${index})`, color: `var(--ic-thumb-fg-${index})` };
 });
 
-onIonViewWillEnter(async () => {
-  if (!friendsStore.friends.length) void friendsStore.fetchFriends();
+async function load(): Promise<void> {
   try {
     idea.value = await ideasApi.get(id);
+    notFound.value = false;
   } catch (e) {
-    // Hidden or gone: the API answers 404 either way, and so do we.
-    if (e instanceof ApiError && 404 === e.status) notFound.value = true;
-    else throw e;
+    // Hidden, gone (the API answers 404 either way), or not on this device while offline.
+    if ((e instanceof ApiError && 404 === e.status) || isNetworkError(e)) {
+      idea.value = null;
+      notFound.value = true;
+    } else throw e;
   }
+}
+
+onIonViewWillEnter(() => {
+  if (!friendsStore.friends.length) void friendsStore.fetchFriends();
+  void load();
 });
+// Purged by a sync (made private, friend removed…): it disappears here too.
+useLocalRefresh(load);
 </script>
 
 <style scoped>

@@ -1,31 +1,20 @@
 import { defineStore } from 'pinia';
-import { notificationsApi } from '../services/notifications';
+import { repo } from '../offline/repo';
+import { useLocalDb } from '../offline/db';
 
-/** The Activité tab badge: refreshed on demand and every minute while the app is open. */
+/** The Activité tab badge, from the synced centre (spec §8: works offline too). */
 export const useNotificationsStore = defineStore('notifications', {
-  state: () => ({
-    unreadCount: 0,
-    timer: null as ReturnType<typeof setInterval> | null,
-  }),
+  getters: {
+    unreadCount(): number {
+      void useLocalDb().revision;
+
+      return repo.unreadCount();
+    },
+  },
   actions: {
-    async refreshCount(): Promise<void> {
-      try {
-        this.unreadCount = await notificationsApi.unreadCount();
-      } catch {
-        // Offline or signed out: keep the last known count.
-      }
-    },
-
-    startPolling(): void {
-      if (this.timer) return;
-      void this.refreshCount();
-      this.timer = setInterval(() => void this.refreshCount(), 60_000);
-    },
-
-    stopPolling(): void {
-      if (this.timer) clearInterval(this.timer);
-      this.timer = null;
-      this.unreadCount = 0;
-    },
+    /** Kept for callers: the count follows the local data by itself. */
+    startPolling(): void {},
+    stopPolling(): void {},
+    async refreshCount(): Promise<void> {},
   },
 });

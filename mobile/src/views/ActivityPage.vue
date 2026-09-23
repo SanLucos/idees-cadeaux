@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content>
-      <ion-refresher slot="fixed" @ion-refresh="onRefresh">
+      <ion-refresher slot="fixed" @ion-refresh="pullToRefresh">
         <ion-refresher-content />
       </ion-refresher>
 
@@ -71,8 +71,8 @@ import {
   onIonViewWillEnter,
   useIonRouter,
   type InfiniteScrollCustomEvent,
-  type RefresherCustomEvent,
 } from '@ionic/vue';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { notificationsApi } from '../services/notifications';
 import { useNotificationsStore } from '../stores/notifications';
 import { useActiveProfileStore } from '../stores/activeProfile';
@@ -115,7 +115,6 @@ async function fetchPage(): Promise<void> {
   const result = await notificationsApi.list(page.value);
   items.value = 1 === page.value ? result.member : [...items.value, ...result.member];
   total.value = result.totalItems;
-  store.unreadCount = result.unreadCount;
   loaded.value = true;
 }
 
@@ -127,6 +126,7 @@ async function reload(): Promise<void> {
 onIonViewWillEnter(() => {
   reload();
 });
+const { pullToRefresh } = useLocalRefresh(reload);
 
 async function loadMore(event: InfiniteScrollCustomEvent): Promise<void> {
   page.value += 1;
@@ -134,21 +134,15 @@ async function loadMore(event: InfiniteScrollCustomEvent): Promise<void> {
   await event.target.complete();
 }
 
-async function onRefresh(event: RefresherCustomEvent): Promise<void> {
-  await reload();
-  event.target.complete();
-}
 
 async function markAllRead(): Promise<void> {
   await notificationsApi.markAllRead();
   items.value = items.value.map((i) => ({ ...i, readAt: i.readAt ?? new Date().toISOString() }));
-  store.unreadCount = 0;
 }
 
 async function open(item: AppNotification): Promise<void> {
   if (!item.readAt) {
     item.readAt = new Date().toISOString();
-    store.unreadCount = Math.max(0, store.unreadCount - 1);
     void notificationsApi.markRead(item.id);
   }
   const target = notificationTarget(item);

@@ -1,69 +1,75 @@
 import { api } from './api';
-import { uuidv7 } from '../utils/uuidv7';
+import { repo } from '../offline/repo';
+import { ideaMutations } from '../offline/mutations';
+import { useAuthStore } from '../stores/auth';
+import { useActiveProfileStore } from '../stores/activeProfile';
+import { fileToDataUrl } from '../utils/fileToDataUrl';
 import type { Idea, IdeaArchiveKind, IdeaInput, IdeaListQuery, IdeaPage, PrivateIdea } from '../types/idea';
 
-function toQuery(query: IdeaListQuery): string {
-  const params = new URLSearchParams();
-  Object.entries(query).forEach(([key, value]) => {
-    if (null !== value && undefined !== value && '' !== value) params.set(key, String(value));
-  });
-  const encoded = params.toString();
-
-  return encoded ? `?${encoded}` : '';
+function selfId(): string {
+  return useActiveProfileStore().activeId ?? useAuthStore().user?.id ?? '';
 }
 
-/** Thin wrappers over the lot 3 endpoints (spec §7). */
+/**
+ * Ideas, read from the device (spec §8) and written through the offline
+ * outbox. Lists that aren't synced (a child's friends' lists, spec §11
+ * décision 33) are still read from the API, online.
+ */
 export const ideasApi = {
-  /** `userId` omitted: my own list (owner view, with segment counts). */
-  list(query: IdeaListQuery, userId?: string): Promise<IdeaPage> {
-    return api.get<IdeaPage>(`/users/${userId ?? 'me'}/ideas${toQuery(query)}`);
+  /** `userId` omitted: my own list (or the active child's). */
+  async list(query: IdeaListQuery, userId?: string): Promise<IdeaPage> {
+    const ownerId = userId ?? selfId();
+    if (repo.hasList(ownerId, selfId())) return repo.ideas(ownerId, query);
+
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (null !== value && undefined !== value && '' !== value) params.set(key, String(value));
+    });
+
+    return api.get<IdeaPage>(`/users/${ownerId}/ideas?${params}`);
   },
 
-  privateIdeas(): Promise<PrivateIdea[]> {
-    return api.get<PrivateIdea[]>('/ideas/private');
+  async privateIdeas(): Promise<PrivateIdea[]> {
+    return repo.privateIdeas(useAuthStore().user?.id ?? '', useActiveProfileStore().activeId);
   },
 
-  get(id: string): Promise<Idea> {
-    return api.get<Idea>(`/ideas/${id}`);
+  async get(id: string): Promise<Idea> {
+    return repo.idea(id) ?? api.get<Idea>(`/ideas/${id}`);
   },
 
-  /** The id is generated here so a retried create stays a single idea (spec §8). */
   create(input: IdeaInput): Promise<Idea> {
-    return api.post<Idea>('/ideas', { json: { id: uuidv7(), ...input } });
+    return ideaMutations.create(input);
   },
 
   update(id: string, input: Partial<IdeaInput>): Promise<Idea> {
-    return api.patch<Idea>(`/ideas/${id}`, { json: input });
+    return ideaMutations.update(id, input);
   },
 
   remove(id: string): Promise<void> {
-    return api.delete(`/ideas/${id}`);
+    return ideaMutations.remove(id);
   },
 
   publish(id: string): Promise<Idea> {
-    return api.post<Idea>(`/ideas/${id}/publish`);
+    return ideaMutations.publish(id);
   },
 
   unpublish(id: string): Promise<Idea> {
-    return api.post<Idea>(`/ideas/${id}/unpublish`);
+    return ideaMutations.unpublish(id);
   },
 
   archive(id: string, kind: IdeaArchiveKind): Promise<Idea> {
-    return api.post<Idea>(`/ideas/${id}/archive`, { json: { kind } });
+    return ideaMutations.archive(id, kind);
   },
 
   unarchive(id: string): Promise<Idea> {
-    return api.post<Idea>(`/ideas/${id}/unarchive`);
+    return ideaMutations.unarchive(id);
   },
 
-  uploadImage(id: string, file: File): Promise<Idea> {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    return api.post<Idea>(`/ideas/${id}/image`, { formData });
+  async uploadImage(id: string, file: File): Promise<Idea> {
+    return ideaMutations.setImage(id, { dataUrl: await fileToDataUrl(file), filename: file.name || 'image.jpg' });
   },
 
   removeImage(id: string): Promise<Idea> {
-    return api.delete<Idea>(`/ideas/${id}/image`);
+    return ideaMutations.removeImage(id);
   },
 };

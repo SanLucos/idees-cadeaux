@@ -35,22 +35,37 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { App } from '@capacitor/app';
 import type { PluginListenerHandle } from '@capacitor/core';
-import { IonBadge, IonButton, IonIcon, IonLabel, IonPage, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from '@ionic/vue';
+import { IonBadge, IonButton, IonIcon, IonLabel, IonPage, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, toastController } from '@ionic/vue';
+import { useSync } from '../offline/sync';
+import { startSyncLoop, stopSyncLoop } from '../offline/runtime';
 import { useNotificationsStore } from '../stores/notifications';
 import { push } from '../services/push';
 import { usePushConsent } from '../composables/usePushConsent';
 import { add, giftOutline, notificationsOutline, peopleOutline, personOutline } from 'ionicons/icons';
 
-const { t } = useI18n();
+const { t, te } = useI18n();
+const sync = useSync();
 const notifications = useNotificationsStore();
 const pushConsent = usePushConsent();
 let resumeListener: PluginListenerHandle | null = null;
 
+// « Déjà réservé par X »… : a queued write the server refused (spec §5.7, §8).
+watch(
+  () => sync.lastRefusal,
+  async (op) => {
+    if (!op?.error) return;
+    const key = `errors.${op.error.code}`;
+    const message = te(key) ? t(key, op.error.extra) : t('sync.refused', { title: op.label.title ?? '' });
+    await (await toastController.create({ message, duration: 4000, color: 'danger' })).present();
+  },
+);
+
 onMounted(async () => {
+  void startSyncLoop();
   notifications.startPolling();
   // Spec §5.11: the push token is (re)registered at each sign-in / start.
   void push.register(pushConsent.onOpen);
@@ -58,6 +73,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  void stopSyncLoop();
   notifications.stopPolling();
   void resumeListener?.remove();
 });

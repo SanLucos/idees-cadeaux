@@ -35,3 +35,6 @@ npm-debug.log*
 # Cypress artefacts
 tests/e2e/screenshots/
 tests/e2e/videos/
+
+# Copied from sql.js by the postinstall script (jeep-sqlite, web)
+public/assets/sql-wasm.wasm

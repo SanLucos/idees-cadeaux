@@ -109,10 +109,11 @@ import {
   onIonViewWillEnter,
   toastController,
 } from '@ionic/vue';
-import { ApiError } from '../services/api';
+import { ApiError, isNetworkError } from '../services/api';
 import { interactionsApi } from '../services/interactions';
 import { useFriendsStore } from '../stores/friends';
 import { useErrorMessage } from '../composables/useErrorMessage';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { formatPrice } from '../utils/price';
 import AppAvatar from '../components/AppAvatar.vue';
 import ContributionProgress from '../components/ContributionProgress.vue';
@@ -150,21 +151,36 @@ function apply(c: Contribution): void {
 
 onIonViewWillEnter(async () => {
   if (!friendsStore.friends.length) void friendsStore.fetchFriends();
-  try {
-    apply(await interactionsApi.contribution(id));
-  } catch (e) {
-    if (e instanceof ApiError && 404 === e.status) {
-      notFound.value = true;
-
-      return;
-    }
-    throw e;
-  }
+  if (!(await load())) return;
   // Coming from "Cotiser à plusieurs" / "Ouvrir à plusieurs": offer to pledge right away (spec §5.7).
   if ('1' === route.query.pledge && !contribution.value?.myPledge) {
     await nextTick();
     await amountInput.value?.$el.setFocus();
   }
+});
+
+async function load(): Promise<boolean> {
+  try {
+    apply(await interactionsApi.contribution(id));
+    notFound.value = false;
+
+    return true;
+  } catch (e) {
+    if ((e instanceof ApiError && 404 === e.status) || isNetworkError(e)) {
+      contribution.value = null;
+      notFound.value = true;
+
+      return false;
+    }
+    throw e;
+  }
+}
+
+// Re-read after a sync, without clobbering an amount being typed.
+useLocalRefresh(async () => {
+  const typed = amount.value;
+  await load();
+  if (typed && typed !== amount.value) amount.value = typed;
 });
 
 async function run(action: () => Promise<Contribution>): Promise<void> {

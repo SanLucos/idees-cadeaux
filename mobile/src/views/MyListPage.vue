@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content>
-      <ion-refresher slot="fixed" @ion-refresh="onRefresh">
+      <ion-refresher slot="fixed" @ion-refresh="pullToRefresh">
         <ion-refresher-content />
       </ion-refresher>
 
@@ -11,6 +11,7 @@
         </template>
         {{ acting ? acting.displayName : t('myList.title') }}
         <template #end>
+          <SyncBadge />
           <ion-button class="ic-round-button" :aria-label="t('myList.search')" @click="toggleSearch">
             <ion-icon slot="icon-only" :icon="searchOutline" />
           </ion-button>
@@ -118,8 +119,8 @@ import {
   IonSegmentButton,
   onIonViewWillEnter,
   type InfiniteScrollCustomEvent,
-  type RefresherCustomEvent,
 } from '@ionic/vue';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import InteractionPills from '../components/InteractionPills.vue';
@@ -132,6 +133,7 @@ import EmptyState from '../components/EmptyState.vue';
 import IdeaCard from '../components/IdeaCard.vue';
 import OccasionChips from '../components/OccasionChips.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
+import SyncBadge from '../components/SyncBadge.vue';
 import type { Idea, IdeaListQuery, IdeaSort } from '../types/idea';
 
 const BANNER_KEY = 'ic.surpriseBannerDismissed';
@@ -204,14 +206,11 @@ async function loadMore(event: InfiniteScrollCustomEvent): Promise<void> {
   await event.target.complete();
 }
 
-async function onRefresh(event: RefresherCustomEvent): Promise<void> {
-  await reload();
-  event.target.complete();
-}
 
 onIonViewWillEnter(() => {
   reload();
 });
+const { pullToRefresh } = useLocalRefresh(reload);
 
 function toggleSearch(): void {
   searchOpen.value = !searchOpen.value;

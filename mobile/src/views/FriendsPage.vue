@@ -98,10 +98,10 @@ import {
   IonPage,
   IonRefresher,
   IonRefresherContent,
-  type RefresherCustomEvent,
 } from '@ionic/vue';
 import { useFriendsStore } from '../stores/friends';
 import { useActiveProfileStore } from '../stores/activeProfile';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import AppAvatar from '../components/AppAvatar.vue';
 import EmptyState from '../components/EmptyState.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
@@ -120,10 +120,7 @@ onMounted(() => {
   store.fetchAll();
 });
 
-async function refresh(event: RefresherCustomEvent): Promise<void> {
-  await store.fetchAll();
-  event.target.complete();
-}
+const { pullToRefresh: refresh } = useLocalRefresh(() => store.refresh());
 
 function upcoming(f: Friendship): number | null {
   const { birthDay, birthMonth } = f.user;
