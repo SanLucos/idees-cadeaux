@@ -39,6 +39,23 @@ final class LinkPreviewTest extends AuthTestCase
         self::assertSame([1200, 600], [$size[0], $size[1]]);
     }
 
+    public function testDecodesWebpImages(): void
+    {
+        $token = $this->registerVerifyAndLogin('lp-webp@example.com');
+        $client = static::createClient();
+        $image = imagecreatetruecolor(40, 20);
+        ob_start();
+        imagewebp($image);
+        $this->transport()->setResponseFactory([
+            new MockResponse('<html><head><meta property="og:image" content="/a.webp"></head></html>', ['response_headers' => ['content-type' => 'text/html']]),
+            new MockResponse((string) ob_get_clean(), ['response_headers' => ['content-type' => 'image/webp']]),
+        ]);
+
+        $response = $client->request('POST', '/api/link-previews', ['auth_bearer' => $token, 'json' => ['url' => self::SHOP.'/']]);
+
+        self::assertStringStartsWith('data:image/jpeg;base64,', $response->toArray()['imageDataUrl']);
+    }
+
     public function testNothingFoundIsNotAnError(): void
     {
         $token = $this->registerVerifyAndLogin('lp-empty@example.com');
