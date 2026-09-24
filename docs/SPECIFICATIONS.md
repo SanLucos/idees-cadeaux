@@ -390,30 +390,6 @@ Tous les points ouverts ont été traités et toutes les hypothèses validées.
 33. ✅ **Tranché (lot 6) — hors-ligne des profils enfants** : sur les appareils du gestionnaire, la liste de l'enfant (vue gestionnaire), ses tailles et préférences, ses amitiés. Consulter les listes des amis de l'enfant en son nom reste en ligne.
 34. ✅ **Tranché (lot 6) — photo créée hors-ligne** : gardée sur l'appareil et envoyée au retour du réseau, après la création de l'idée.
 35. ✅ **Tranché (lot 6) — actions hors-ligne** : idées (créer, modifier, publier, repasser en privé, archiver, supprimer), réservations, cotisations et participations, commentaires, j'aime, pseudo et anniversaire, tailles et préférences, lecture des notifications. En ligne seulement, avec un message clair : amis (demandes, réponses, retrait, contacts), profils enfants, compte, réglages de notifications.
-
----
-
-## 12. Plan de livraison proposé (lots)
-
-| Lot | Contenu | Critère de fin |
-|---|---|---|
-| **0. Fondations** | Monorepo, Docker, CI, squelettes API Platform et Ionic Vue, i18n branchée, conventions (UUID client, timestamps, soft delete), harnais de tests de visibilité, modèle de comptes prévoyant les profils gérés (type, gestionnaire, `X-Acting-As`) | CI verte, app vide qui parle à l'API |
-| **1. Comptes** | Inscription/connexion email, vérification, mot de passe oublié, Google/Apple, sessions, profil, onboarding | Un utilisateur crée un compte, se connecte, édite son profil |
-| **2. Amis** | Recherche par email, contacts hachés, demandes, acceptation, retrait | Deux utilisateurs deviennent amis et se retirent |
-| **3. Idées** | CRUD, occasions, suggestions, idées privées et publication, listes, filtres, archives, règles de visibilité | Suite de visibilité verte sur idées et suggestions |
-| **4. Interactions** | Réservation, réactions, commentaires, cotisation, marquage « offert » et archivage des suggestions | Suite de visibilité verte sur tous les objets cachés |
-| **4 bis. Profils enfants** | Création de profils gérés, agir au nom de l'enfant (`X-Acting-As`), vue gestionnaire, amitiés au nom de l'enfant, rattachement d'un email, export et suppression | Suite de visibilité verte avec la vue gestionnaire ; conversion en compte autonome validée |
-| **5. Notifications** | In-app, email, push, préférences, consentement, rappels d'anniversaire | Aucune fuite vers le propriétaire, tests à l'appui |
-| **6. Hors-ligne** | SQLite, outbox, `/sync`, gestion des conflits, UI de synchro | Scénarios hors-ligne complets validés |
-| **7. Confort** | Aperçu de lien, partage Android, Share Extension iOS (tâche dédiée) | Idée créée depuis un partage sur iOS et Android |
-| **7 bis. Partage par lien** | Création, révocation et régénération du lien, page web invité, mode invité dans l'appli, liens universels / App Links, jointure avec confirmation, lien de profil enfant, plafond anti-abus | Tests de visibilité verts avec la vue invité ; un visiteur sans compte voit la liste, s'inscrit, puis devient ami |
-| **8. RGPD et publication** | Export, suppression de compte, finitions i18n, accessibilité, nom et identité définitifs (identifiant d'app, icône, écran de démarrage), préparation stores | Application publiable |
-
----
-
-## 13. Instructions pour Claude Code
-
-- Un `CLAUDE.md` prêt à l'emploi est fourni avec ce document : le placer à la racine du dépôt, et ce document dans `docs/SPECIFICATIONS.md`. Compléter sa section « Commandes » au lot 0.
-- Avancer **lot par lot**, en mettant à jour les tests à chaque étape. Ne pas passer au lot suivant si la suite de visibilité est rouge.
-- En cas d'ambiguïté ou de conflit avec une décision de la section 11, **poser la question** plutôt que d'inventer.
-- Ne jamais implémenter de paiement réel ni stocker de contacts du téléphone.
+36. ⏳ **Proposé (lot 7), à valider — aperçu de lien** : `POST /link-previews` répond de façon synchrone (5 s maximum) plutôt que par une tâche Messenger (§2), pour que « Pré-remplir » réponde tout de suite. L'image est renvoyée redimensionnée (data URL JPEG) et n'est copiée sur notre stockage que si l'utilisateur la garde, par l'envoi d'image ordinaire (hors-ligne compris). Même réponse `link_preview.unavailable` pour une adresse interne refusée et un site injoignable. Les valeurs trouvées ne remplissent que les champs encore vides.
+37. ⏳ **Proposé (lot 7), à valider — partage reçu hors-ligne** (§5.6) : l'idée est enregistrée en **brouillon privé** par défaut (modifiable), avec pour titre provisoire le nom du site ; après la synchronisation suivante, l'aperçu complète titre (s'il est resté provisoire), prix et image s'ils sont vides. Les amis ne voient donc rien avant relecture.
+38. ⏳ **Proposé (lot 7), à valider — mécanisme de partage natif** : un seul point d'entrée, le lien `<identifiant d'app>://share?url=…&text=…&title=…`. Android : filtre d'intent `ACTION_SEND` (texte), réécrit par `MainActivity`. iOS : Share Extension sans interface propre qui ouvre l'appli via ce lien (passage par la chaîne de répondeurs, API non officielle pour une extension : à surveiller à la revue App Store ; repli possible par App Group).

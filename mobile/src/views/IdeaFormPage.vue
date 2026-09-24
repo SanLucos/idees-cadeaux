@@ -408,6 +408,14 @@ function receiveShare(): void {
   }
 }
 
+// Another share while this form is already open.
+watch(
+  () => sharedContent.pending,
+  (pending) => {
+    if (pending && !isEdit) receiveShare();
+  },
+);
+
 onMounted(async () => {
   if (!isEdit && route.query.shared) receiveShare();
   await Promise.all([occasionsStore.ensureLoaded(), friendsStore.friends.length ? null : friendsStore.fetchFriends()]);

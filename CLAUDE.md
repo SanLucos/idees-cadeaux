@@ -71,6 +71,14 @@ npm run build          # vue-tsc + build de prod
 npx cypress run        # tests e2e (nécessite `npm run dev` ou le build servi en parallèle)
 ```
 
+**Natif (`/mobile/android`, `/mobile/ios`, lot 7)**
+```
+npm run build && npx cap sync   # copie le build web et les plugins dans les projets natifs
+npx cap open android            # Android Studio (SDK Android requis)
+npx cap open ios                # Xcode (macOS), cibles App + ShareExtension
+```
+Partage vers l'appli (spec §5.6) : lien `<APP_ID>://share?url=…` ; Android via l'intent `ACTION_SEND` (`MainActivity`), iOS via la cible `ShareExtension`. Test rapide sans partage : `adb shell am start -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "https://…" <APP_ID>` ; sur le web, ouvrir `/share?url=…`. L'identifiant `com.example.ideescadeaux` est aussi écrit dans les projets natifs (namespace, bundle id, cible `ShareExtension`) : à renommer avec le nom définitif (lot 8).
+
 **CI** : `.github/workflows/ci.yml`, deux jobs (`backend`, `mobile`), lint + tests, déclenchés sur push/PR vers `main`.
 
 ## Sécurité

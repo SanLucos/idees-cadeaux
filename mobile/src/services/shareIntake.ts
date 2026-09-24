@@ -12,8 +12,12 @@ import { parseShareDeepLink } from '../utils/sharedContent';
 export async function listenForShares(router: Router): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
+  // Android reports a cold-start link twice (launch URL and appUrlOpen).
+  let last = { link: '', at: 0 };
   const open = (link: string | undefined) => {
     if (!link || !parseShareDeepLink(link)) return;
+    if (link === last.link && Date.now() - last.at < 5000) return;
+    last = { link, at: Date.now() };
     const query = Object.fromEntries(new URL(link).searchParams.entries());
     void router.push({ path: '/share', query });
   };
