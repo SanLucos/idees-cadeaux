@@ -46,7 +46,14 @@ services:
 
     App\Notification\Push\PushSender: '@App\Notification\Push\FcmPushSender'
 
+    # Raw transport behind SafeHttpFetcher (spec §5.5), which adds the
+    # SSRF guard itself; swapped for a mock in tests.
+    link_preview.transport: '@http_client'
+
 when@test:
     services:
         App\Notification\Push\PushSender:
             class: App\Notification\Push\InMemoryPushSender
+        link_preview.transport:
+            class: Symfony\Component\HttpClient\MockHttpClient
+            public: true

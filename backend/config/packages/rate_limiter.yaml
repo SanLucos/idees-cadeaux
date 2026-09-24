@@ -10,3 +10,8 @@ framework:
             policy: sliding_window
             limit: 10
             interval: '15 minutes'
+        # Spec §9 / §5.5: "limitation de débit sur ... aperçu de lien".
+        link_preview:
+            policy: sliding_window
+            limit: 30
+            interval: '10 minutes'

@@ -33,6 +33,8 @@ final class ActingAsGuardListener
         ['POST', '#^/api/ideas/[0-9a-f-]{36}/(publish|unpublish|archive|unarchive)$#'],
         ['POST|DELETE', '#^/api/ideas/[0-9a-f-]{36}/image$#'],
         ['GET', '#^/api/occasions$#'],
+        // Pre-filling its ideas from a link (spec §5.5).
+        ['POST', '#^/api/link-previews$#'],
         // Profile details.
         ['GET|POST', '#^/api/profile_(sizes|preferences)$#'],
         ['GET|PATCH|DELETE', '#^/api/profile_(sizes|preferences)/[0-9a-f-]{36}$#'],
