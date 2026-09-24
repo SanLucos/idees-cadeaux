@@ -284,6 +284,10 @@
     "sync": {
       "cursor_invalid": "Sync needs to restart.",
       "fetch_invalid": "Sync needs to restart."
+    },
+    "link_preview": {
+      "invalid_url": "The link must start with http:// or https://.",
+      "unavailable": "Couldn't read the page."
     }
   },
   "locales": {
@@ -453,7 +457,23 @@
     "privateHint": "Visible to you only, to publish later.",
     "publishIdea": "Publish idea",
     "publishSuggestion": "Publish suggestion",
-    "saveDraft": "Save draft"
+    "saveDraft": "Save draft",
+    "prefill": {
+      "action": "Pre-fill",
+      "found": "Found on the page",
+      "foundDetail": "Suggested below: {fields}. Feel free to edit.",
+      "empty": "Nothing found on the page",
+      "unavailable": "Couldn't read the page",
+      "manual": "Enter the details yourself.",
+      "deferred": "Pre-fill when back online",
+      "deferredDetail": "The idea is saved now; its title, image and price will be filled in as soon as possible.",
+      "imageFromLink": "Taken from the link",
+      "fields": {
+        "title": "title",
+        "image": "image",
+        "price": "price"
+      }
+    }
   },
   "secret": {
     "zoneTitle": "Between friends · invisible to {name}"

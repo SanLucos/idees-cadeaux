@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router';
 import { i18n } from './i18n';
 import { openLocalDb } from './offline/runtime';
+import { listenForShares } from './services/shareIntake';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -54,5 +55,6 @@ openLocalDb().then(() => {
   app.use(router);
   router.isReady().then(() => {
     app.mount('#app');
+    void listenForShares(router);
   });
 });

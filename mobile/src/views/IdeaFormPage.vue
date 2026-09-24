@@ -26,16 +26,31 @@
 
         <SecretBand v-if="isSuggestion">{{ t('ideaForm.suggestionBand', { name: recipientName }) }}</SecretBand>
 
-        <ion-input
-          v-model="url"
-          class="ic-field"
-          fill="outline"
-          type="url"
-          inputmode="url"
-          :label="t('ideaForm.link')"
-          label-placement="stacked"
-          placeholder="https://"
-        />
+        <div class="link-row">
+          <ion-input
+            v-model="url"
+            class="ic-field"
+            fill="outline"
+            type="url"
+            inputmode="url"
+            :label="t('ideaForm.link')"
+            label-placement="stacked"
+            placeholder="https://"
+          />
+          <ion-button class="prefill" :disabled="!url.trim() || 'loading' === prefillState" @click="prefill">
+            <ion-spinner v-if="'loading' === prefillState" slot="start" name="crescent" />
+            <ion-icon v-else slot="start" :icon="sparklesOutline" aria-hidden="true" />
+            {{ t('ideaForm.prefill.action') }}
+          </ion-button>
+        </div>
+
+        <div v-if="prefillMessage" class="prefill-status" :class="`prefill-status--${prefillState}`" role="status">
+          <ion-icon :icon="'found' === prefillState ? checkmarkOutline : 'deferred' === prefillState ? cloudOfflineOutline : informationCircleOutline" aria-hidden="true" />
+          <div>
+            <strong>{{ prefillMessage.title }}</strong>
+            <div>{{ prefillMessage.detail }}</div>
+          </div>
+        </div>
 
         <ion-input
           v-model="title"
@@ -69,14 +84,19 @@
               <img v-if="imagePreview" :src="imagePreview" alt="" />
               <ion-icon v-else :icon="imageOutline" aria-hidden="true" />
             </div>
-            <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden @change="onImagePicked" />
-            <ion-button class="ic-button-surface" @click="fileInput?.click()">
-              <ion-icon slot="start" :icon="imageOutline" />
-              {{ imagePreview ? t('ideaForm.changeImage') : t('ideaForm.addImage') }}
-            </ion-button>
-            <ion-button v-if="imagePreview" class="ic-button-surface" :aria-label="t('ideaForm.removeImage')" @click="clearImage">
-              <ion-icon slot="icon-only" :icon="trashOutline" />
-            </ion-button>
+            <div class="image-actions">
+              <div v-if="imageFromLink" class="image-source">{{ t('ideaForm.prefill.imageFromLink') }}</div>
+              <div class="image-buttons">
+                <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden @change="onImagePicked" />
+                <ion-button class="ic-button-surface" @click="fileInput?.click()">
+                  <ion-icon slot="start" :icon="imageOutline" />
+                  {{ imagePreview ? t('ideaForm.changeImage') : t('ideaForm.addImage') }}
+                </ion-button>
+                <ion-button v-if="imagePreview" class="ic-button-surface" :aria-label="t('ideaForm.removeImage')" @click="clearImage">
+                  <ion-icon slot="icon-only" :icon="trashOutline" />
+                </ion-button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -141,10 +161,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { imageOutline, lockClosedOutline, peopleOutline, trashOutline } from 'ionicons/icons';
+import {
+  checkmarkOutline,
+  cloudOfflineOutline,
+  imageOutline,
+  informationCircleOutline,
+  lockClosedOutline,
+  peopleOutline,
+  sparklesOutline,
+  trashOutline,
+} from 'ionicons/icons';
 import {
   alertController,
   IonButton,
@@ -158,11 +187,18 @@ import {
   IonRadioGroup,
   IonSelect,
   IonSelectOption,
+  IonSpinner,
   IonText,
   IonTextarea,
   useIonRouter,
 } from '@ionic/vue';
 import { ideasApi } from '../services/ideas';
+import { ApiError, isNetworkError } from '../services/api';
+import { linkPreviewApi, previewImageFile, type LinkPreview } from '../services/linkPreview';
+import { addPendingPrefill } from '../offline/pendingPrefill';
+import { useSync } from '../offline/sync';
+import { useSharedContentStore } from '../stores/sharedContent';
+import { fallbackTitle } from '../utils/sharedContent';
 import { useAuthStore } from '../stores/auth';
 import { useFriendsStore } from '../stores/friends';
 import { useActiveProfileStore } from '../stores/activeProfile';
@@ -177,7 +213,7 @@ import type { Idea, IdeaInput, IdeaVisibility } from '../types/idea';
 
 const OCCASIONS_SHOWN_BY_DEFAULT = 4;
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const ionRouter = useIonRouter();
 const auth = useAuthStore();
@@ -208,6 +244,16 @@ const fileInput = ref<HTMLInputElement>();
 const pickedImage = ref<File | null>(null);
 const imagePreview = ref<string | null>(null);
 const removeExistingImage = ref(false);
+const imageFromLink = ref(false);
+
+/** Pre-fill from the link (spec §5.5) — or, offline, once the network is back (spec §5.6). */
+type PrefillState = 'idle' | 'loading' | 'found' | 'empty' | 'unavailable' | 'deferred';
+const prefillState = ref<PrefillState>('idle');
+const prefillFound = ref<string[]>([]);
+/** Set while offline: the idea is saved now and completed later (offline/pendingPrefill.ts). */
+const deferredPrefill = ref<{ url: string; fallbackTitle: string } | null>(null);
+const sync = useSync();
+const sharedContent = useSharedContentStore();
 
 const recipients = computed(() => [
   { id: auth.user?.id ?? '', name: auth.user?.displayName ?? '', avatarUrl: auth.user?.avatarUrl ?? null, isMe: true },
@@ -264,7 +310,106 @@ const thumbStyle = computed(() => {
   return { background: `var(--ic-thumb-bg-${index})`, color: `var(--ic-thumb-fg-${index})` };
 });
 
+const prefillMessage = computed(() => {
+  switch (prefillState.value) {
+    case 'found':
+      return { title: t('ideaForm.prefill.found'), detail: t('ideaForm.prefill.foundDetail', { fields: new Intl.ListFormat(locale.value, { type: 'conjunction' }).format(prefillFound.value) }) };
+    case 'empty':
+      return { title: t('ideaForm.prefill.empty'), detail: t('ideaForm.prefill.manual') };
+    case 'unavailable':
+      return { title: t('ideaForm.prefill.unavailable'), detail: t('ideaForm.prefill.manual') };
+    case 'deferred':
+      return { title: t('ideaForm.prefill.deferred'), detail: t('ideaForm.prefill.deferredDetail') };
+    default:
+      return null;
+  }
+});
+
+// A preview (or its deferral) belongs to the link it was made for.
+const prefillUrl = ref('');
+watch(url, (value) => {
+  if (value.trim() === prefillUrl.value) return;
+  deferredPrefill.value = null;
+  prefillState.value = 'idle';
+});
+
+function deferPrefill(link: string): void {
+  prefillUrl.value = link;
+  const standIn = fallbackTitle(link);
+  deferredPrefill.value = { url: link, fallbackTitle: standIn };
+  if (!title.value.trim()) title.value = standIn;
+  prefillState.value = 'deferred';
+}
+
+async function prefill(): Promise<void> {
+  const link = url.value.trim();
+  if (!link) return;
+  prefillUrl.value = link;
+  if (!sync.online) {
+    deferPrefill(link);
+
+    return;
+  }
+
+  prefillState.value = 'loading';
+  error.value = '';
+  try {
+    applyPreview(await linkPreviewApi.fetch(link));
+  } catch (e) {
+    if (isNetworkError(e)) {
+      deferPrefill(link);
+    } else if (e instanceof ApiError && e.code.startsWith('link_preview.')) {
+      prefillState.value = 'unavailable';
+    } else {
+      prefillState.value = 'idle';
+      error.value = describe(e);
+    }
+  }
+}
+
+/** Proposed, never imposed (spec §5.5): only fills what's still empty. */
+async function applyPreview(preview: LinkPreview): Promise<void> {
+  const found: string[] = [];
+  const titleIsStandIn = deferredPrefill.value && title.value === deferredPrefill.value.fallbackTitle;
+  if (preview.title && (!title.value.trim() || titleIsStandIn)) {
+    title.value = preview.title;
+    found.push(t('ideaForm.prefill.fields.title'));
+  }
+  if (preview.imageDataUrl && !imagePreview.value) {
+    pickedImage.value = await previewImageFile(preview.imageDataUrl);
+    imagePreview.value = preview.imageDataUrl;
+    imageFromLink.value = true;
+    removeExistingImage.value = false;
+    found.push(t('ideaForm.prefill.fields.image'));
+  }
+  if (preview.priceAmount && !priceAmount.value.trim()) {
+    priceAmount.value = preview.priceAmount.replace(/\.00$/, '');
+    priceCurrency.value = preview.priceCurrency ?? priceCurrency.value;
+    found.push(t('ideaForm.prefill.fields.price'));
+  }
+  deferredPrefill.value = null;
+  prefillFound.value = found;
+  prefillState.value = found.length ? 'found' : 'empty';
+}
+
+/** Spec §5.6: a share from another app opens this form pre-filled. */
+function receiveShare(): void {
+  const shared = sharedContent.consume();
+  if (!shared) return;
+  url.value = shared.url ?? '';
+  title.value = shared.title ?? '';
+  if (!shared.url) return;
+  if (sync.online) {
+    void prefill();
+  } else {
+    deferPrefill(shared.url);
+    // Saved as a private draft: its details arrive later, to be checked before friends see it.
+    visibility.value = 'private';
+  }
+}
+
 onMounted(async () => {
+  if (!isEdit && route.query.shared) receiveShare();
   await Promise.all([occasionsStore.ensureLoaded(), friendsStore.friends.length ? null : friendsStore.fetchFriends()]);
   if (!isEdit) return;
 
@@ -286,11 +431,13 @@ function onImagePicked(event: Event): void {
   pickedImage.value = file;
   imagePreview.value = URL.createObjectURL(file);
   removeExistingImage.value = false;
+  imageFromLink.value = false;
 }
 
 function clearImage(): void {
   pickedImage.value = null;
   imagePreview.value = null;
+  imageFromLink.value = false;
   removeExistingImage.value = !!existing.value?.imageUrl;
 }
 
@@ -345,6 +492,10 @@ async function submit(): Promise<void> {
       idea = await ideasApi.uploadImage(idea.id, pickedImage.value);
     } else if (removeExistingImage.value) {
       idea = await ideasApi.removeImage(idea.id);
+    }
+
+    if (deferredPrefill.value && deferredPrefill.value.url === (idea.url ?? '')) {
+      await addPendingPrefill({ ideaId: idea.id, ...deferredPrefill.value, actingAs: activeProfile.activeId });
     }
 
     ionRouter.navigate(`/ideas/${idea.id}`, isEdit ? 'back' : 'forward', 'replace');
@@ -413,6 +564,66 @@ fieldset {
   background: var(--ic-primary-soft);
 }
 
+.link-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.prefill {
+  --background: var(--ion-text-color);
+  --color: var(--ic-surface);
+  height: 56px;
+  margin: 0;
+}
+
+.prefill ion-spinner {
+  width: 18px;
+  height: 18px;
+  margin-inline-end: 6px;
+}
+
+.prefill-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: -6px;
+  padding: 12px 14px;
+  border-radius: var(--ic-radius-card);
+  background: var(--ic-surface-muted);
+  color: var(--ion-text-color);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.prefill-status--found {
+  background: var(--ic-success-soft);
+  color: var(--ion-color-success);
+}
+
+.prefill-status ion-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 18px;
+}
+
+.image-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.image-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.image-source {
+  font-size: 13px;
+  color: var(--ic-text-secondary);
+}
+
 .price-row {
   display: grid;
   grid-template-columns: 1fr 110px;
@@ -425,7 +636,7 @@ fieldset {
   gap: 10px;
 }
 
-.image-row ion-button {
+.image-buttons ion-button {
   margin: 0;
 }
 

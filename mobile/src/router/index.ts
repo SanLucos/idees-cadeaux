@@ -2,6 +2,10 @@ import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
+import { useSharedContentStore } from '../stores/sharedContent';
+import { parseSharedContent } from '../utils/sharedContent';
+
+const queryString = (value: unknown) => (typeof value === 'string' ? value : null);
 
 const routes: Array<RouteRecordRaw> = [
   { path: '/', redirect: '/tabs/list' },
@@ -47,6 +51,19 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'activity', name: 'Activity', component: () => import('../views/ActivityPage.vue') },
       { path: 'profile', name: 'Profile', component: () => import('../views/ProfilePage.vue') },
     ],
+  },
+  // Share from another app (spec §5.6, services/shareIntake.ts): keep the
+  // content, then open the form — through sign-in first if needed.
+  {
+    path: '/share',
+    name: 'Share',
+    component: () => import('../views/MyListPage.vue'),
+    beforeEnter: (to) => {
+      const content = parseSharedContent({ url: queryString(to.query.url), text: queryString(to.query.text), title: queryString(to.query.title) });
+      if (content) useSharedContentStore().receive(content);
+
+      return content ? { name: 'IdeaNew', query: { shared: '1' } } : { name: 'MyList' };
+    },
   },
   // Full-screen pages, outside the tab bar (as on the FicheIdee and NouvelleIdee mock-ups).
   {
@@ -135,6 +152,10 @@ router.beforeEach(async (to) => {
   }
   if ('Onboarding' === to.name && auth.user?.isOnboarded) {
     return { name: 'MyList' };
+  }
+  // A share received while signed out (spec §5.6): open it once signed in and onboarded.
+  if (auth.user?.isOnboarded && useSharedContentStore().pending && 'IdeaNew' !== to.name) {
+    return { name: 'IdeaNew', query: { shared: '1' } };
   }
 
   // Restore the active child profile before any screen loads its data,

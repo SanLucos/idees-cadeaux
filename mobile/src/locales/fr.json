@@ -284,6 +284,10 @@
     "sync": {
       "cursor_invalid": "Synchronisation à reprendre.",
       "fetch_invalid": "Synchronisation à reprendre."
+    },
+    "link_preview": {
+      "invalid_url": "Le lien doit commencer par http:// ou https://.",
+      "unavailable": "Page impossible à lire."
     }
   },
   "locales": {
@@ -453,7 +457,23 @@
     "privateHint": "Visible de vous seul, à publier plus tard.",
     "publishIdea": "Publier l'idée",
     "publishSuggestion": "Publier la suggestion",
-    "saveDraft": "Enregistrer le brouillon"
+    "saveDraft": "Enregistrer le brouillon",
+    "prefill": {
+      "action": "Pré-remplir",
+      "found": "Trouvé sur la page",
+      "foundDetail": "Proposé ci-dessous : {fields}. Modifiez librement.",
+      "empty": "Rien trouvé sur la page",
+      "unavailable": "Page impossible à lire",
+      "manual": "Saisissez les informations vous-même.",
+      "deferred": "Pré-remplissage au retour du réseau",
+      "deferredDetail": "L'idée est enregistrée maintenant ; son titre, son image et son prix se compléteront dès que possible.",
+      "imageFromLink": "Récupérée depuis le lien",
+      "fields": {
+        "title": "titre",
+        "image": "image",
+        "price": "prix"
+      }
+    }
   },
   "secret": {
     "zoneTitle": "Entre amis · invisible pour {name}"
