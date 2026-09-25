@@ -139,7 +139,7 @@ final class InteractionNormalizer
             'id' => $contribution->getId()->toRfc4122(),
             'ideaId' => $contribution->getIdea()->getId()->toRfc4122(),
             'status' => $contribution->getStatus()->value,
-            'initiator' => $this->user($contribution->getInitiator()),
+            'initiator' => null !== $contribution->getInitiator() ? $this->user($contribution->getInitiator()) : null,
             'isInitiator' => $isInitiator,
             'targetAmount' => $contribution->getTargetAmount(),
             'currency' => $contribution->getCurrency(),

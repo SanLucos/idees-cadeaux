@@ -36,6 +36,8 @@ final class UserNormalizer
             'emailVerified' => null !== $user->getEmailVerifiedAt(),
             'type' => $user->getType()->value,
             'managedBy' => $this->managerOf($user),
+            // Spec §5.13: the « Votre compte sera supprimé le … » screen.
+            'deletionScheduledAt' => $user->getDeletionScheduledAt()?->format(\DATE_ATOM),
         ];
     }
 

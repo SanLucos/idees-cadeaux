@@ -30,9 +30,13 @@ class Contribution implements TimestampableInterface, SoftDeletableInterface
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Idea $idea;
 
+    /**
+     * Null once the initiator's account is deleted for good (spec §5.13):
+     * the contribution was closed first, the others' pledges are kept.
+     */
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private User $initiator;
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?User $initiator;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
     private ?string $targetAmount;
@@ -61,7 +65,7 @@ class Contribution implements TimestampableInterface, SoftDeletableInterface
         return $this->idea;
     }
 
-    public function getInitiator(): User
+    public function getInitiator(): ?User
     {
         return $this->initiator;
     }

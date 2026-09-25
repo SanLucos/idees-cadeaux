@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ 'cancel_deletion.title'|trans({}, 'account', locale) }} · {{ app_name }}</title>
+    <style>
+        body { margin: 0; padding: 40px 20px; background: #F6F0E6; color: #2B211C; font-family: 'Helvetica Neue', system-ui, sans-serif; }
+        main { max-width: 480px; margin: 0 auto; padding: 24px; background: #FFFCF7; border: 1px solid #E4D8C6; border-radius: 16px; }
+        h1 { margin: 0 0 16px; font-family: Georgia, serif; font-weight: 400; font-size: 28px; }
+        button { display: block; width: 100%; min-height: 48px; margin-top: 12px; border: 0; border-radius: 14px; background: #A94A2A; color: #FFFCF7; font-size: 16px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>{{ 'cancel_deletion.title'|trans({}, 'account', locale) }}</h1>
+    {% if state == 'invalid' %}
+        <p>{{ 'cancel_deletion.invalid'|trans({}, 'account', locale) }}</p>
+    {% elseif state == 'done' %}
+        <p>{{ 'cancel_deletion.done'|trans({}, 'account', locale) }}</p>
+    {% else %}
+        <p>{{ 'cancel_deletion.question'|trans({'%date%': date}, 'account', locale) }}</p>
+        <form method="post"><button type="submit">{{ 'cancel_deletion.submit'|trans({}, 'account', locale) }}</button></form>
+    {% endif %}
+</main>
+</body>
+</html>

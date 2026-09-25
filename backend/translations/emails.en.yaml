@@ -19,3 +19,35 @@ managed_invitation:
   how: "In the app, choose “I have an invitation” on the sign-in screen, then enter this email address, this code and a password. The profile, its ideas and its friends become yours; %manager% will no longer have access."
   expiry: "This code is valid for 7 days."
   ignore: "If you weren't expecting this message, ignore it: nothing will happen."
+
+reauthenticate:
+  subject: "Your confirmation code"
+  heading: "Confirm it's really you"
+  intro: "Use this code to confirm your request (exporting your data or deleting your account):"
+  expiry: "This code expires in 15 minutes."
+  ignore: "If you didn't make this request, ignore this email and change your password."
+
+account:
+  deletion_requested:
+    subject: "Your account will be deleted on %date%"
+    heading: "Account deletion requested"
+    body: "Your account and your data will be deleted for good on %date%. Until then your account is suspended: friends can't send you requests and you receive no notifications."
+    action: "Cancel the deletion"
+    hint: "You can also cancel by signing in to the app before that date."
+    ignore: "If you didn't make this request, cancel it with the button above and change your password."
+  deleted:
+    subject: "Your account has been deleted"
+    heading: "Your account has been deleted"
+    body: "As requested, your account and your data have been deleted for good. Backups are erased within 30 days. Thank you for using %app%."
+  profile_deleted:
+    subject: "%profile%'s profile has been deleted"
+    heading: "Profile deleted"
+    body: "As requested, %profile%'s profile and its data have been deleted for good. Backups are erased within 30 days."
+  export_ready:
+    subject: "Your data is ready"
+    subject_profile: "%profile%'s data is ready"
+    heading: "Your export is ready"
+    body: "The archive of your data is ready to download."
+    body_profile: "The archive of %profile%'s profile data is ready to download."
+    action: "Download the archive"
+    expiry: "This link is valid for 48 hours. Keep the archive somewhere safe: it contains personal data."

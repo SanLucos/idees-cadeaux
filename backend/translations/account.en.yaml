@@ -1,0 +1,6 @@
+cancel_deletion:
+  title: "Cancel the deletion"
+  question: "Your account is due to be deleted on %date%. Do you want to keep it?"
+  submit: "Keep my account"
+  done: "Done: the deletion is cancelled and your account works normally again."
+  invalid: "This link is no longer valid: the deletion may already be cancelled. Sign in to the app to check."

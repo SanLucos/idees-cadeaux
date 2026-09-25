@@ -43,8 +43,10 @@ final class NotificationRecipients
     public function interactionGroup(Idea $idea): array
     {
         $people = [];
-        $add = static function (User $user) use (&$people): void {
-            $people[$user->getId()->toRfc4122()] = $user;
+        $add = static function (?User $user) use (&$people): void {
+            if (null !== $user) {
+                $people[$user->getId()->toRfc4122()] = $user;
+            }
         };
 
         if ($idea->isSuggestion()) {

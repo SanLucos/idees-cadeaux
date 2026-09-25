@@ -19,3 +19,35 @@ managed_invitation:
   how: "Dans l'application, choisissez « J'ai une invitation » sur l'écran de connexion, puis saisissez cette adresse email, ce code et un mot de passe. Le profil, ses idées et ses amis deviennent les vôtres ; %manager% n'y aura plus accès."
   expiry: "Ce code est valable 7 jours."
   ignore: "Si vous ne vous attendiez pas à ce message, ignorez-le : rien ne se passera."
+
+reauthenticate:
+  subject: "Votre code de confirmation"
+  heading: "Confirmez qu'il s'agit bien de vous"
+  intro: "Utilisez ce code pour confirmer votre demande (export de vos données ou suppression de votre compte) :"
+  expiry: "Ce code expire dans 15 minutes."
+  ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email et changez votre mot de passe."
+
+account:
+  deletion_requested:
+    subject: "Votre compte sera supprimé le %date%"
+    heading: "Suppression de votre compte demandée"
+    body: "Votre compte et vos données seront supprimés définitivement le %date%. D'ici là, votre compte est suspendu : vos amis ne peuvent plus vous envoyer de demande et vous ne recevez plus de notification."
+    action: "Annuler la suppression"
+    hint: "Vous pouvez aussi annuler en vous connectant à l'application avant cette date."
+    ignore: "Si vous n'êtes pas à l'origine de cette demande, annulez-la avec le bouton ci-dessus et changez votre mot de passe."
+  deleted:
+    subject: "Votre compte a été supprimé"
+    heading: "Votre compte a été supprimé"
+    body: "Comme demandé, votre compte et vos données ont été supprimés définitivement. Les sauvegardes sont effacées sous 30 jours. Merci d'avoir utilisé %app%."
+  profile_deleted:
+    subject: "Le profil de %profile% a été supprimé"
+    heading: "Profil supprimé"
+    body: "Comme demandé, le profil de %profile% et ses données ont été supprimés définitivement. Les sauvegardes sont effacées sous 30 jours."
+  export_ready:
+    subject: "Vos données sont prêtes"
+    subject_profile: "Les données de %profile% sont prêtes"
+    heading: "Votre export est prêt"
+    body: "L'archive de vos données est prête à être téléchargée."
+    body_profile: "L'archive des données du profil de %profile% est prête à être téléchargée."
+    action: "Télécharger l'archive"
+    expiry: "Ce lien est valable 48 heures. Gardez l'archive en lieu sûr : elle contient des données personnelles."

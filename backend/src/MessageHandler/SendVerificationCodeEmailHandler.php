@@ -37,6 +37,7 @@ final class SendVerificationCodeEmailHandler
         $translationKey = match ($message->purpose) {
             VerificationCodePurpose::VerifyEmail => 'verify_email',
             VerificationCodePurpose::ResetPassword => 'reset_password',
+            VerificationCodePurpose::Reauthenticate => 'reauthenticate',
         };
 
         $this->localeSwitcher->runWithLocale($user->getLocale(), function () use ($user, $translationKey, $message): void {

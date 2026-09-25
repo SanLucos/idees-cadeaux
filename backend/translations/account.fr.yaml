@@ -1,0 +1,6 @@
+cancel_deletion:
+  title: "Annuler la suppression"
+  question: "Votre compte doit être supprimé le %date%. Voulez-vous le garder ?"
+  submit: "Garder mon compte"
+  done: "C'est fait : la suppression est annulée et votre compte fonctionne de nouveau normalement."
+  invalid: "Ce lien n'est plus valide : la suppression a peut-être déjà été annulée. Connectez-vous à l'application pour vérifier."

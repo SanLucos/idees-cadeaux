@@ -83,7 +83,8 @@ final class SendFriendRequestController
     {
         // Spec §5.15: nobody can ask a managed profile to be their friend,
         // and a managed profile only befriends adults. Same silent answer.
-        if (null === $target || $target === $me || $target->isManaged()) {
+        // Nor anyone whose account is being deleted (spec §5.13).
+        if (null === $target || $target === $me || $target->isManaged() || $target->isSuspended()) {
             return;
         }
 

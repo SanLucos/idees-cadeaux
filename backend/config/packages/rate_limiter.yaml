@@ -30,3 +30,8 @@ framework:
             policy: sliding_window
             limit: 30
             interval: '10 minutes'
+        # Spec §5.13: password or emailed code before an export or a deletion.
+        reauthentication:
+            policy: sliding_window
+            limit: 10
+            interval: '15 minutes'

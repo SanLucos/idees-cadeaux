@@ -13,6 +13,8 @@ framework:
             App\Message\SendVerificationCodeEmail: async
             App\Message\SendManagedProfileInvitationEmail: async
             App\Message\DeliverNotification: async
+            App\Message\SendAccountEmail: async
+            App\Message\ExportUserData: async
 
 when@test:
     framework:

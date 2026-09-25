@@ -54,7 +54,12 @@ final class RegisterController
         if (\strlen($password) < 10) {
             throw new ApiProblemException('validation.password_too_short', 'Password must be at least 10 characters.', 422);
         }
-        if (null !== $this->users->findOneBy(['email' => $email])) {
+        $existing = $this->users->findOneBy(['email' => $email]);
+        if (null !== $existing && null !== $existing->getDeletionScheduledAt()) {
+            // Spec §5.13: "un message invitant à se connecter pour annuler".
+            throw new ApiProblemException('auth.account_deletion_scheduled', 'This account is scheduled for deletion: sign in to cancel it.', 409);
+        }
+        if (null !== $existing) {
             throw new ApiProblemException('auth.email_already_registered', 'This email is already registered.', 409);
         }
 

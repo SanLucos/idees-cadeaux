@@ -42,7 +42,7 @@ final class ContactsMatchController
         $matches = [];
         // Managed profiles (spec §5.15) are excluded from contact matching.
         foreach ($this->users->findBy(['type' => UserType::Regular]) as $candidate) {
-            if ($candidate === $me || null === $candidate->getEmail()) {
+            if ($candidate === $me || null === $candidate->getEmail() || $candidate->isSuspended()) {
                 continue;
             }
 
