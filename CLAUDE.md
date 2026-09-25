@@ -79,6 +79,8 @@ npx cap open ios                # Xcode (macOS), cibles App + ShareExtension
 ```
 Partage vers l'appli (spec §5.6) : lien `<APP_ID>://share?url=…` ; Android via l'intent `ACTION_SEND` (`MainActivity`), iOS via la cible `ShareExtension`. Test rapide sans partage : `adb shell am start -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "https://…" <APP_ID>` ; sur le web, ouvrir `/share?url=…`. L'identifiant `com.example.ideescadeaux` est aussi écrit dans les projets natifs (namespace, bundle id, cible `ShareExtension`) : à renommer avec le nom définitif (lot 8).
 
+Lien de partage (lot 7 bis, spec §5.16) : `SHARE_LINK_BASE_URL`, `APP_ID`, `APP_STORE_URL` / `PLAY_STORE_URL`, `ANDROID_CERT_FINGERPRINTS`, `APPLE_TEAM_ID` dans `backend/.env`. La page invité est servie par le back (`/u/<jeton>`). App Links Android : propriété Gradle `shareLinkHost` (`-PshareLinkHost=<domaine>` ou `android/gradle.properties`) ; Universal Links iOS : entitlement Associated Domains à ajouter avec le domaine définitif (lot 8). Test rapide : `adb shell am start -a android.intent.action.VIEW -d "<APP_ID>://u/<jeton>"` ; sur le web, ouvrir `/u/<jeton>`.
+
 **CI** : `.github/workflows/ci.yml`, deux jobs (`backend`, `mobile`), lint + tests, déclenchés sur push/PR vers `main`.
 
 ## Sécurité
