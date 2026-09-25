@@ -1,0 +1,4 @@
+/* Spec §9: permission usage texts. */
+"NSContactsUsageDescription" = "To find your friends who already use the app. Only anonymous fingerprints of email addresses are compared; no contact is sent or kept.";
+"NSPhotoLibraryUsageDescription" = "To add a photo to a gift idea or to your profile.";
+"NSCameraUsageDescription" = "To take a photo of a gift idea or for your profile.";

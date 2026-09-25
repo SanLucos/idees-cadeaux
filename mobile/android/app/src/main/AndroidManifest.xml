@@ -61,4 +61,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- « Mes contacts » (spec §5.3): read on the device, only hashed emails are sent. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- Push notifications on Android 13+ (spec §5.11), asked after the in-app consent. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

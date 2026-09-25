@@ -81,6 +81,8 @@ Partage vers l'appli (spec §5.6) : lien `<APP_ID>://share?url=…` ; Android vi
 
 Lien de partage (lot 7 bis, spec §5.16) : `SHARE_LINK_BASE_URL`, `APP_ID`, `APP_STORE_URL` / `PLAY_STORE_URL`, `ANDROID_CERT_FINGERPRINTS`, `APPLE_TEAM_ID` dans `backend/.env`. La page invité est servie par le back (`/u/<jeton>`). App Links Android : propriété Gradle `shareLinkHost` (`-PshareLinkHost=<domaine>` ou `android/gradle.properties`) ; Universal Links iOS : entitlement Associated Domains à ajouter avec le domaine définitif (lot 8). Test rapide : `adb shell am start -a android.intent.action.VIEW -d "<APP_ID>://u/<jeton>"` ; sur le web, ouvrir `/u/<jeton>`.
 
+RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket, servies par le back via des URL signées (`MEDIA_BASE_URL`, route `/media/…`). Export (ZIP construit par le `worker`, lien 48 h par email) et suppression de compte (14 jours de grâce, effacement par la tâche quotidienne du `worker`). Politique de confidentialité (brouillon) sur `/privacy`. Préparation des stores : `docs/stores/`. Les liens des emails utilisent `DEFAULT_URI`.
+
 **CI** : `.github/workflows/ci.yml`, deux jobs (`backend`, `mobile`), lint + tests, déclenchés sur push/PR vers `main`.
 
 ## Sécurité

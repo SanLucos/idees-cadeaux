@@ -1,0 +1,4 @@
+/* Spec §9 : textes de justification des permissions. */
+"NSContactsUsageDescription" = "Pour retrouver vos amis déjà inscrits. Seules des empreintes anonymes des adresses email sont comparées ; aucun contact n'est envoyé ni conservé.";
+"NSPhotoLibraryUsageDescription" = "Pour ajouter une photo à une idée cadeau ou à votre profil.";
+"NSCameraUsageDescription" = "Pour prendre en photo une idée cadeau ou pour votre profil.";
