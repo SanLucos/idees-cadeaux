@@ -71,7 +71,10 @@ final class GuestPageController
         $view = $this->guestView->build($link, $filter);
         $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
         foreach ($view['member'] as &$idea) {
-            $idea['price'] = null !== $idea['priceAmount'] ? $formatter->formatCurrency((float) $idea['priceAmount'], $idea['priceCurrency'] ?? 'EUR') : null;
+            // Whole amounts without decimals, as in the app (« 120 € »).
+            $amount = null !== $idea['priceAmount'] ? (float) $idea['priceAmount'] : null;
+            $formatter->setAttribute(\NumberFormatter::FRACTION_DIGITS, null !== $amount && floor($amount) === $amount ? 0 : 2);
+            $idea['price'] = null !== $amount ? $formatter->formatCurrency($amount, $idea['priceCurrency'] ?? 'EUR') : null;
         }
         unset($idea);
 
