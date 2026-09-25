@@ -15,6 +15,7 @@ use App\Repository\ContributionPledgeRepository;
 use App\Repository\ContributionRepository;
 use App\Repository\ReactionRepository;
 use App\Repository\ReservationRepository;
+use App\Service\MediaUrls;
 use App\Util\Money;
 
 /**
@@ -38,7 +39,7 @@ final class InteractionNormalizer
         private readonly ContributionPledgeRepository $pledges,
         private readonly ReactionRepository $reactions,
         private readonly CommentRepository $comments,
-        private readonly string $storagePublicBaseUrl,
+        private readonly MediaUrls $media,
     ) {
     }
 
@@ -177,7 +178,7 @@ final class InteractionNormalizer
         return [
             'id' => $user->getId()->toRfc4122(),
             'displayName' => $user->getDisplayName(),
-            'avatarUrl' => null !== $user->getAvatarPath() ? $this->storagePublicBaseUrl.'/'.$user->getAvatarPath() : null,
+            'avatarUrl' => $this->media->url($user->getAvatarPath()),
         ];
     }
 }

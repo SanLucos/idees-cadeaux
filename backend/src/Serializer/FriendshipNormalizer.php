@@ -7,6 +7,7 @@ namespace App\Serializer;
 use App\Entity\Enum\FriendshipStatus;
 use App\Entity\Friendship;
 use App\Entity\User;
+use App\Service\MediaUrls;
 
 /**
  * The requester's view never reveals a decline (CLAUDE.md règle 4):
@@ -16,7 +17,7 @@ use App\Entity\User;
  */
 final class FriendshipNormalizer
 {
-    public function __construct(private readonly string $storagePublicBaseUrl)
+    public function __construct(private readonly MediaUrls $media)
     {
     }
 
@@ -48,7 +49,7 @@ final class FriendshipNormalizer
         $summary = [
             'id' => $user->getId()->toRfc4122(),
             'displayName' => $user->getDisplayName(),
-            'avatarUrl' => null !== $user->getAvatarPath() ? $this->storagePublicBaseUrl.'/'.$user->getAvatarPath() : null,
+            'avatarUrl' => $this->media->url($user->getAvatarPath()),
         ];
 
         // Spec §4: a pending request only ever shows pseudo + avatar;

@@ -33,7 +33,7 @@ final class IdeaImageUploadService
         $source = $this->reader->read($file);
 
         $path = \sprintf('ideas/%s-%s.jpg', $idea->getId()->toRfc4122(), bin2hex(random_bytes(4)));
-        $options = ['visibility' => 'public', 'mimetype' => 'image/jpeg'];
+        $options = ['visibility' => 'private', 'mimetype' => 'image/jpeg'];
         $this->storage->write($path, UploadedImageReader::toJpeg(UploadedImageReader::fit($source, self::LARGE_MAX_SIDE)), $options);
         $this->storage->write(IdeaNormalizer::thumbnailPath($path), UploadedImageReader::toJpeg(UploadedImageReader::square($source, self::THUMBNAIL_SIZE)), $options);
 

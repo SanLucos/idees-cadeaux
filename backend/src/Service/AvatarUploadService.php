@@ -33,7 +33,7 @@ final class AvatarUploadService
         $previous = $user->getAvatarPath();
 
         $path = \sprintf('avatars/%s-%s.jpg', $user->getId()->toRfc4122(), bin2hex(random_bytes(4)));
-        $this->storage->write($path, $binary, ['visibility' => 'public', 'mimetype' => 'image/jpeg']);
+        $this->storage->write($path, $binary, ['visibility' => 'private', 'mimetype' => 'image/jpeg']);
 
         if (null !== $previous) {
             try {

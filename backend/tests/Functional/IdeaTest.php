@@ -221,8 +221,19 @@ final class IdeaTest extends AuthTestCase
             'extra' => ['files' => ['image' => new UploadedFile($path, 'photo.png', 'image/png', null, true)]],
         ])->toArray();
 
-        self::assertStringEndsWith('.jpg', $response['imageUrl']);
-        self::assertStringEndsWith('-thumb.jpg', $response['thumbnailUrl']);
+        self::assertMatchesRegularExpression('#/media/ideas/[0-9a-f-]+\.jpg\?e=\d+&s=[0-9a-f]{64}$#', $response['imageUrl']);
+        self::assertMatchesRegularExpression('#-thumb\.jpg\?#', $response['thumbnailUrl']);
+
+        // Private in the bucket, served through the signed URL (spec §11 décision 41).
+        $storagePath = (string) preg_replace('#^.*/media/([^?]+)\?.*$#', '$1', $response['imageUrl']);
+        self::assertSame('private', self::getContainer()->get('default.storage')->visibility($storagePath));
+        $image = static::createClient()->request('GET', (string) strstr($response['imageUrl'], '/media/'));
+        self::assertSame(200, $image->getStatusCode());
+        self::assertSame('image/jpeg', $image->getHeaders()['content-type'][0]);
+        $forged = preg_replace('#s=[0-9a-f]{64}#', 's='.str_repeat('0', 64), (string) strstr($response['imageUrl'], '/media/'));
+        self::assertSame(404, static::createClient()->request('GET', (string) $forged)->getStatusCode());
+        $expired = preg_replace('#e=\d+#', 'e='.(time() - 10), (string) strstr($response['imageUrl'], '/media/'));
+        self::assertSame(404, static::createClient()->request('GET', (string) $expired)->getStatusCode());
 
         $cleared = static::createClient()->request('DELETE', "/api/ideas/{$idea['id']}/image", ['auth_bearer' => $token])->toArray();
         self::assertNull($cleared['imageUrl']);

@@ -7,6 +7,7 @@ namespace App\Serializer;
 use App\Entity\Idea;
 use App\Entity\User;
 use App\Security\IdeaAccess;
+use App\Service\MediaUrls;
 
 /**
  * Spec §4 "Conséquences techniques" 1: distinct serialisation views.
@@ -31,7 +32,7 @@ final class IdeaNormalizer
 {
     public function __construct(
         private readonly InteractionNormalizer $interactions,
-        private readonly string $storagePublicBaseUrl,
+        private readonly MediaUrls $media,
     ) {
     }
 
@@ -204,6 +205,6 @@ final class IdeaNormalizer
 
     private function url(?string $path): ?string
     {
-        return null !== $path ? $this->storagePublicBaseUrl.'/'.$path : null;
+        return $this->media->url($path);
     }
 }

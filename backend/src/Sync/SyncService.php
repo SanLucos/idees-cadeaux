@@ -21,6 +21,7 @@ use App\Serializer\IdeaNormalizer;
 use App\Serializer\InteractionNormalizer;
 use App\Serializer\ManagedProfileNormalizer;
 use App\Serializer\UserNormalizer;
+use App\Service\MediaUrls;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -69,18 +70,21 @@ final class SyncService
         $friends = array_map(static fn (Friendship $f) => $f->otherParty($me), $this->friendships->findAccepted($me));
 
         $inventory = array_fill_keys(self::TYPES, []);
+        // Documents carrying image URLs move with MediaUrls' week: devices
+        // get fresh signed URLs before theirs expire (spec §11 décision 41).
+        $media = MediaUrls::windowStart();
 
         foreach ([$me, ...$friends, ...$children] as $user) {
-            $inventory['user'][$user->getId()->toRfc4122()] = ['version' => self::v($user->getUpdatedAt()), 'entity' => $user];
+            $inventory['user'][$user->getId()->toRfc4122()] = ['version' => self::v($user->getUpdatedAt(), $media), 'entity' => $user];
         }
         foreach ($children as $child) {
-            $inventory['managed_profile'][$child->getId()->toRfc4122()] = ['version' => self::v($child->getUpdatedAt()), 'entity' => $child];
+            $inventory['managed_profile'][$child->getId()->toRfc4122()] = ['version' => self::v($child->getUpdatedAt(), $media), 'entity' => $child];
         }
 
         foreach ([$me, ...$children] as $viewer) {
             foreach ([...$this->friendships->findAccepted($viewer), ...$this->friendships->findPendingIncoming($viewer), ...$this->friendships->findOutgoingVisible($viewer)] as $friendship) {
                 $inventory['friendship'][$friendship->getId()->toRfc4122()] = [
-                    'version' => self::v(max($friendship->getUpdatedAt(), $friendship->otherParty($viewer)->getUpdatedAt())),
+                    'version' => self::v(max($friendship->getUpdatedAt(), $friendship->otherParty($viewer)->getUpdatedAt()), $media),
                     'entity' => $friendship,
                     'viewer' => $viewer,
                 ];
@@ -91,7 +95,7 @@ final class SyncService
         $interactionVersions = $this->interactionVersions(array_keys($ideas));
         foreach ($ideas as $id => $idea) {
             $inventory['idea'][$id] = [
-                'version' => self::v(max($idea->getUpdatedAt(), $idea->getAuthor()->getUpdatedAt(), $idea->getOwner()->getUpdatedAt()), $interactionVersions[$id] ?? null),
+                'version' => self::v(max($idea->getUpdatedAt(), $idea->getAuthor()->getUpdatedAt(), $idea->getOwner()->getUpdatedAt()), $interactionVersions[$id] ?? null, $media),
                 'entity' => $idea,
             ];
         }
@@ -99,7 +103,7 @@ final class SyncService
         // Comments: only where the interactions are visible — never on one's own list (règle 1).
         $withInteractions = array_keys(array_filter($ideas, static fn (Idea $i) => $i->getOwner() !== $me && $i->isPublished()));
         foreach ($this->findIn(Comment::class, 'idea', $withInteractions) as $comment) {
-            $inventory['comment'][$comment->getId()->toRfc4122()] = ['version' => self::v(max($comment->getUpdatedAt(), $comment->getAuthor()->getUpdatedAt())), 'entity' => $comment];
+            $inventory['comment'][$comment->getId()->toRfc4122()] = ['version' => self::v(max($comment->getUpdatedAt(), $comment->getAuthor()->getUpdatedAt()), $media), 'entity' => $comment];
         }
 
         $profiles = array_map(static fn (User $u) => $u->getId()->toRfc4122(), [$me, ...$friends, ...$children]);

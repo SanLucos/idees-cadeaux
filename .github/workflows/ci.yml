@@ -35,7 +35,6 @@ jobs:
       # command reliably): the test env stores uploads on local disk
       # instead (config/packages/flysystem.yaml, when@test).
       STORAGE_ENDPOINT: http://localhost:9000
-      STORAGE_PUBLIC_BASE_URL: http://localhost:9000/idees-cadeaux
       STORAGE_BUCKET: idees-cadeaux
       STORAGE_KEY: idees_cadeaux
       STORAGE_SECRET: ci-unused

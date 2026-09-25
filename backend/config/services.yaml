@@ -25,7 +25,7 @@ services:
             $googleClientId: '%env(GOOGLE_CLIENT_ID)%'
             $appleClientId: '%env(APPLE_CLIENT_ID)%'
             $refreshTokenTtl: '%gesdinet_jwt_refresh_token.ttl%'
-            $storagePublicBaseUrl: '%env(STORAGE_PUBLIC_BASE_URL)%'
+            $mediaBaseUrl: '%env(MEDIA_BASE_URL)%'
             $shareLinkBaseUrl: '%env(SHARE_LINK_BASE_URL)%'
             $appId: '%env(APP_ID)%'
             $appStoreUrl: '%env(APP_STORE_URL)%'

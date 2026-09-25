@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Serializer;
 
 use App\Entity\User;
+use App\Service\MediaUrls;
 
 /**
  * The "vue propriétaire" shape (self, GET/PATCH /users/me): every
@@ -14,7 +15,7 @@ use App\Entity\User;
  */
 final class UserNormalizer
 {
-    public function __construct(private readonly string $storagePublicBaseUrl)
+    public function __construct(private readonly MediaUrls $media)
     {
     }
 
@@ -69,6 +70,6 @@ final class UserNormalizer
 
     private function avatarUrl(User $user): ?string
     {
-        return null !== $user->getAvatarPath() ? $this->storagePublicBaseUrl.'/'.$user->getAvatarPath() : null;
+        return $this->media->url($user->getAvatarPath());
     }
 }
