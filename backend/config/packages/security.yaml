@@ -58,6 +58,8 @@ security:
         - { path: ^/api/health, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/(register|login|refresh|verify-email|forgot-password|reset-password|social|managed-invitation)(/|$), roles: PUBLIC_ACCESS }
         - { path: ^/api/(docs|contexts|errors|validation_errors|\.well-known)(/|\.|$), roles: PUBLIC_ACCESS }
+        # Guest view of a share link (spec §5.16); joining needs an account.
+        - { path: ^/api/share-links/[^/]+$, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api, roles: ROLE_USER }
 
 when@test:

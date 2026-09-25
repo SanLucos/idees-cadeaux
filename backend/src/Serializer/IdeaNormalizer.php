@@ -23,7 +23,9 @@ use App\Security\IdeaAccess;
  *   idea of the list; interactions are computed for the manager as a
  *   person (pledge amounts keep règle 3).
  *
- * The guest view (lot 7 bis) comes later.
+ * - normalizeForGuest(): the guest view of a share link (spec §5.16),
+ *   for anyone holding the link: the idea itself, nothing about its
+ *   state, author or interactions; images through signed URLs.
  */
 final class IdeaNormalizer
 {
@@ -42,6 +44,29 @@ final class IdeaNormalizer
             'view' => 'owner',
             'canEdit' => true,
             'canUnarchive' => $idea->isArchived(),
+        ];
+    }
+
+    /**
+     * @param callable(string $kind): string $mediaUrl signed URL of this idea's 'image' or 'thumb'
+     *
+     * @return array<string, mixed>
+     */
+    public function normalizeForGuest(Idea $idea, callable $mediaUrl): array
+    {
+        $hasImage = null !== $idea->getImagePath();
+
+        return [
+            'id' => $idea->getId()->toRfc4122(),
+            'view' => 'guest',
+            'title' => $idea->getTitle(),
+            'url' => $idea->getUrl(),
+            'priceAmount' => $idea->getPriceAmount(),
+            'priceCurrency' => $idea->getPriceCurrency(),
+            'imageUrl' => $hasImage ? $mediaUrl('image') : null,
+            'thumbnailUrl' => $hasImage ? $mediaUrl('thumb') : null,
+            'note' => $idea->getNote(),
+            'occasion' => $idea->getOccasion()?->getCode(),
         ];
     }
 

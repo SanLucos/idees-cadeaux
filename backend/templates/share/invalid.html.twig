@@ -1,0 +1,7 @@
+{% extends 'share/_layout.html.twig' %}
+{% block body %}
+<main class="message">
+    <h1>{{ (rate_limited ? 'invalid.rate_limited_title' : 'invalid.title')|trans({}, 'share', locale) }}</h1>
+    <p class="muted">{{ (rate_limited ? 'invalid.rate_limited_body' : 'invalid.body')|trans({}, 'share', locale) }}</p>
+</main>
+{% endblock %}

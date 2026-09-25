@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Enum\FriendshipOrigin;
 use App\Entity\Enum\FriendshipStatus;
 use App\Entity\Friendship;
 use App\Entity\User;
@@ -62,6 +63,62 @@ class FriendshipRepository extends ServiceEntityRepository
                 ->setMaxResults(1)
                 ->getQuery()
                 ->getOneOrNullResult();
+        } finally {
+            if ($wasEnabled) {
+                $filters->enable('soft_deleteable');
+            }
+        }
+    }
+
+    /**
+     * Did `$remover` ever remove a friendship with `$other`? Spec §5.16:
+     * someone removed by a link's owner can't come back through it.
+     */
+    public function wasRemovedBy(User $remover, User $other): bool
+    {
+        return $this->withDeleted(fn () => (int) $this->createQueryBuilder('f')
+            ->select('COUNT(f.id)')
+            ->andWhere('(f.requester = :a AND f.addressee = :b) OR (f.requester = :b AND f.addressee = :a)')
+            ->andWhere('f.removedBy = :a AND f.deletedAt IS NOT NULL')
+            ->setParameter('a', $remover->getId(), 'uuid')
+            ->setParameter('b', $other->getId(), 'uuid')
+            ->getQuery()
+            ->getSingleScalarResult() > 0);
+    }
+
+    /**
+     * Friendships created through `$owner`'s share links since `$since`,
+     * across regenerations and removals (spec §5.16 "plafond anti-abus").
+     */
+    public function countJoinedViaLinkSince(User $owner, \DateTimeImmutable $since): int
+    {
+        return $this->withDeleted(fn () => (int) $this->createQueryBuilder('f')
+            ->select('COUNT(f.id)')
+            ->andWhere('f.addressee = :owner AND f.origin = :link AND f.respondedAt >= :since')
+            ->setParameter('owner', $owner->getId(), 'uuid')
+            ->setParameter('link', FriendshipOrigin::Link)
+            ->setParameter('since', $since)
+            ->getQuery()
+            ->getSingleScalarResult());
+    }
+
+    /**
+     * @template T
+     *
+     * @param callable(): T $query
+     *
+     * @return T
+     */
+    private function withDeleted(callable $query): mixed
+    {
+        $filters = $this->em->getFilters();
+        $wasEnabled = $filters->isEnabled('soft_deleteable');
+        if ($wasEnabled) {
+            $filters->disable('soft_deleteable');
+        }
+
+        try {
+            return $query();
         } finally {
             if ($wasEnabled) {
                 $filters->enable('soft_deleteable');

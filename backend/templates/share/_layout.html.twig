@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    {% block meta %}{% endblock %}
+    <style nonce="{{ nonce }}">
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #F6F0E6; color: #2B211C; font-family: 'Figtree', 'Helvetica Neue', system-ui, sans-serif; }
+        a { color: #A94A2A; }
+        .page { max-width: 560px; min-height: 100vh; margin: 0 auto; display: flex; flex-direction: column; }
+        header { display: flex; align-items: center; gap: 8px; padding: 24px 20px 8px; font-family: 'Young Serif', Georgia, serif; font-size: 18px; }
+        .hero { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 20px 16px; text-align: center; }
+        .avatar { width: 80px; height: 80px; border-radius: 40px; background: #7A4E3A; color: #FFFCF7; display: flex; align-items: center; justify-content: center; font-family: 'Young Serif', Georgia, serif; font-size: 33px; overflow: hidden; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        h1 { margin: 0; font-family: 'Young Serif', Georgia, serif; font-weight: 400; font-size: 28px; line-height: 1.15; }
+        .muted { font-size: 14px; color: #6A5D53; }
+        .chips { display: flex; gap: 8px; overflow-x: auto; padding: 0 20px 16px; }
+        .chip { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E4D8C6; background: #FFFCF7; color: #2B211C; font-size: 14px; font-weight: 500; text-decoration: none; }
+        .chip.on { border-color: #2B211C; background: #2B211C; color: #FFFCF7; font-weight: 600; }
+        .ideas { display: flex; flex-direction: column; gap: 10px; padding: 0 20px 20px; }
+        .card { display: flex; flex-direction: column; gap: 12px; padding: 12px; border-radius: 16px; background: #FFFCF7; border: 1px solid #E4D8C6; }
+        .card-top { display: flex; gap: 12px; }
+        .thumb { width: 64px; height: 64px; flex-shrink: 0; border-radius: 12px; background: #EAD9C6; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #7A4E3A; font-size: 26px; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .title { font-size: 16px; font-weight: 600; line-height: 1.3; }
+        .meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 14px; color: #6A5D53; margin-top: 4px; }
+        .price { font-weight: 600; color: #2B211C; }
+        .note { margin: 6px 0 0; font-size: 14px; color: #6A5D53; white-space: pre-line; }
+        .actions { display: flex; gap: 8px; }
+        .action { flex-grow: 1; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 12px; border: 1px solid #E4D8C6; color: #2B211C; text-decoration: none; font-size: 14px; font-weight: 600; }
+        .action.icon { flex-grow: 0; width: 44px; }
+        .more { display: block; text-align: center; padding: 8px 20px 20px; font-weight: 600; }
+        .empty { padding: 24px 20px; text-align: center; color: #6A5D53; }
+        footer { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding: 16px 20px 32px; background: #FFFCF7; border-top: 1px solid #E4D8C6; }
+        .button { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; border: 1px solid #E4D8C6; background: #FFFCF7; color: #2B211C; }
+        .button.primary { background: #A94A2A; border-color: #A94A2A; color: #FFFCF7; }
+        .stores { display: flex; gap: 8px; }
+        .stores .button { flex: 1; }
+        .center { text-align: center; }
+        main.message { margin: 64px 20px; padding: 24px; background: #FFFCF7; border: 1px solid #E4D8C6; border-radius: 16px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <header><span aria-hidden="true">🎁</span>{{ app_name }}</header>
+    {% block body %}{% endblock %}
+</div>
+</body>
+</html>

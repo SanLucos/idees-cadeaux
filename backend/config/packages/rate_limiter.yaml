@@ -15,3 +15,18 @@ framework:
             policy: sliding_window
             limit: 30
             interval: '10 minutes'
+        # Spec §5.16 "endpoints publics limités en débit": guest view (API
+        # and web page), per IP; its images have their own, larger quota.
+        share_link_public:
+            policy: sliding_window
+            limit: 60
+            interval: '10 minutes'
+        share_link_media:
+            policy: sliding_window
+            limit: 600
+            interval: '10 minutes'
+        # Confirmation screen and joining, per signed-in account.
+        share_link_join:
+            policy: sliding_window
+            limit: 30
+            interval: '10 minutes'

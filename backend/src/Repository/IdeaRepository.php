@@ -44,6 +44,49 @@ class IdeaRepository extends ServiceEntityRepository
     }
 
     /**
+     * Vue invité (spec §5.16): the owner's own published, active ideas
+     * — never a suggestion, a draft or an archive, whatever the filter.
+     *
+     * @return Paginator<Idea>
+     */
+    public function findGuestView(User $owner, IdeaListFilter $filter): Paginator
+    {
+        $qb = $this->createQueryBuilder('i')
+            ->andWhere('i.owner = :owner AND i.author = :owner')
+            ->andWhere('i.visibility = :published')
+            ->setParameter('owner', $owner->getId(), 'uuid')
+            ->setParameter('published', IdeaVisibility::Published);
+
+        return $this->paginate($this->applyFilter($qb, new IdeaListFilter(
+            status: IdeaStatus::Active,
+            occasion: $filter->occasion,
+            sort: $filter->sort,
+            page: $filter->page,
+            itemsPerPage: $filter->itemsPerPage,
+        )), $filter);
+    }
+
+    /**
+     * The occasions used in the guest view, for its filter chips.
+     *
+     * @return string[]
+     */
+    public function findGuestOccasionCodes(User $owner): array
+    {
+        return array_column($this->createQueryBuilder('i')
+            ->select('DISTINCT o.code AS code, o.sortOrder AS sortOrder')
+            ->innerJoin('i.occasion', 'o')
+            ->andWhere('i.owner = :owner AND i.author = :owner')
+            ->andWhere('i.visibility = :published AND i.status = :active')
+            ->setParameter('owner', $owner->getId(), 'uuid')
+            ->setParameter('published', IdeaVisibility::Published)
+            ->setParameter('active', IdeaStatus::Active)
+            ->orderBy('o.sortOrder', 'ASC')
+            ->getQuery()
+            ->getArrayResult(), 'code');
+    }
+
+    /**
      * Vue ami: `$owner`'s personal ideas and their friends' suggestions,
      * published — plus my own drafts for them (visible to me alone).
      * The caller has already checked `$viewer` is `$owner`'s friend.

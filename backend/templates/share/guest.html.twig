@@ -1,0 +1,74 @@
+{% extends 'share/_layout.html.twig' %}
+{% set name = view.owner.displayName %}
+{% block title %}{{ 'guest.page_title'|trans({'%name%': name, '%app%': app_name}, 'share', locale) }}{% endblock %}
+{% block meta %}
+    {# Open Graph (spec §5.16): the pseudo and a generic text, never an idea. #}
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ 'guest.og_title'|trans({'%name%': name}, 'share', locale) }}">
+    <meta property="og:description" content="{{ 'guest.og_description'|trans({'%app%': app_name}, 'share', locale) }}">
+    <meta property="og:site_name" content="{{ app_name }}">
+{% endblock %}
+{% block body %}
+<div class="hero">
+    <div class="avatar" aria-hidden="true">
+        {% if view.owner.avatarUrl %}<img src="{{ view.owner.avatarUrl }}" alt="">{% else %}{{ name|first|upper }}{% endif %}
+    </div>
+    <h1>{{ 'guest.heading'|trans({'%name%': name}, 'share', locale) }}</h1>
+    <div class="muted">{{ 'guest.read_only'|trans({}, 'share', locale) }}</div>
+</div>
+
+<nav class="chips" aria-label="{{ 'guest.filters'|trans({}, 'share', locale) }}">
+    {% set sort_query = filter.sort != 'recent' ? {sort: filter.sort} : {} %}
+    <a class="chip{{ filter.occasion is null ? ' on' }}" href="?{{ sort_query|url_encode }}">{{ 'guest.all'|trans({}, 'share', locale) }}</a>
+    {% for code in view.occasions %}
+        <a class="chip{{ filter.occasion == code ? ' on' }}" href="?{{ ({occasion: code}|merge(sort_query))|url_encode }}">{{ ('occasion.' ~ code)|trans({}, 'share', locale) }}</a>
+    {% endfor %}
+    {% set occasion_query = filter.occasion is not null ? {occasion: filter.occasion} : {} %}
+    <a class="chip{{ filter.sort == 'price_asc' ? ' on' }}" href="?{{ (filter.sort == 'price_asc' ? occasion_query : occasion_query|merge({sort: 'price_asc'}))|url_encode }}">{{ 'guest.sort_price'|trans({}, 'share', locale) }}</a>
+</nav>
+
+<section class="ideas">
+    {% for idea in view.member %}
+        <article class="card">
+            <div class="card-top">
+                <div class="thumb" aria-hidden="true">
+                    {% if idea.thumbnailUrl %}<img src="{{ idea.thumbnailUrl }}" alt="">{% else %}🎁{% endif %}
+                </div>
+                <div>
+                    <div class="title">{{ idea.title }}</div>
+                    <div class="meta">
+                        {% if idea.price %}<span class="price">{{ idea.price }}</span>{% endif %}
+                        {% if idea.price and idea.occasion %}<span aria-hidden="true">·</span>{% endif %}
+                        {% if idea.occasion %}<span>{{ ('occasion.' ~ idea.occasion)|trans({}, 'share', locale) }}</span>{% endif %}
+                    </div>
+                    {% if idea.note %}<p class="note">{{ idea.note }}</p>{% endif %}
+                    {% if idea.url %}<p class="note"><a href="{{ idea.url }}" rel="noopener noreferrer nofollow" target="_blank">{{ 'guest.see_link'|trans({}, 'share', locale) }}</a></p>{% endif %}
+                </div>
+            </div>
+            {# Visible, but every interaction leads to « Créer un compte pour interagir ». #}
+            <div class="actions">
+                <a class="action" href="#join">{{ 'guest.offer'|trans({}, 'share', locale) }}</a>
+                <a class="action icon" href="#join" aria-label="{{ 'guest.like'|trans({}, 'share', locale) }}">♡</a>
+                <a class="action icon" href="#join" aria-label="{{ 'guest.comment'|trans({}, 'share', locale) }}">💬</a>
+            </div>
+        </article>
+    {% else %}
+        <p class="empty">{{ 'guest.empty'|trans({'%name%': name}, 'share', locale) }}</p>
+    {% endfor %}
+</section>
+{% if has_more %}
+    <a class="more" href="?{{ ({page: filter.page + 1}|merge(occasion_query)|merge(sort_query))|url_encode }}">{{ 'guest.more'|trans({}, 'share', locale) }}</a>
+{% endif %}
+
+<footer id="join">
+    <div class="muted center">{{ 'guest.join_hint'|trans({'%name%': name}, 'share', locale) }}</div>
+    <a class="button primary" href="{{ open_in_app_url }}">{{ 'guest.open_in_app'|trans({}, 'share', locale) }}</a>
+    {% if app_store_url or play_store_url %}
+        <div class="stores">
+            {% if app_store_url %}<a class="button" href="{{ app_store_url }}" rel="noopener noreferrer">{{ 'guest.app_store'|trans({}, 'share', locale) }}</a>{% endif %}
+            {% if play_store_url %}<a class="button" href="{{ play_store_url }}" rel="noopener noreferrer">{{ 'guest.play_store'|trans({}, 'share', locale) }}</a>{% endif %}
+        </div>
+    {% endif %}
+    <div class="muted center">{{ 'guest.after_install'|trans({}, 'share', locale) }}</div>
+</footer>
+{% endblock %}

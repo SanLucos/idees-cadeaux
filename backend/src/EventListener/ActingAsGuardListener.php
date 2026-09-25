@@ -44,6 +44,10 @@ final class ActingAsGuardListener
         ['POST', '#^/api/friendships/[0-9a-f-]{36}/(accept|decline|cancel)$#'],
         ['DELETE', '#^/api/friendships/[0-9a-f-]{36}$#'],
         ['POST', '#^/api/contacts/match$#'],
+        // Its share link (spec §5.16: "le gestionnaire crée, révoque et
+        // régénère le lien"). Joining someone's link stays adult-only.
+        ['GET|POST|DELETE', '#^/api/share-link$#'],
+        ['POST', '#^/api/share-link/regenerate$#'],
     ];
 
     public function __construct(private readonly ActingContext $acting)
