@@ -39,6 +39,8 @@ final class UserNormalizer
             'managedBy' => $this->managerOf($user),
             // Spec §5.13: the « Votre compte sera supprimé le … » screen.
             'deletionScheduledAt' => $user->getDeletionScheduledAt()?->format(\DATE_ATOM),
+            // Re-authentication (spec §5.13): the password, or else an emailed code.
+            'hasPassword' => null !== $user->getPasswordHash(),
         ];
     }
 
