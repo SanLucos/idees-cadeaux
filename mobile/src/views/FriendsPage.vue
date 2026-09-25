@@ -28,6 +28,12 @@
             <span>{{ t('friends.byContacts') }}</span>
           </div>
         </ion-button>
+        <ion-button class="quick-action" router-link="/profile/share">
+          <div>
+            <ion-icon :icon="linkOutline" color="primary" aria-hidden="true" />
+            <span>{{ t('shareLink.myLink') }}</span>
+          </div>
+        </ion-button>
       </div>
 
       <template v-if="store.incoming.length">
@@ -87,7 +93,7 @@
 <script setup lang="ts">
 import { onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { bookOutline, calendarOutline, mailOutline, peopleOutline, personAddOutline } from 'ionicons/icons';
+import { bookOutline, calendarOutline, linkOutline, mailOutline, peopleOutline, personAddOutline } from 'ionicons/icons';
 import {
   IonButton,
   IonContent,
@@ -146,7 +152,7 @@ function friendSubtitle(f: Friendship): string {
 <style scoped>
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 

@@ -21,4 +21,9 @@ describe('notificationTarget', () => {
     const target = notificationTarget(n('friend_request_accepted', { actor: { id: 'u4', displayName: 'Hugo' }, subject: { id: 'child-1', displayName: 'Jules' } }))
     expect(target).toEqual({ path: '/tabs/friends/u4', actAs: 'child-1' })
   })
+
+  test('share links: the new friend, or the share screen of the suspended link\'s profile', () => {
+    expect(notificationTarget(n('friend_joined_via_link', { actor: { id: 'u5', displayName: 'Léa' } })).path).toBe('/tabs/friends/u5')
+    expect(notificationTarget(n('share_link_suspended', { subject: { id: 'child-1', displayName: 'Jules' } }))).toEqual({ path: '/profile/share', actAs: 'child-1' })
+  })
 })

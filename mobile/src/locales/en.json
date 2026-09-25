@@ -288,6 +288,10 @@
     "link_preview": {
       "invalid_url": "The link must start with http:// or https://.",
       "unavailable": "Couldn't read the page."
+    },
+    "share_link": {
+      "invalid": "Invalid or expired link.",
+      "confirmation_required": "Please confirm creating the link."
     }
   },
   "locales": {
@@ -678,6 +682,86 @@
       "preference_delete": "Deleted preference",
       "notification_read": "Notification read",
       "notification_readAll": "Notifications read"
+    }
+  },
+  "shareLink": {
+    "title": "Share my profile",
+    "titleChild": "Share {name}'s profile",
+    "intro": "Anyone with this link can see your published ideas without an account and become your friend.",
+    "introChild": "Anyone with this link can see {name}'s published ideas without an account and become their friend. You'll see their published ideas and get the notifications.",
+    "entry": "Share my profile",
+    "entryChild": "Share {name}'s profile",
+    "entryNone": "No link yet",
+    "entryActive": "Active link · {count} friend added | Active link · {count} friends added",
+    "entrySuspended": "Link suspended",
+    "myLink": "My link",
+    "none": "There is no link: sharing is off.",
+    "create": "Create the link",
+    "confirmCreateTitle": "Create a share link?",
+    "confirmCreate": "Anyone with this link can see your published ideas without an account and become your friend.",
+    "confirmCreateChild": "Anyone with this link can see {name}'s published ideas without an account and become their friend. Do you confirm, as the profile's manager?",
+    "confirmCreateButton": "Create the link",
+    "active": "Active",
+    "suspended": "Suspended",
+    "joinCount": "No friend added through this link | {count} friend added through this link | {count} friends added through this link",
+    "suspendedHint": "Too many friends were added in 24 h: the link is suspended. Regenerate it to get a new one.",
+    "copy": "Copy",
+    "copied": "Link copied.",
+    "share": "Share",
+    "shareTitle": "My gift ideas",
+    "shareText": "Here are my gift ideas on {app}:",
+    "shareTextChild": "Here are {name}'s gift ideas on {app}:",
+    "visitorTitle": "What a visitor without an account sees",
+    "visitorSees": {
+      "identity": "Your nickname and avatar",
+      "ideas": "Your published ideas",
+      "profile": "Sizes, preferences, birthday",
+      "friends": "Your friends",
+      "drafts": "Drafts and archives"
+    },
+    "preview": "Preview the guest view",
+    "manageTitle": "Manage the link",
+    "regenerate": "Regenerate the link",
+    "regenerateHint": "The old link stops working. Friends already added stay friends.",
+    "confirmRegenerate": "The old link will stop working. Friends already added stay friends.",
+    "disable": "Turn off the link",
+    "confirmDisable": "The link will stop working and sharing will be off. Friends already added stay friends.",
+    "guest": {
+      "heading": "{name}'s gift ideas",
+      "readOnly": "Guest view · read only",
+      "preview": "Preview: this is what a visitor without an account sees.",
+      "all": "All",
+      "price": "Price",
+      "offer": "I'll give it",
+      "like": "Like",
+      "comment": "Comment",
+      "seeLink": "See the link",
+      "empty": "{name} hasn't published any idea yet.",
+      "more": "See more ideas",
+      "joinHint": "Reserve, chip in and become friends with {name}.",
+      "createAccount": "Create an account to interact",
+      "haveAccount": "I already have an account",
+      "signIn": "Sign in",
+      "interactTitle": "Create an account to interact",
+      "interactText": "You need an account to reserve, comment, react, chip in or become friends. Your invitation is kept for 7 days."
+    },
+    "join": {
+      "title": "Become friends with {name}?",
+      "text": "You'll see each other's gift ideas. {name} will be notified.",
+      "textChild": "Profile managed by {manager}. {manager} will see your published ideas and be notified.",
+      "confirm": "Become friends",
+      "later": "Not now",
+      "done": "You're now friends with {name}.",
+      "offline": "You're offline. The invitation is kept and will be handled when you're back online.",
+      "invalid": "Invalid or expired link."
+    },
+    "open": {
+      "link": "I have an invitation link",
+      "title": "I have an invitation link",
+      "intro": "Paste the share link a friend sent you.",
+      "field": "Invitation link",
+      "submit": "Open",
+      "invalid": "This isn't an invitation link."
     }
   }
 }

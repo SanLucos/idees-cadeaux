@@ -24,7 +24,7 @@ export function notificationTarget(n: AppNotification): NotificationTarget {
       case 'birthday_reminder':
         return p.friend ? `/tabs/friends/${p.friend.id}` : '/tabs/friends';
       case 'share_link_suspended':
-        return '/tabs/profile';
+        return '/profile/share';
       case 'contribution_opened':
       case 'pledge_added':
       case 'contribution_goal_reached':

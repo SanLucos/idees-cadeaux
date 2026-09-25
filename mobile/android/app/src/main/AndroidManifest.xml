@@ -29,6 +29,22 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
 
+            <!-- Spec §5.16: share links. The app's own scheme (<app id>://u/<token>, the web page's « Ouvrir dans l'appli »)… -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="${applicationId}" android:host="u" />
+            </intent-filter>
+
+            <!-- …and App Links on https://<domaine>/u/… (host: gradle property shareLinkHost, verified via /.well-known/assetlinks.json). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="${shareLinkHost}" android:pathPrefix="/u/" />
+            </intent-filter>
+
         </activity>
 
         <provider

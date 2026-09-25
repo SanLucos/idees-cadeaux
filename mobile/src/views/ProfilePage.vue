@@ -25,6 +25,16 @@
         </ion-button>
       </div>
 
+      <!-- « Partager mon profil » (Profil.png, spec §5.16), for the active profile. -->
+      <router-link class="share-entry" to="/profile/share">
+        <ion-icon :icon="shareSocialOutline" aria-hidden="true" />
+        <span class="share-entry__text">
+          <strong>{{ activeProfile.active ? t('shareLink.entryChild', { name: current.name }) : t('shareLink.entry') }}</strong>
+          <span v-if="shareSubtitle" class="share-entry__sub">{{ shareSubtitle }}</span>
+        </span>
+        <ion-icon :icon="chevronForward" aria-hidden="true" />
+      </router-link>
+
       <!-- Keyed on the active profile: sizes and preferences reload as the child's. -->
       <ProfileSizesSection :key="`sizes-${activeProfile.activeId ?? 'me'}`" />
       <ProfilePreferencesSection :key="`prefs-${activeProfile.activeId ?? 'me'}`" />
@@ -72,15 +82,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { add, chevronDown, globeOutline, logOutOutline, notificationsOutline } from 'ionicons/icons';
+import { add, chevronDown, chevronForward, globeOutline, logOutOutline, notificationsOutline, shareSocialOutline } from 'ionicons/icons';
 import { actionSheetController, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPage } from '@ionic/vue';
 import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import { useNotificationsStore } from '../stores/notifications';
 import { push } from '../services/push';
+import { shareLinksApi } from '../services/shareLinks';
 import { SUPPORTED_LOCALES } from '../i18n';
 import { formatBirthday } from '../utils/birthday';
 import AppAvatar from '../components/AppAvatar.vue';
@@ -89,6 +100,7 @@ import ProfileSizesSection from '../components/ProfileSizesSection.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import type { ManagedProfile } from '../types/user';
+import type { ShareLink } from '../types/shareLink';
 
 const { t, locale } = useI18n();
 const router = useRouter();
@@ -115,6 +127,23 @@ const otherNames = computed(() =>
 onMounted(() => {
   auth.fetchMe();
   activeProfile.fetchChildren();
+  void loadShareLink();
+});
+
+/** The share entry's status line; undefined while unknown (e.g. offline). */
+const shareLink = ref<ShareLink | null | undefined>(undefined);
+async function loadShareLink(): Promise<void> {
+  shareLink.value = undefined;
+  shareLink.value = await shareLinksApi.mine().catch(() => undefined);
+}
+watch(() => activeProfile.activeId, () => void loadShareLink());
+
+const shareSubtitle = computed(() => {
+  const link = shareLink.value;
+  if (undefined === link) return null;
+  if (null === link) return t('shareLink.entryNone');
+
+  return 'suspended' === link.status ? t('shareLink.entrySuspended') : t('shareLink.entryActive', { count: link.joinCount }, link.joinCount);
 });
 
 function childSubtitle(child: ManagedProfile): string {
@@ -222,5 +251,37 @@ ion-item ion-label p {
 
 .bottom-space {
   height: 24px;
+}
+.share-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 8px;
+  padding: 16px;
+  border-radius: var(--ic-radius-card);
+  background: var(--ion-color-dark);
+  color: var(--ic-surface);
+  text-decoration: none;
+}
+
+.share-entry ion-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.share-entry__text {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.share-entry__text strong {
+  font-size: 16px;
+}
+
+.share-entry__sub {
+  font-size: 13px;
+  opacity: 0.8;
 }
 </style>

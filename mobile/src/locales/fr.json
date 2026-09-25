@@ -288,6 +288,10 @@
     "link_preview": {
       "invalid_url": "Le lien doit commencer par http:// ou https://.",
       "unavailable": "Page impossible à lire."
+    },
+    "share_link": {
+      "invalid": "Lien invalide ou expiré.",
+      "confirmation_required": "Confirmez la création du lien."
     }
   },
   "locales": {
@@ -678,6 +682,86 @@
       "preference_delete": "Suppression d'une préférence",
       "notification_read": "Notification lue",
       "notification_readAll": "Notifications lues"
+    }
+  },
+  "shareLink": {
+    "title": "Partager mon profil",
+    "titleChild": "Partager le profil de {name}",
+    "intro": "Toute personne ayant ce lien pourra voir vos idées publiées sans compte et devenir votre ami.",
+    "introChild": "Toute personne ayant ce lien pourra voir les idées publiées de {name} sans compte et devenir son ami. Vous verrez ses idées publiées et recevrez les notifications.",
+    "entry": "Partager mon profil",
+    "entryChild": "Partager le profil de {name}",
+    "entryNone": "Aucun lien pour l'instant",
+    "entryActive": "Lien actif · {count} ami ajouté | Lien actif · {count} amis ajoutés",
+    "entrySuspended": "Lien suspendu",
+    "myLink": "Mon lien",
+    "none": "Aucun lien n'existe : le partage est désactivé.",
+    "create": "Créer le lien",
+    "confirmCreateTitle": "Créer un lien de partage ?",
+    "confirmCreate": "Toute personne ayant ce lien pourra voir vos idées publiées sans compte et devenir votre ami.",
+    "confirmCreateChild": "Toute personne ayant ce lien pourra voir les idées publiées de {name} sans compte et devenir son ami. Confirmez-vous, en tant que gestionnaire du profil ?",
+    "confirmCreateButton": "Créer le lien",
+    "active": "Actif",
+    "suspended": "Suspendu",
+    "joinCount": "Aucun ami ajouté via ce lien | {count} ami ajouté via ce lien | {count} amis ajoutés via ce lien",
+    "suspendedHint": "Trop d'amis ont été ajoutés en 24 h : le lien est suspendu. Régénérez-le pour en obtenir un nouveau.",
+    "copy": "Copier",
+    "copied": "Lien copié.",
+    "share": "Partager",
+    "shareTitle": "Mes idées cadeaux",
+    "shareText": "Voici mes idées cadeaux sur {app} :",
+    "shareTextChild": "Voici les idées cadeaux de {name} sur {app} :",
+    "visitorTitle": "Ce que voit un visiteur sans compte",
+    "visitorSees": {
+      "identity": "Votre pseudo et votre avatar",
+      "ideas": "Vos idées publiées",
+      "profile": "Tailles, préférences, anniversaire",
+      "friends": "Vos amis",
+      "drafts": "Brouillons et archives"
+    },
+    "preview": "Aperçu de la vue invité",
+    "manageTitle": "Gérer le lien",
+    "regenerate": "Régénérer le lien",
+    "regenerateHint": "L'ancien lien cesse de fonctionner. Les amis déjà ajoutés le restent.",
+    "confirmRegenerate": "L'ancien lien cessera de fonctionner. Les amis déjà ajoutés le restent.",
+    "disable": "Désactiver le lien",
+    "confirmDisable": "Le lien cessera de fonctionner et le partage sera désactivé. Les amis déjà ajoutés le restent.",
+    "guest": {
+      "heading": "Les idées cadeaux de {name}",
+      "readOnly": "Vue invité · lecture seule",
+      "preview": "Aperçu : c'est ce que voit un visiteur sans compte.",
+      "all": "Toutes",
+      "price": "Prix",
+      "offer": "Je l’offre",
+      "like": "J’aime",
+      "comment": "Commenter",
+      "seeLink": "Voir le lien",
+      "empty": "{name} n'a pas encore publié d'idée.",
+      "more": "Voir plus d'idées",
+      "joinHint": "Réservez, cotisez et devenez ami avec {name}.",
+      "createAccount": "Créer un compte pour interagir",
+      "haveAccount": "J’ai déjà un compte",
+      "signIn": "Se connecter",
+      "interactTitle": "Créer un compte pour interagir",
+      "interactText": "Pour réserver, commenter, réagir, cotiser ou devenir ami, il faut un compte. Votre invitation est gardée 7 jours."
+    },
+    "join": {
+      "title": "Devenir ami avec {name} ?",
+      "text": "Vous verrez mutuellement vos idées cadeaux. {name} sera prévenu·e.",
+      "textChild": "Profil géré par {manager}. {manager} verra vos idées publiées et sera prévenu·e.",
+      "confirm": "Devenir amis",
+      "later": "Pas maintenant",
+      "done": "Vous êtes maintenant ami avec {name}.",
+      "offline": "Vous êtes hors ligne. L'invitation est gardée et sera traitée au retour du réseau.",
+      "invalid": "Lien invalide ou expiré."
+    },
+    "open": {
+      "link": "J'ai un lien d'invitation",
+      "title": "J'ai un lien d'invitation",
+      "intro": "Collez le lien de partage qu'un ami vous a envoyé.",
+      "field": "Lien d'invitation",
+      "submit": "Ouvrir",
+      "invalid": "Ce n'est pas un lien d'invitation."
     }
   }
 }

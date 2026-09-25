@@ -3,6 +3,7 @@ import { RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import { useSharedContentStore } from '../stores/sharedContent';
+import { usePendingInvitationStore } from '../stores/pendingInvitation';
 import { parseSharedContent } from '../utils/sharedContent';
 
 const queryString = (value: unknown) => (typeof value === 'string' ? value : null);
@@ -64,6 +65,40 @@ const routes: Array<RouteRecordRaw> = [
 
       return content ? { name: 'IdeaNew', query: { shared: '1' } } : { name: 'MyList' };
     },
+  },
+  // Share links (spec §5.16): the guest view for visitors without an
+  // account (and the owner's preview), the confirmation screen once
+  // signed in, and « J'ai un lien d'invitation ».
+  {
+    path: '/u/:token',
+    name: 'GuestView',
+    component: () => import('../views/GuestViewPage.vue'),
+    beforeEnter: (to) => {
+      const auth = useAuthStore();
+      if (!auth.isAuthenticated || '1' === to.query.preview) return true;
+      usePendingInvitationStore().keep(String(to.params.token));
+
+      return auth.user?.isOnboarded ? { name: 'JoinViaLink', params: { token: to.params.token } } : { name: 'Onboarding' };
+    },
+  },
+  {
+    path: '/join/:token',
+    name: 'JoinViaLink',
+    component: () => import('../views/JoinViaLinkPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  { path: '/open-link', name: 'OpenShareLink', component: () => import('../views/OpenShareLinkPage.vue') },
+  {
+    path: '/profile/share',
+    name: 'ShareProfile',
+    component: () => import('../views/ShareProfilePage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/profile/children/:id/share',
+    name: 'ChildShareProfile',
+    component: () => import('../views/ShareProfilePage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
   },
   // Full-screen pages, outside the tab bar (as on the FicheIdee and NouvelleIdee mock-ups).
   {
@@ -156,6 +191,14 @@ router.beforeEach(async (to) => {
   // A share received while signed out (spec §5.6): open it once signed in and onboarded.
   if (auth.user?.isOnboarded && useSharedContentStore().pending && 'IdeaNew' !== to.name) {
     return { name: 'IdeaNew', query: { shared: '1' } };
+  }
+
+  // A share link opened signed out or offline (spec §5.16): its
+  // confirmation screen, once signed in and onboarded.
+  const pendingInvitation = usePendingInvitationStore();
+  const invitation = pendingInvitation.deferred ? null : pendingInvitation.token;
+  if (auth.user?.isOnboarded && invitation && !['JoinViaLink', 'GuestView', 'NotificationConsent', 'IdeaNew'].includes(String(to.name))) {
+    return { name: 'JoinViaLink', params: { token: invitation } };
   }
 
   // Restore the active child profile before any screen loads its data,

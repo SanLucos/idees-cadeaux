@@ -50,6 +50,9 @@
       <ion-text class="ion-text-center" style="display: block; margin-top: 0.75rem;">
         <router-link to="/invitation">{{ t('invitation.link') }}</router-link>
       </ion-text>
+      <ion-text class="ion-text-center" style="display: block; margin-top: 0.75rem;">
+        <router-link to="/open-link">{{ t('shareLink.open.link') }}</router-link>
+      </ion-text>
 
       <SocialLoginButtons class="ion-margin-top" @error="(message) => (error = message)" />
     </ion-content>
