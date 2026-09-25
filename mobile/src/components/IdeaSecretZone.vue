@@ -3,7 +3,7 @@
     <!-- Contribution in progress (or its history) -->
     <div v-if="contribution" class="ic-card block">
       <div class="block__head">
-        <strong>{{ t('interactions.contributionBy', { name: contribution.isInitiator ? t('interactions.you') : contribution.initiator.displayName }) }}</strong>
+        <strong>{{ t('interactions.contributionBy', { name: contribution.isInitiator ? t('interactions.you') : (contribution.initiator?.displayName ?? t('contribution.formerMember')) }) }}</strong>
         <span v-if="'closed' === contribution.status" class="ic-muted">{{ t('interactions.contributionClosed') }}</span>
         <span v-else-if="contribution.remainingAmount" class="ic-muted">
           {{ t('interactions.remaining', { amount: money(contribution.remainingAmount) }) }}

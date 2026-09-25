@@ -5,6 +5,9 @@ import router from './router';
 import { i18n } from './i18n';
 import { openLocalDb } from './offline/runtime';
 import { listenForShares } from './services/shareIntake';
+import { reportError, setErrorRoute } from './services/errorReporter';
+import { setOnDeletionScheduled } from './services/api';
+import { useAuthStore } from './stores/auth';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -48,6 +51,24 @@ import '@fontsource/figtree/700.css';
 import './theme/variables.css';
 
 const app = createApp(App).use(IonicVue).use(createPinia()).use(i18n);
+
+// Spec §9: uncaught errors reach the backend's logs (services/errorReporter).
+app.config.errorHandler = (error) => {
+  console.error(error);
+  reportError(error, 'vue');
+};
+window.addEventListener('error', (event) => reportError(event.error ?? event.message, 'window'));
+window.addEventListener('unhandledrejection', (event) => reportError(event.reason, 'promise'));
+// Spec §5.13: the account was scheduled for deletion (e.g. from another
+// device): reload it, the router then shows the grace-period screen.
+setOnDeletionScheduled(() => {
+  void useAuthStore()
+    .fetchMe()
+    .then(() => router.replace({ name: 'DeletionScheduled' }))
+    .catch(() => undefined);
+});
+// The route's name, not its path: paths may hold share tokens.
+router.afterEach((to) => setErrorRoute(String(to.name ?? '')));
 
 // The device database (spec §8) must be open before the first screen —
 // and the session restore — read from it.

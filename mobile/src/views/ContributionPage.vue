@@ -58,7 +58,7 @@
           <ion-icon :icon="shieldCheckmarkOutline" aria-hidden="true" />
           <p>
             <strong>{{ t('contribution.declarativeTitle') }}</strong>
-            {{ t('contribution.declarativeBody', { name: contribution.isInitiator ? t('interactions.you') : contribution.initiator.displayName }) }}
+            {{ t('contribution.declarativeBody', { name: contribution.isInitiator ? t('interactions.you') : (contribution.initiator?.displayName ?? t('contribution.formerMember')) }) }}
           </p>
         </div>
 

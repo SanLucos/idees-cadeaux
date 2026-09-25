@@ -194,7 +194,10 @@
       "refresh_token_invalid": "Session expired, please sign in again.",
       "social_token_invalid": "Sign-in rejected by the provider.",
       "social_email_missing": "This provider did not share an email address.",
-      "required": "Sign-in required."
+      "required": "Sign-in required.",
+      "reauthentication_required": "Confirm with your password or an emailed code.",
+      "reauthentication_failed": "Wrong password or code.",
+      "account_deletion_scheduled": "This account is being deleted: sign in to cancel the deletion."
     },
     "validation": {
       "email_invalid": "Invalid email address.",
@@ -292,6 +295,12 @@
     "share_link": {
       "invalid": "Invalid or expired link.",
       "confirmation_required": "Please confirm creating the link."
+    },
+    "export": {
+      "rate_limited": "Too many exports today, try again tomorrow."
+    },
+    "account": {
+      "deletion_scheduled": "Your account is being deleted: cancel the deletion to continue."
     }
   },
   "locales": {
@@ -539,7 +548,8 @@
     "closeConfirm": {
       "title": "Close the contribution?",
       "message": "Nobody will be able to chip in or change their share any more."
-    }
+    },
+    "formerMember": "a former member"
   },
   "acting": {
     "listOf": "{name}'s list",
@@ -762,6 +772,54 @@
       "field": "Invitation link",
       "submit": "Open",
       "invalid": "This isn't an invitation link."
+    }
+  },
+  "account": {
+    "privacy": "Privacy policy",
+    "privacyNotice": "By creating an account, you accept our privacy policy.",
+    "reauth": {
+      "password": "Your password",
+      "codeIntro": "To confirm, we'll email you a code.",
+      "sendCode": "Get a code",
+      "codeSent": "Code sent: enter it below (valid 15 minutes).",
+      "code": "Code received by email"
+    },
+    "export": {
+      "title": "Export my data",
+      "titleChild": "Export {name}'s data",
+      "intro": "Get a ZIP archive with your data and your images.",
+      "introChild": "Get a ZIP archive with the data and images of {name}'s profile.",
+      "contents": {
+        "profile": "Profile, sizes and preferences",
+        "ideas": "Ideas you wrote, suggestions to your friends included",
+        "friends": "Friends and friend requests (nicknames)",
+        "activity": "Your comments, reactions, reservations and pledges",
+        "images": "Uploaded images"
+      },
+      "delivery": "The download link will be sent to {email} and stay valid for 48 hours.",
+      "submit": "Request the export",
+      "requested": "On its way: you'll soon get an email at {email} with the download link (valid 48 hours)."
+    },
+    "delete": {
+      "title": "Delete my account",
+      "graceTitle": "14 days to change your mind",
+      "grace": "Your account will be suspended for 14 days: friends can't reach you and you get no notifications. To cancel, sign in or use the link in the confirmation email.",
+      "erased": "After that, everything is deleted for good: your account, your ideas and everything on them, and what you did on your friends' lists.",
+      "exportFirst": "Export my data first",
+      "childrenTitle": "Your child profiles",
+      "childrenIntro": "If you do nothing, they'll be deleted with your account. You can hand them over to an email address or export their data.",
+      "attachEmail": "Attach an email",
+      "exportChild": "Export",
+      "confirmTitle": "Confirm",
+      "understood": "I understand the deletion becomes permanent after 14 days.",
+      "submit": "Delete my account",
+      "alertTitle": "Delete your account?",
+      "alertMessage": "It will be deleted for good in 14 days, unless you cancel before then."
+    },
+    "scheduled": {
+      "title": "Your account will be deleted on {date}",
+      "text": "Until then it's suspended. You can still cancel the deletion or export your data.",
+      "cancel": "Cancel the deletion"
     }
   }
 }

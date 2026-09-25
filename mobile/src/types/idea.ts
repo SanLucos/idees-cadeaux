@@ -33,7 +33,8 @@ export interface Contribution {
   id: string;
   ideaId: string;
   status: 'open' | 'closed';
-  initiator: PersonRef;
+  /** Null once the initiator's account was deleted (spec §5.13): the contribution is then closed. */
+  initiator: PersonRef | null;
   isInitiator: boolean;
   targetAmount: string | null;
   currency: string;

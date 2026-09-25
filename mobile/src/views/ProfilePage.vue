@@ -66,9 +66,22 @@
             <ion-label>{{ t('profile.settings.language') }}</ion-label>
             <ion-note slot="end">{{ t(`locales.${locale}`) }}</ion-note>
           </ion-item>
+          <!-- Spec §5.13: export, privacy policy, account deletion. -->
+          <ion-item button router-link="/settings/export" detail>
+            <ion-icon slot="start" :icon="downloadOutline" aria-hidden="true" />
+            <ion-label>{{ t('account.export.title') }}</ion-label>
+          </ion-item>
+          <ion-item button :href="privacyUrl" target="_blank" rel="noopener" detail>
+            <ion-icon slot="start" :icon="shieldCheckmarkOutline" aria-hidden="true" />
+            <ion-label>{{ t('account.privacy') }}</ion-label>
+          </ion-item>
           <ion-item button @click="logout">
             <ion-icon slot="start" :icon="logOutOutline" aria-hidden="true" />
             <ion-label>{{ t('nav.logout') }}</ion-label>
+          </ion-item>
+          <ion-item button router-link="/settings/delete-account" detail>
+            <ion-icon slot="start" :icon="trashOutline" color="danger" aria-hidden="true" />
+            <ion-label color="danger">{{ t('account.delete.title') }}</ion-label>
           </ion-item>
         </ion-list>
       </template>
@@ -85,13 +98,14 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { add, chevronDown, chevronForward, globeOutline, logOutOutline, notificationsOutline, shareSocialOutline } from 'ionicons/icons';
+import { add, chevronDown, chevronForward, downloadOutline, globeOutline, logOutOutline, notificationsOutline, shareSocialOutline, shieldCheckmarkOutline, trashOutline } from 'ionicons/icons';
 import { actionSheetController, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPage } from '@ionic/vue';
 import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import { useNotificationsStore } from '../stores/notifications';
 import { push } from '../services/push';
 import { shareLinksApi } from '../services/shareLinks';
+import { backendUrl } from '../utils/backendUrl';
 import { SUPPORTED_LOCALES } from '../i18n';
 import { formatBirthday } from '../utils/birthday';
 import AppAvatar from '../components/AppAvatar.vue';
@@ -107,6 +121,7 @@ const router = useRouter();
 const auth = useAuthStore();
 const activeProfile = useActiveProfileStore();
 const notifications = useNotificationsStore();
+const privacyUrl = computed(() => backendUrl(`/privacy?lang=${locale.value}`));
 
 /** Whoever the screen is about: me, or the active child. */
 const current = computed(() => {

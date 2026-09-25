@@ -38,6 +38,9 @@
         <ion-button expand="block" type="submit" class="ion-margin-top" :disabled="loading">
           {{ t('auth.register.submit') }}
         </ion-button>
+        <p class="ion-text-center privacy">
+          <a :href="backendUrl(`/privacy?lang=${locale}`)" target="_blank" rel="noopener">{{ t('account.privacyNotice') }}</a>
+        </p>
       </form>
 
       <ion-text class="ion-text-center" style="display: block; margin-top: 2rem;">
@@ -55,6 +58,7 @@ import { useRouter } from 'vue-router';
 import { IonButton, IonContent, IonHeader, IonInput, IonItem, IonList, IonPage, IonText, IonTitle, IonToolbar } from '@ionic/vue';
 import { useAuthStore } from '../../stores/auth';
 import { useErrorMessage } from '../../composables/useErrorMessage';
+import { backendUrl } from '../../utils/backendUrl';
 
 const { t, locale } = useI18n();
 const router = useRouter();
@@ -79,3 +83,9 @@ async function submit(): Promise<void> {
   }
 }
 </script>
+
+<style scoped>
+.privacy {
+  font-size: 14px;
+}
+</style>

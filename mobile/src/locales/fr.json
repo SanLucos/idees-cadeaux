@@ -194,7 +194,10 @@
       "refresh_token_invalid": "Session expirée, reconnectez-vous.",
       "social_token_invalid": "Connexion refusée par le fournisseur.",
       "social_email_missing": "Ce fournisseur n'a pas partagé d'adresse email.",
-      "required": "Connexion requise."
+      "required": "Connexion requise.",
+      "reauthentication_required": "Confirmez avec votre mot de passe ou un code reçu par email.",
+      "reauthentication_failed": "Mot de passe ou code incorrect.",
+      "account_deletion_scheduled": "Ce compte doit être supprimé : connectez-vous pour annuler la suppression."
     },
     "validation": {
       "email_invalid": "Adresse email invalide.",
@@ -292,6 +295,12 @@
     "share_link": {
       "invalid": "Lien invalide ou expiré.",
       "confirmation_required": "Confirmez la création du lien."
+    },
+    "export": {
+      "rate_limited": "Trop d'exports demandés aujourd'hui, réessayez demain."
+    },
+    "account": {
+      "deletion_scheduled": "Votre compte doit être supprimé : annulez la suppression pour continuer."
     }
   },
   "locales": {
@@ -539,7 +548,8 @@
     "closeConfirm": {
       "title": "Clôturer la cotisation ?",
       "message": "Plus personne ne pourra participer ni modifier sa participation."
-    }
+    },
+    "formerMember": "un ancien membre"
   },
   "acting": {
     "listOf": "Liste de {name}",
@@ -762,6 +772,54 @@
       "field": "Lien d'invitation",
       "submit": "Ouvrir",
       "invalid": "Ce n'est pas un lien d'invitation."
+    }
+  },
+  "account": {
+    "privacy": "Politique de confidentialité",
+    "privacyNotice": "En créant un compte, vous acceptez notre politique de confidentialité.",
+    "reauth": {
+      "password": "Votre mot de passe",
+      "codeIntro": "Pour confirmer, nous vous envoyons un code par email.",
+      "sendCode": "Recevoir un code",
+      "codeSent": "Code envoyé : saisissez-le ci-dessous (valable 15 minutes).",
+      "code": "Code reçu par email"
+    },
+    "export": {
+      "title": "Exporter mes données",
+      "titleChild": "Exporter les données de {name}",
+      "intro": "Recevez une archive ZIP avec vos données et vos images.",
+      "introChild": "Recevez une archive ZIP avec les données et les images du profil de {name}.",
+      "contents": {
+        "profile": "Profil, tailles et préférences",
+        "ideas": "Idées écrites, suggestions faites à vos amis comprises",
+        "friends": "Amis et demandes d'ami (pseudos)",
+        "activity": "Vos commentaires, réactions, réservations et participations",
+        "images": "Images envoyées"
+      },
+      "delivery": "Le lien de téléchargement sera envoyé à {email} et restera valable 48 heures.",
+      "submit": "Demander l'export",
+      "requested": "C'est parti : vous recevrez bientôt un email à {email} avec le lien de téléchargement (valable 48 heures)."
+    },
+    "delete": {
+      "title": "Supprimer mon compte",
+      "graceTitle": "14 jours pour changer d'avis",
+      "grace": "Votre compte sera suspendu pendant 14 jours : vos amis ne pourront plus vous écrire et vous ne recevrez plus de notification. Pour annuler, connectez-vous ou utilisez le lien de l'email de confirmation.",
+      "erased": "Ensuite, tout sera supprimé définitivement : votre compte, vos idées et tout ce qui s'y rattache, et ce que vous avez fait sur les listes de vos amis.",
+      "exportFirst": "Exporter d'abord mes données",
+      "childrenTitle": "Vos profils enfants",
+      "childrenIntro": "Sans action de votre part, ils seront supprimés avec votre compte. Vous pouvez les confier à une adresse email ou exporter leurs données.",
+      "attachEmail": "Rattacher un email",
+      "exportChild": "Exporter",
+      "confirmTitle": "Confirmer",
+      "understood": "Je comprends que la suppression sera définitive après 14 jours.",
+      "submit": "Supprimer mon compte",
+      "alertTitle": "Supprimer votre compte ?",
+      "alertMessage": "Il sera supprimé définitivement dans 14 jours, sauf si vous annulez d'ici là."
+    },
+    "scheduled": {
+      "title": "Votre compte sera supprimé le {date}",
+      "text": "D'ici là, il est suspendu. Vous pouvez encore annuler la suppression ou exporter vos données.",
+      "cancel": "Annuler la suppression"
     }
   }
 }

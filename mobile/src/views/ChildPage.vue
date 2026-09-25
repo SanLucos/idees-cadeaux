@@ -27,6 +27,10 @@
           <ion-button expand="block" class="manage" @click="manage">
             {{ t('children.manageList', { name: child.displayName }) }}
           </ion-button>
+          <!-- Spec §5.13: the manager exports the child's data (link sent to them). -->
+          <ion-button class="ic-button-surface" expand="block" :router-link="`/profile/children/${child.id}/export`">
+            {{ t('account.export.titleChild', { name: child.displayName }) }}
+          </ion-button>
           <!-- Spec §5.16: the manager shares the child's profile from its page. -->
           <ion-button class="ic-button-surface" expand="block" :router-link="`/profile/children/${child.id}/share`">
             {{ t('shareLink.entryChild', { name: child.displayName }) }}

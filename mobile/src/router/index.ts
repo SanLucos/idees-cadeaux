@@ -66,6 +66,31 @@ const routes: Array<RouteRecordRaw> = [
       return content ? { name: 'IdeaNew', query: { shared: '1' } } : { name: 'MyList' };
     },
   },
+  // Account (spec §5.13): export, deletion, and the only screen left during its grace period.
+  {
+    path: '/settings/export',
+    name: 'ExportData',
+    component: () => import('../views/ExportDataPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile/children/:id/export',
+    name: 'ChildExportData',
+    component: () => import('../views/ExportDataPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/settings/delete-account',
+    name: 'AccountDeletion',
+    component: () => import('../views/AccountDeletionPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
+    path: '/account/deletion-scheduled',
+    name: 'DeletionScheduled',
+    component: () => import('../views/DeletionScheduledPage.vue'),
+    meta: { requiresAuth: true },
+  },
   // Share links (spec §5.16): the guest view for visitors without an
   // account (and the owner's preview), the confirmation screen once
   // signed in, and « J'ai un lien d'invitation ».
@@ -178,6 +203,13 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'Login' };
+  }
+  // Spec §5.13: an account being deleted only sees « Votre compte sera supprimé le … ».
+  if (auth.user?.deletionScheduledAt) {
+    return ['DeletionScheduled', 'ExportData'].includes(String(to.name)) ? true : { name: 'DeletionScheduled' };
+  }
+  if ('DeletionScheduled' === to.name) {
+    return { name: 'MyList' };
   }
   if (to.meta.guest && auth.isAuthenticated) {
     return { name: 'MyList' };

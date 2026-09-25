@@ -46,6 +46,29 @@ export function setActingAs(profileId: string | null): void {
   actingAsProfileId = profileId;
 }
 
+let onDeletionScheduled: (() => void) | null = null;
+
+/**
+ * Spec §5.13: an account scheduled for deletion only reaches the
+ * « Votre compte sera supprimé le … » screen; stores/auth reacts here
+ * when the server says so (account.deletion_scheduled).
+ */
+export function setOnDeletionScheduled(callback: (() => void) | null): void {
+  onDeletionScheduled = callback;
+}
+
+/** Spec §9: sent with every request, so an error report matches the server's logs. */
+export function newRequestId(): string {
+  return `app-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+let lastRequestId: string | null = null;
+
+/** The id of the last request sent, for error reports. */
+export function lastApiRequestId(): string | null {
+  return lastRequestId;
+}
+
 let refreshPromise: Promise<void> | null = null;
 
 async function doRefresh(): Promise<void> {
@@ -74,7 +97,8 @@ async function perform(method: string, path: string, options: RequestOptions): P
   // format drops @id (and wraps collections as a bare array instead of
   // {member: [...]}) — this app relies on @id to address items for
   // PATCH/DELETE, so it needs the full JSON-LD/Hydra shape.
-  const headers: Record<string, string> = { Accept: 'application/ld+json', ...options.headers };
+  lastRequestId = newRequestId();
+  const headers: Record<string, string> = { Accept: 'application/ld+json', 'X-Request-Id': lastRequestId, ...options.headers };
   let body: BodyInit | undefined;
 
   if (options.formData) {
@@ -106,6 +130,9 @@ async function perform(method: string, path: string, options: RequestOptions): P
 async function rawRequest<T>(method: string, path: string, options: RequestOptions): Promise<T> {
   const { status, payload } = await perform(method, path, options);
 
+  if (403 === status && 'account.deletion_scheduled' === payload.code) {
+    onDeletionScheduled?.();
+  }
   if (status >= 400) {
     throw new ApiError(status, (payload.code as string) ?? 'request.failed', (payload.detail as string) ?? '', payload);
   }

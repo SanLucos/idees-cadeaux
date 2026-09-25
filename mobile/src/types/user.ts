@@ -11,6 +11,10 @@ export interface User {
   emailVerified: boolean;
   type?: 'regular' | 'managed';
   managedBy?: { id: string; displayName: string | null } | null;
+  /** Spec §5.13: set during the 14 days of grace before the account is erased. */
+  deletionScheduledAt?: string | null;
+  /** Re-authentication: the password, or else a code sent by email. */
+  hasPassword?: boolean;
 }
 
 /** A child profile (spec §5.15), as listed by GET /managed-profiles. */
