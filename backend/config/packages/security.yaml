@@ -56,6 +56,8 @@ security:
 
     access_control:
         - { path: ^/api/health, roles: PUBLIC_ACCESS }
+        # Error reports from the app, signed in or not (spec §9).
+        - { path: ^/api/client-errors$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/(register|login|refresh|verify-email|forgot-password|reset-password|social|managed-invitation)(/|$), roles: PUBLIC_ACCESS }
         - { path: ^/api/(docs|contexts|errors|validation_errors|\.well-known)(/|\.|$), roles: PUBLIC_ACCESS }
         # Guest view of a share link (spec §5.16); joining needs an account.

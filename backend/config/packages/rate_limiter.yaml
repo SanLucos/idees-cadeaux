@@ -40,3 +40,8 @@ framework:
             policy: sliding_window
             limit: 3
             interval: '1 day'
+        # Spec §9: the app's error reports, per IP (a crash loop mustn't flood the logs).
+        client_errors:
+            policy: sliding_window
+            limit: 30
+            interval: '10 minutes'

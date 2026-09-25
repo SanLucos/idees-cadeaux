@@ -1,0 +1,61 @@
+{% extends 'legal/_layout.html.twig' %}
+{% block title %}Privacy policy{% endblock %}
+{% block body %}
+<h1>Privacy policy</h1>
+<p class="muted">Draft version of <span class="todo">[TO BE COMPLETED: date]</span>. <a href="?lang=fr">Version française</a></p>
+
+<p>{{ app_name }} lets you publish gift ideas, share them with your friends and coordinate with them without spoiling the surprise. This page explains what data we process, why, for how long, and how to exercise your rights.</p>
+
+<h2>1. Controller</h2>
+<p><span class="todo">[TO BE COMPLETED: publisher's name, legal form, address]</span>. Contact for any question about your data: <span class="todo">[TO BE COMPLETED: contact / DPO email]</span>.</p>
+
+<h2>2. Data we process and why</h2>
+<table>
+    <tr><th>Data</th><th>Purpose</th><th>Legal basis</th></tr>
+    <tr><td>Email, password (hashed), or Google / Apple identity</td><td>Creating and securing your account</td><td>Performance of the contract</td></tr>
+    <tr><td>Nickname, avatar, birthday (optional), language, time zone</td><td>Your profile, visible to your friends; birthday reminders</td><td>Performance of the contract</td></tr>
+    <tr><td>Gift ideas (title, link, price, note, image, occasion), sizes and preferences</td><td>The service itself</td><td>Performance of the contract</td></tr>
+    <tr><td>Friendships, suggestions, reservations, comments, reactions, contributions</td><td>Coordination between friends, hidden from the recipient</td><td>Performance of the contract</td></tr>
+    <tr><td>Push tokens, notification preferences and consents</td><td>Notifying you, as you choose</td><td>Consent (push and email), withdrawable at any time</td></tr>
+    <tr><td>Hashes of your contacts' emails, if you use “My contacts”</td><td>Finding friends already registered; <strong>no contact is kept</strong> on our servers</td><td>Consent (phone permission)</td></tr>
+    <tr><td>Address of a web page you want to pre-fill from</td><td>Reading its title, price and image; not kept outside the idea you save</td><td>Performance of the contract</td></tr>
+    <tr><td>Technical logs (ids, IP addresses, errors)</td><td>Security, abuse prevention, fixing errors</td><td>Legitimate interest</td></tr>
+</table>
+<p>No advertising, no data sale, no profiling. No payment goes through the app: contributions are declarative only.</p>
+
+<h2>3. Who sees what</h2>
+<ul>
+    <li>Your published ideas, nickname, avatar, birthday, sizes and preferences are visible to your <strong>friends</strong>. Your drafts are visible to you only.</li>
+    <li>What your friends do on your ideas (suggestions, reservations, comments, reactions, contributions) is <strong>deliberately hidden</strong> from you, your data export included.</li>
+    <li>Individual contribution amounts are visible only to their author and to whoever started the contribution.</li>
+    <li><strong>Share link</strong>: if you create a share link for your profile, anyone who has it can see, without an account, your nickname, avatar and published personal ideas (nothing else), on a non-indexed web page. You can regenerate or turn off the link at any time.</li>
+</ul>
+
+<h2>4. Child profiles</h2>
+<p>An adult may create a profile for their child, without email or sign-in, stating they hold parental authority (timestamped consent). Data is kept to a minimum (nickname, optional avatar and birthday, ideas, sizes, preferences, adult friends). These profiles never appear in email search or contact matching. The manager can export or delete the profile, or hand it over to an email address. The app is not meant to be used directly by children.</p>
+
+<h2>5. Recipients and processors</h2>
+<p>Your data is hosted in the European Union by <span class="todo">[TO BE COMPLETED: hosting, image storage, email provider]</span>. Push notifications go through Firebase Cloud Messaging (Google) and, on iOS, Apple's push service: they only receive a device identifier and the notification text. Signing in with Google or Apple exchanges an identity token with them.</p>
+
+<h2>6. Retention</h2>
+<ul>
+    <li>Account and contents: as long as the account exists.</li>
+    <li>Account deletion: a <strong>14-day</strong> grace period during which you can cancel (account suspended), then permanent deletion; backups are erased by rotation within <strong>30 days</strong>.</li>
+    <li>Cancelled or deleted interactions: erased for good 30 days later.</li>
+    <li>Unanswered friend requests: expire after 30 days.</li>
+    <li>Data export: archive available for 48 hours, then erased.</li>
+    <li>Technical logs: <span class="todo">[TO BE COMPLETED: duration, e.g. 90 days]</span>.</li>
+</ul>
+
+<h2>7. Your rights</h2>
+<p>You can access, correct and delete your data, object to some processing, and ask for restriction and portability. In the app: <strong>Profile → Export my data</strong> (ZIP archive sent by email) and <strong>Profile → Delete my account</strong>. Notification consents are withdrawn in <strong>Profile → Notifications</strong> or through each email's unsubscribe link. For anything else: <span class="todo">[TO BE COMPLETED: contact]</span>. You may also complain to your data protection authority (in France, the CNIL).</p>
+
+<h2>8. Security</h2>
+<p>Encrypted connections (HTTPS), hashed passwords, short-lived access tokens, secure storage on the device (Keychain / Keystore), private images served through short-lived signed links, photo metadata (EXIF) removed, limited attempts.</p>
+
+<h2>9. Cookies and local storage</h2>
+<p>The share link web page sets no cookie. The app keeps a copy of your data on your device to work offline; it is erased when you sign out.</p>
+
+<h2>10. Changes</h2>
+<p>We will tell you in the app about any significant change to this policy.</p>
+{% endblock %}

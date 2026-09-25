@@ -1,0 +1,61 @@
+{% extends 'legal/_layout.html.twig' %}
+{% block title %}Politique de confidentialité{% endblock %}
+{% block body %}
+<h1>Politique de confidentialité</h1>
+<p class="muted">Version provisoire du <span class="todo">[À COMPLÉTER : date]</span>. <a href="?lang=en">English version</a></p>
+
+<p>{{ app_name }} permet de publier ses idées cadeaux, de les partager avec ses amis et de se coordonner avec eux sans gâcher la surprise. Cette page explique quelles données nous traitons, pourquoi, combien de temps, et comment exercer vos droits.</p>
+
+<h2>1. Responsable du traitement</h2>
+<p><span class="todo">[À COMPLÉTER : nom de l'éditeur, forme juridique, adresse]</span>. Contact pour toute question sur vos données : <span class="todo">[À COMPLÉTER : adresse email de contact / DPO]</span>.</p>
+
+<h2>2. Données traitées et finalités</h2>
+<table>
+    <tr><th>Données</th><th>Pourquoi</th><th>Base légale</th></tr>
+    <tr><td>Email, mot de passe (chiffré), ou identifiant Google / Apple</td><td>Créer et sécuriser votre compte</td><td>Exécution du contrat</td></tr>
+    <tr><td>Pseudo, avatar, date d'anniversaire (facultative), langue, fuseau horaire</td><td>Votre profil, visible de vos amis ; rappels d'anniversaire</td><td>Exécution du contrat</td></tr>
+    <tr><td>Idées cadeaux (titre, lien, prix, note, image, occasion), tailles et préférences</td><td>Le service lui-même</td><td>Exécution du contrat</td></tr>
+    <tr><td>Amitiés, suggestions, réservations, commentaires, réactions, cotisations</td><td>Coordination entre amis, sans que le destinataire le voie</td><td>Exécution du contrat</td></tr>
+    <tr><td>Jetons de notification push, préférences et consentements de notification</td><td>Vous prévenir, selon vos réglages</td><td>Consentement (push et email), révocable à tout moment</td></tr>
+    <tr><td>Empreintes (hachées) des emails de vos contacts, si vous utilisez « Mes contacts »</td><td>Trouver vos amis déjà inscrits ; <strong>aucun contact n'est conservé</strong> par nos serveurs</td><td>Consentement (permission du téléphone)</td></tr>
+    <tr><td>Adresse d'une page web que vous voulez pré-remplir</td><td>Lire son titre, son prix et son image ; l'adresse n'est pas conservée en dehors de l'idée que vous enregistrez</td><td>Exécution du contrat</td></tr>
+    <tr><td>Journaux techniques (identifiants, adresses IP, erreurs)</td><td>Sécurité, prévention des abus, correction des erreurs</td><td>Intérêt légitime</td></tr>
+</table>
+<p>Nous ne faisons ni publicité, ni revente de données, ni profilage. Aucun paiement ne transite par l'application : les cotisations sont uniquement déclaratives.</p>
+
+<h2>3. Qui voit quoi</h2>
+<ul>
+    <li>Vos idées publiées, pseudo, avatar, anniversaire, tailles et préférences sont visibles de vos <strong>amis</strong>. Vos brouillons ne sont visibles que de vous.</li>
+    <li>Ce que vos amis font sur vos idées (suggestions, réservations, commentaires, réactions, cotisations) vous est <strong>volontairement caché</strong>, y compris dans l'export de vos données.</li>
+    <li>Les montants individuels d'une cotisation ne sont visibles que de leur auteur et de l'initiateur de la cotisation.</li>
+    <li><strong>Lien de partage</strong> : si vous créez un lien de partage de votre profil, toute personne qui l'a peut voir, sans compte, votre pseudo, votre avatar et vos idées personnelles publiées (rien d'autre), sur une page web non indexée. Vous pouvez régénérer ou désactiver ce lien à tout moment.</li>
+</ul>
+
+<h2>4. Profils enfants</h2>
+<p>Un adulte peut créer un profil pour son enfant, sans email ni connexion. Il atteste être titulaire de l'autorité parentale (consentement horodaté). Les données sont limitées au minimum (pseudo, avatar et anniversaire facultatifs, idées, tailles, préférences, amis adultes). Ces profils n'apparaissent ni dans la recherche par email ni dans la correspondance de contacts. Le gestionnaire peut exporter ou supprimer le profil, ou le confier à une adresse email. L'application n'est pas destinée à être utilisée directement par des enfants.</p>
+
+<h2>5. Destinataires et sous-traitants</h2>
+<p>Vos données sont hébergées dans l'Union européenne chez <span class="todo">[À COMPLÉTER : hébergeur, stockage d'images, service d'envoi d'emails]</span>. Les notifications push passent par Firebase Cloud Messaging (Google) et, pour iOS, par le service de notifications d'Apple : seuls un identifiant d'appareil et le texte de la notification leur sont transmis. La connexion avec Google ou Apple échange un jeton d'identité avec ces fournisseurs.</p>
+
+<h2>6. Durées de conservation</h2>
+<ul>
+    <li>Compte et contenus : tant que le compte existe.</li>
+    <li>Suppression du compte : période de grâce de <strong>14 jours</strong> pendant laquelle vous pouvez annuler (compte suspendu), puis suppression définitive ; les sauvegardes sont effacées par rotation sous <strong>30 jours</strong>.</li>
+    <li>Interactions annulées ou supprimées : effacées définitivement 30 jours après.</li>
+    <li>Demandes d'ami sans réponse : expirent après 30 jours.</li>
+    <li>Export de vos données : archive disponible 48 heures, puis effacée.</li>
+    <li>Journaux techniques : <span class="todo">[À COMPLÉTER : durée, par ex. 90 jours]</span>.</li>
+</ul>
+
+<h2>7. Vos droits</h2>
+<p>Vous pouvez accéder à vos données, les rectifier, les supprimer, vous opposer à certains traitements, en demander la limitation et la portabilité. Dans l'application : <strong>Profil → Exporter mes données</strong> (archive ZIP envoyée par email) et <strong>Profil → Supprimer mon compte</strong>. Les consentements aux notifications se retirent dans <strong>Profil → Notifications</strong> ou via le lien de désinscription de chaque email. Pour toute autre demande : <span class="todo">[À COMPLÉTER : contact]</span>. Vous pouvez aussi saisir la CNIL (www.cnil.fr).</p>
+
+<h2>8. Sécurité</h2>
+<p>Connexions chiffrées (HTTPS), mots de passe hachés, jetons d'accès courts, stockage sécurisé sur l'appareil (Keychain / Keystore), images privées servies par des liens signés à durée limitée, métadonnées (EXIF) des photos supprimées, limitation du nombre de tentatives.</p>
+
+<h2>9. Cookies et stockage local</h2>
+<p>La page web des liens de partage ne dépose aucun cookie. L'application conserve sur votre appareil une copie de vos données pour fonctionner hors ligne ; elle est effacée à la déconnexion.</p>
+
+<h2>10. Modifications</h2>
+<p>Nous vous informerons dans l'application de toute modification importante de cette politique.</p>
+{% endblock %}
