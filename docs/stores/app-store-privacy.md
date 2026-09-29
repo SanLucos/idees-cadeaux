@@ -16,4 +16,4 @@ Réponses au questionnaire *App Privacy* d'App Store Connect. Aucune donnée n'e
 - **Suivi** : Non.
 - **Achats** : aucun (pas de paiement réel, spec §1).
 - **Profils enfants** : créés et gérés par un adulte ; l'app n'est pas dans la catégorie Enfants.
-- **URL de la politique** : `https://[À COMPLÉTER : domaine]/privacy`.
+- **URL de la politique** : `https://ideescadeaux.frigologie.fr/privacy`.
