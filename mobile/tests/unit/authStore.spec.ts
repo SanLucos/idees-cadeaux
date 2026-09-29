@@ -97,4 +97,25 @@ describe('auth store', () => {
 
     expect(auth.isAuthenticated).toBe(false)
   })
+
+  test('choosing a pseudo completes onboarding at once, before the queued PATCH is sent', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, 200)))
+    const auth = useAuthStore()
+    auth.user = {
+      id: '1',
+      email: 'a@example.com',
+      displayName: null,
+      avatarUrl: null,
+      birthDay: null,
+      birthMonth: null,
+      birthYear: null,
+      locale: 'fr',
+      isOnboarded: false,
+      emailVerified: true,
+    }
+
+    await auth.updateProfile({ displayName: 'Alice' })
+
+    expect(auth.user?.isOnboarded).toBe(true)
+  })
 })

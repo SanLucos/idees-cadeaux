@@ -115,7 +115,9 @@ export const useAuthStore = defineStore('auth', {
      */
     async updateProfile(patch: Partial<Pick<User, 'displayName' | 'birthDay' | 'birthMonth' | 'birthYear' | 'locale'>>): Promise<void> {
       if (!this.user) return;
-      this.user = { ...this.user, ...patch };
+      // Same rule as the server (User::isOnboarded): a pseudo means onboarded,
+      // without waiting for the queued PATCH.
+      this.user = { ...this.user, ...patch, isOnboarded: this.user.isOnboarded || !!patch.displayName };
       applyLocale(this.user.locale);
       const db = useLocalDb();
       if (db.get('user', this.user.id)) await db.patch('user', this.user.id, patch);
