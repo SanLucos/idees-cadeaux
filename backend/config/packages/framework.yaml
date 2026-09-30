@@ -8,6 +8,11 @@ framework:
     #esi: true
     #fragments: true
 
+    # Prod runs behind Traefik then nginx: docker-compose.prod.yaml sets
+    # SYMFONY_TRUSTED_PROXIES, so the client IP (rate limiting) and the
+    # https scheme come from these headers. Ignored while no proxy is trusted.
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port']
+
 when@test:
     framework:
         test: true

@@ -1,0 +1,111 @@
+# Production stack, served behind the Traefik of another stack on the same
+# server through the external network ${TRAEFIK_NETWORK} (docs/DEPLOIEMENT.md).
+# No port is published: nginx is the only service Traefik can reach.
+#
+#   ./deploy-prod.sh        (reads .env.prod, see .env.prod.example)
+
+x-php: &php
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile.prod
+    target: php
+  image: ideescadeaux-php:latest
+  restart: unless-stopped
+  depends_on:
+    - postgres
+    - minio
+  env_file: .env.prod
+  environment:
+    APP_ENV: prod
+    APP_DEBUG: "0"
+    DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8
+    STORAGE_ENDPOINT: http://minio:9000
+    STORAGE_BUCKET: ${MINIO_BUCKET}
+    STORAGE_KEY: ${MINIO_ROOT_USER}
+    STORAGE_SECRET: ${MINIO_ROOT_PASSWORD}
+    STORAGE_REGION: us-east-1
+    DEFAULT_URI: https://${APP_HOST}
+    SHARE_LINK_BASE_URL: https://${APP_HOST}
+    MEDIA_BASE_URL: https://${APP_HOST}
+    # Requests arrive through Traefik then nginx, both on private Docker
+    # networks: trust their X-Forwarded-* headers (client IP, https).
+    SYMFONY_TRUSTED_PROXIES: private_ranges
+  volumes:
+    - ${DATA_DIR}/jwt:/var/www/backend/config/jwt
+  labels:
+    - traefik.enable=false
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Host directories rather than Docker volumes: a `docker volume prune`
+    # run by another stack on the server can never delete them.
+    volumes:
+      - ${DATA_DIR}/postgres:/var/lib/postgresql/data
+    labels:
+      - traefik.enable=false
+
+  minio:
+    image: quay.io/minio/minio:latest
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ${DATA_DIR}/minio:/data
+    labels:
+      - traefik.enable=false
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      - minio
+    restart: 'no'
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do sleep 1; done;
+      mc mb --ignore-existing local/${MINIO_BUCKET};
+      mc anonymous set none local/${MINIO_BUCKET};
+      "
+    labels:
+      - traefik.enable=false
+
+  php:
+    <<: *php
+
+  # Same image as php: consumes the async queue and the scheduled tasks.
+  worker:
+    <<: *php
+    command: ["bin/console", "messenger:consume", "async", "scheduler_default", "--time-limit=3600"]
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+      target: nginx
+    image: ideescadeaux-nginx:latest
+    restart: unless-stopped
+    depends_on:
+      - php
+    networks:
+      - default
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK}
+      - traefik.http.routers.ideescadeaux.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.ideescadeaux.entrypoints=websecure
+      - traefik.http.routers.ideescadeaux.tls=true
+      - traefik.http.routers.ideescadeaux.tls.certresolver=${TRAEFIK_CERT_RESOLVER}
+      - traefik.http.services.ideescadeaux.loadbalancer.server.port=80
+
+networks:
+  proxy:
+    name: ${TRAEFIK_NETWORK}
+    external: true

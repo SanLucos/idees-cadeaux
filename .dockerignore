@@ -1,0 +1,14 @@
+# Build context of docker/php/Dockerfile.prod (repo root).
+*
+!backend
+!docker
+backend/vendor
+backend/var
+backend/tests
+backend/.phpunit.cache
+backend/.env.local
+backend/.env.*.local
+backend/.env.local.php
+backend/config/jwt/*.pem
+backend/public/bundles
+backend/compose*.yaml
