@@ -20,6 +20,7 @@ use App\Serializer\FriendshipNormalizer;
 use App\Serializer\IdeaNormalizer;
 use App\Serializer\InteractionNormalizer;
 use App\Serializer\ManagedProfileNormalizer;
+use App\Serializer\ProfileSizeHistoryView;
 use App\Serializer\UserNormalizer;
 use App\Service\MediaUrls;
 use Doctrine\DBAL\ArrayParameterType;
@@ -109,7 +110,11 @@ final class SyncService
         $profiles = array_map(static fn (User $u) => $u->getId()->toRfc4122(), [$me, ...$friends, ...$children]);
         foreach ([ProfileSize::class => 'profile_size', ProfilePreference::class => 'profile_preference'] as $class => $type) {
             foreach ($this->findIn($class, 'user', $profiles) as $entry) {
-                $inventory[$type][$entry->getId()->toRfc4122()] = ['version' => self::v($entry->getUpdatedAt()), 'entity' => $entry];
+                // A size's document depends on who its owner is to me (history, spec §11
+                // décision 51): it moves with the owner, so a child turned autonomous
+                // account takes its history back from the former manager's devices.
+                $version = $entry instanceof ProfileSize ? self::v($entry->getUpdatedAt(), $entry->getUser()->getUpdatedAt()) : self::v($entry->getUpdatedAt());
+                $inventory[$type][$entry->getId()->toRfc4122()] = ['version' => $version, 'entity' => $entry];
             }
         }
 
@@ -147,7 +152,8 @@ final class SyncService
                 'profile_size' => [
                     'id' => $id, '@id' => '/api/profile_sizes/'.$id, 'userId' => $entity->getUser()->getId()->toRfc4122(),
                     'label' => $entity->getLabel(), 'value' => $entity->getValue(), 'note' => $entity->getNote(), 'sortOrder' => $entity->getSortOrder(),
-                ],
+                    // Mine or my child's only: a friend's size comes without it.
+                ] + (ProfileSizeHistoryView::isReadableBy($entity, $me) ? ['history' => ProfileSizeHistoryView::entries($entity)] : []),
                 'profile_preference' => [
                     'id' => $id, '@id' => '/api/profile_preferences/'.$id, 'userId' => $entity->getUser()->getId()->toRfc4122(),
                     'category' => $entity->getCategory()->value, 'label' => $entity->getLabel(), 'value' => $entity->getValue(),

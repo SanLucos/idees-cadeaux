@@ -16,6 +16,8 @@ use App\Entity\Trait\SoftDeletableTrait;
 use App\Entity\Trait\TimestampableTrait;
 use App\Repository\ProfileSizeRepository;
 use App\State\ProfileSizeCreateProcessor;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Uid\Uuid;
@@ -26,6 +28,11 @@ use Symfony\Component\Uid\Uuid;
  * friends by App\Doctrine\Extension\VisibleToOwnerOrFriendsExtension —
  * anyone else gets a 404, not a 403. Writes (Patch/Delete) are further
  * restricted to the owner alone by App\Security\Voter\OwnedEntityVoter.
+ *
+ * Every value it has had is kept in `history` (spec §11 décision 51),
+ * which friends never get: App\Serializer\ProfileSizeNormalizer adds it
+ * for the owner, or the manager of a child profile, alone. The owner
+ * removes a past value with App\Controller\ProfileSizeHistoryController.
  */
 #[ApiResource(
     operations: [
@@ -69,6 +76,11 @@ class ProfileSize implements TimestampableInterface, SoftDeletableInterface, Own
     #[ORM\Column]
     private int $sortOrder = 0;
 
+    /** @var Collection<int, ProfileSizeHistory> oldest first; the last one is the current value */
+    #[ORM\OneToMany(targetEntity: ProfileSizeHistory::class, mappedBy: 'size', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['createdAt' => 'ASC', 'id' => 'ASC'])]
+    private Collection $history;
+
     public function __construct(User $user, string $label, string $value, ?string $note = null, int $sortOrder = 0, ?Uuid $id = null)
     {
         $this->initializeId($id);
@@ -78,6 +90,7 @@ class ProfileSize implements TimestampableInterface, SoftDeletableInterface, Own
         $this->value = $value;
         $this->note = $note;
         $this->sortOrder = $sortOrder;
+        $this->history = new ArrayCollection([new ProfileSizeHistory($this, $value)]);
     }
 
     public function getUser(): User
@@ -102,7 +115,45 @@ class ProfileSize implements TimestampableInterface, SoftDeletableInterface, Own
 
     public function setValue(string $value): void
     {
+        if ($value === $this->value) {
+            return;
+        }
+
         $this->value = $value;
+        $this->history->add(new ProfileSizeHistory($this, $value));
+    }
+
+    /**
+     * @return list<ProfileSizeHistory> oldest first
+     */
+    public function getHistory(): array
+    {
+        return array_values($this->history->toArray());
+    }
+
+    /**
+     * Removes a past value from the history, for good. The current value
+     * — the last entry — stays: it goes when the value changes.
+     *
+     * @return bool false when `$id` is the current value's entry
+     */
+    public function removeFromHistory(Uuid $id): bool
+    {
+        $entries = $this->getHistory();
+        $current = array_pop($entries);
+        if (null !== $current && $current->getId()->equals($id)) {
+            return false;
+        }
+
+        foreach ($entries as $entry) {
+            if ($entry->getId()->equals($id)) {
+                $this->history->removeElement($entry);
+                // What is shown of this size changed: devices fetch it again.
+                $this->setUpdatedAt(new \DateTimeImmutable());
+            }
+        }
+
+        return true;
     }
 
     public function getNote(): ?string

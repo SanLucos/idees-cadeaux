@@ -28,6 +28,11 @@ export const useProfileDetailsStore = defineStore('profileDetails', {
       await this.fetchSizes();
     },
 
+    async updateSize(size: ProfileSize, label: string, value: string, note: string | null): Promise<void> {
+      await profileMutations.updateSize((size as Local<ProfileSize>).id, { label, value, note });
+      await this.fetchSizes();
+    },
+
     /** Drag-and-drop: persist the new sortOrder of every entry that moved. */
     async moveSize(from: number, to: number): Promise<void> {
       const sizes = [...this.sizes];
@@ -37,6 +42,11 @@ export const useProfileDetailsStore = defineStore('profileDetails', {
       for (const [index, size] of sizes.entries()) {
         if (size.sortOrder !== index) await profileMutations.updateSize(size.id, { sortOrder: index });
       }
+      await this.fetchSizes();
+    },
+
+    async removeSizeHistoryEntry(size: ProfileSize, entryId: string): Promise<void> {
+      await profileMutations.removeSizeHistoryEntry((size as Local<ProfileSize>).id, entryId);
       await this.fetchSizes();
     },
 

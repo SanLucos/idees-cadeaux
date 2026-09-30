@@ -127,10 +127,21 @@
     "sizes": {
       "title": "Tailles",
       "add": "Ajouter une taille",
+      "edit": "Modifier la taille",
       "label": "Libellé",
       "value": "Valeur",
       "note": "Note (optionnel)",
       "empty": "Aucune taille renseignée.",
+      "history": {
+        "title": "Historique",
+        "since": "Depuis le {date}",
+        "current": "Valeur actuelle",
+        "remove": "Retirer {value} de l'historique",
+        "removeConfirm": {
+          "title": "Retirer cette valeur ?",
+          "message": "« {value} » sera définitivement retirée de l'historique."
+        }
+      },
       "suggestions": "Libellés courants",
       "common": {
         "shoe": "Pointure",
@@ -228,7 +239,8 @@
       "invalid": "Requête invalide."
     },
     "profile_size": {
-      "limit_reached": "Limite de 100 tailles atteinte."
+      "limit_reached": "Limite de 100 tailles atteinte.",
+      "history_current": "La valeur actuelle ne peut pas être retirée de l'historique."
     },
     "upload": {
       "too_large": "Le fichier dépasse la taille maximale de 5 Mo.",
@@ -687,6 +699,8 @@
       "profile_update": "Modification du profil",
       "size_create": "Taille « {title} »",
       "size_update": "Ordre des tailles",
+      "size_edit": "Taille « {title} » modifiée",
+      "size_history_delete": "Historique de « {title} »",
       "size_delete": "Suppression d'une taille",
       "preference_create": "Préférence « {title} »",
       "preference_delete": "Suppression d'une préférence",

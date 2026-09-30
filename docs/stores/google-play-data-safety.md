@@ -16,3 +16,4 @@
 | Identifiants de l'appareil | Jeton de notification push | Oui | Non | Fonctionnalités de l'app (notifications) |
 
 - **Public cible** : adultes ; l'app n'est pas conçue pour les enfants (profils enfants gérés par un adulte, spec §5.15). Répondre au questionnaire « Public cible et contenu » en conséquence.
+claude

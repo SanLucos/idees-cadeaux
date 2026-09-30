@@ -11,10 +11,10 @@ use App\Serializer\FriendshipNormalizer;
 use Doctrine\DBAL\Connection;
 
 /**
- * What "Export de mes données" contains (spec §5.13): profile, sizes,
- * preferences, friendships (pseudos), ideas written (suggestions made to
- * others included), comments, reactions, pledges, reservations made,
- * consents, and the uploaded images.
+ * What "Export de mes données" contains (spec §5.13): profile, sizes
+ * (with their history), preferences, friendships (pseudos), ideas
+ * written (suggestions made to others included), comments, reactions,
+ * pledges, reservations made, consents, and the uploaded images.
  *
  * Only what the subject wrote or did — every query filters on its own
  * authorship — so nothing a friend hid on the subject's ideas can get in
@@ -78,7 +78,7 @@ final class DataExportBuilder
                     'avatar' => isset($images['images/avatar.jpg']) ? 'images/avatar.jpg' : null,
                     'exportedAt' => (new \DateTimeImmutable())->format(\DATE_ATOM),
                 ],
-                'sizes.json' => $this->rows('SELECT label, value, note, sort_order, created_at FROM profile_size WHERE user_id = :id AND deleted_at IS NULL ORDER BY sort_order', $id),
+                'sizes.json' => $this->sizes($id),
                 'preferences.json' => $this->rows('SELECT category, label, value, created_at FROM profile_preference WHERE user_id = :id AND deleted_at IS NULL ORDER BY category, created_at', $id),
                 'friends.json' => $this->friends($subject),
                 'ideas.json' => $ideas,
@@ -126,6 +126,34 @@ final class DataExportBuilder
             ],
             'images' => $images,
         ];
+    }
+
+    /**
+     * Sizes with every value they have had (spec §11 décision 51): the
+     * subject's own history, which nobody else reads.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function sizes(string $id): array
+    {
+        $history = [];
+        foreach ($this->rows(
+            'SELECT h.size_id, h.value, h.created_at AS since
+             FROM profile_size_history h JOIN profile_size s ON s.id = h.size_id
+             WHERE s.user_id = :id AND s.deleted_at IS NULL AND h.deleted_at IS NULL ORDER BY h.created_at, h.id',
+            $id,
+        ) as $entry) {
+            $history[(string) $entry['size_id']][] = ['value' => $entry['value'], 'since' => $entry['since']];
+        }
+
+        $sizes = $this->rows('SELECT id, label, value, note, sort_order, created_at FROM profile_size WHERE user_id = :id AND deleted_at IS NULL ORDER BY sort_order', $id);
+        foreach ($sizes as &$size) {
+            $size['history'] = $history[(string) $size['id']] ?? [];
+            unset($size['id']);
+        }
+        unset($size);
+
+        return $sizes;
     }
 
     /**

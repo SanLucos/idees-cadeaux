@@ -189,6 +189,76 @@ final class ManagedProfileVisibilityTest extends AuthTestCase
         $this->login('mv-jules@example.com');
     }
 
+    /** Spec §11 décision 51: a child's size history is its manager's alone — never its friends'. */
+    public function testAChildsSizeHistoryIsReadByItsManagerAlone(): void
+    {
+        $size = $this->childSizeWithHistory();
+
+        foreach ([$this->jules => '/api/profile_sizes', null => "/api/profile_sizes?userId={$this->jules}"] as $actingAs => $path) {
+            $list = $this->expect(200, $this->manager, 'GET', $path, null, '' === $actingAs ? null : $actingAs);
+            self::assertSame(['PAST-31', '32'], array_column($list['member'][0]['history'], 'value'), 'acting as the child or not');
+        }
+        $synced = array_column($this->expect(200, $this->manager, 'POST', '/api/sync', [])['changes']['profile_size'], null, 'id');
+        self::assertSame(['PAST-31', '32'], array_column($synced[$size]['history'], 'value'));
+
+        // The child's friends read the current value, nothing more.
+        $hugoView = $this->expect(200, $this->hugo, 'GET', "/api/profile_sizes?userId={$this->jules}");
+        self::assertSame('32', $hugoView['member'][0]['value']);
+        self::assertArrayNotHasKey('history', $hugoView['member'][0]);
+        self::assertArrayNotHasKey('history', $this->expect(200, $this->hugo, 'GET', "/api/profile_sizes/{$size}"));
+        self::assertStringNotContainsString('PAST-31', json_encode($this->expect(200, $this->hugo, 'POST', '/api/sync', [])));
+
+        // The manager's own friends, and strangers, don't even see the size.
+        foreach ([$this->marc, $this->stranger] as $token) {
+            $this->expect(404, $token, 'GET', "/api/profile_sizes/{$size}");
+            self::assertStringNotContainsString('PAST-31', json_encode($this->expect(200, $token, 'POST', '/api/sync', [])));
+        }
+
+        // Removing a past value: the manager's alone, acting as the child like every write on its profile.
+        $past = $synced[$size]['history'][0]['id'];
+        foreach ([$this->hugo, $this->marc, $this->stranger, $this->manager] as $token) {
+            $this->expect(404, $token, 'DELETE', "/api/profile_sizes/{$size}/history/{$past}");
+        }
+        self::assertSame('acting_as.forbidden', $this->expect(403, $this->hugo, 'DELETE', "/api/profile_sizes/{$size}/history/{$past}", null, $this->jules)['code']);
+        $this->expect(204, $this->manager, 'DELETE', "/api/profile_sizes/{$size}/history/{$past}", null, $this->jules);
+        self::assertSame(['32'], array_column($this->expect(200, $this->manager, 'GET', "/api/profile_sizes/{$size}", null, $this->jules)['history'], 'value'));
+    }
+
+    public function testConvertingToAnAutonomousAccountTakesTheSizeHistoryFromTheManager(): void
+    {
+        $size = $this->childSizeWithHistory();
+        $before = $this->expect(200, $this->manager, 'POST', '/api/sync', []);
+        sleep(1); // Sync versions have a 1 s resolution.
+
+        $this->expect(202, $this->manager, 'POST', "/api/managed-profiles/{$this->jules}/attach-email", ['email' => 'mv-jules@example.com']);
+        $jules = $this->expect(200, $this->stranger, 'POST', '/api/auth/managed-invitation/accept', [
+            'email' => 'mv-jules@example.com',
+            'code' => $this->invitationCode('mv-jules@example.com'),
+            'password' => 'correcthorsebattery',
+        ])['token'];
+
+        // The history follows the profile: it is Jules's own now.
+        self::assertSame(['PAST-31', '32'], array_column($this->expect(200, $jules, 'GET', "/api/profile_sizes/{$size}")['history'], 'value'));
+
+        // The former manager is a friend like any other…
+        self::assertArrayNotHasKey('history', $this->expect(200, $this->manager, 'GET', "/api/profile_sizes/{$size}"));
+        // …and their devices replace the document that held it.
+        $after = $this->expect(200, $this->manager, 'POST', '/api/sync', ['since' => $before['cursor'], 'hashes' => $before['hashes']]);
+        $synced = array_column($after['changes']['profile_size'], null, 'id');
+        self::assertArrayHasKey($size, $synced, 'the size is sent again');
+        self::assertArrayNotHasKey('history', $synced[$size]);
+        self::assertStringNotContainsString('PAST-31', json_encode($after));
+    }
+
+    /** A size of Jules's whose value changed once: PAST-31, then 32. */
+    private function childSizeWithHistory(): string
+    {
+        $size = $this->expect(201, $this->manager, 'POST', '/api/profile_sizes', ['label' => 'Pointure', 'value' => 'PAST-31'], $this->jules);
+        $this->expect(200, $this->manager, 'PATCH', $size['@id'], ['value' => '32'], $this->jules);
+
+        return basename($size['@id']);
+    }
+
     private function invitationCode(string $email): string
     {
         /** @var InMemoryTransport $transport */

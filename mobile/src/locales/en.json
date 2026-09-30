@@ -127,10 +127,21 @@
     "sizes": {
       "title": "Sizes",
       "add": "Add a size",
+      "edit": "Edit size",
       "label": "Label",
       "value": "Value",
       "note": "Note (optional)",
       "empty": "No sizes yet.",
+      "history": {
+        "title": "History",
+        "since": "Since {date}",
+        "current": "Current value",
+        "remove": "Remove {value} from the history",
+        "removeConfirm": {
+          "title": "Remove this value?",
+          "message": "“{value}” will be removed from the history for good."
+        }
+      },
       "suggestions": "Common labels",
       "common": {
         "shoe": "Shoe size",
@@ -228,7 +239,8 @@
       "invalid": "Invalid request."
     },
     "profile_size": {
-      "limit_reached": "Limit of 100 sizes reached."
+      "limit_reached": "Limit of 100 sizes reached.",
+      "history_current": "The current value cannot be removed from the history."
     },
     "upload": {
       "too_large": "File exceeds the 5 MB limit.",
@@ -687,6 +699,8 @@
       "profile_update": "Profile edit",
       "size_create": "Size “{title}”",
       "size_update": "Sizes order",
+      "size_edit": "Size “{title}” edited",
+      "size_history_delete": "History of “{title}”",
       "size_delete": "Deleted size",
       "preference_create": "Preference “{title}”",
       "preference_delete": "Deleted preference",

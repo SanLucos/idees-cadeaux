@@ -29,7 +29,7 @@
       <ion-item v-if="!sizes.length && readonly">
         <ion-label class="ic-muted">{{ t('profile.sizes.empty') }}</ion-label>
       </ion-item>
-      <ion-item v-if="!readonly" button :detail="false" @click="openForm">
+      <ion-item v-if="!readonly" button :detail="false" @click="openForm()">
         <ion-icon slot="start" :icon="add" color="primary" />
         <ion-label color="primary" class="add-label">{{ t('profile.sizes.add') }}</ion-label>
       </ion-item>
@@ -57,6 +57,7 @@ import { useProfileDetailsStore } from '../stores/profileDetails';
 import { useLocalRefresh } from '../composables/useLocalRefresh';
 import SectionTitle from './SectionTitle.vue';
 import SizeFormModal from './SizeFormModal.vue';
+import SizeHistoryModal from './SizeHistoryModal.vue';
 import type { ProfileSize } from '../types/profile';
 
 /** Without `entries`, shows and edits my own sizes; with them, a friend's, read-only. */
@@ -81,8 +82,13 @@ async function onReorder(event: CustomEvent<ItemReorderEventDetail>): Promise<vo
   await store.moveSize(from, to);
 }
 
-async function openForm(): Promise<void> {
-  const modal = await modalController.create({ component: SizeFormModal, breakpoints: [0, 0.75, 1], initialBreakpoint: 0.75 });
+async function openForm(size?: ProfileSize): Promise<void> {
+  const modal = await modalController.create({ component: SizeFormModal, componentProps: { size }, breakpoints: [0, 0.75, 1], initialBreakpoint: 0.75 });
+  await modal.present();
+}
+
+async function openHistory(size: ProfileSize): Promise<void> {
+  const modal = await modalController.create({ component: SizeHistoryModal, componentProps: { size }, breakpoints: [0, 0.75, 1], initialBreakpoint: 0.75 });
   await modal.present();
 }
 
@@ -90,6 +96,9 @@ async function openActions(size: ProfileSize): Promise<void> {
   const sheet = await actionSheetController.create({
     header: `${size.label} : ${size.value}`,
     buttons: [
+      { text: t('profile.edit'), handler: () => void openForm(size) },
+      // Only what the server sent: a size whose value never changed has nothing to show.
+      ...((size.history?.length ?? 0) > 1 ? [{ text: t('profile.sizes.history.title'), handler: () => void openHistory(size) }] : []),
       { text: t('common.delete'), role: 'destructive', handler: () => store.removeSize(size) },
       { text: t('common.cancel'), role: 'cancel' },
     ],

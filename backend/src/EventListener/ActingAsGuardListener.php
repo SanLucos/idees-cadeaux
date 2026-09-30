@@ -38,6 +38,7 @@ final class ActingAsGuardListener
         // Profile details.
         ['GET|POST', '#^/api/profile_(sizes|preferences)$#'],
         ['GET|PATCH|DELETE', '#^/api/profile_(sizes|preferences)/[0-9a-f-]{36}$#'],
+        ['DELETE', '#^/api/profile_sizes/[0-9a-f-]{36}/history/[0-9a-f-]{36}$#'],
         // Friends (spec §5.15: "gère ses amis").
         ['GET', '#^/api/friendships(/incoming|/outgoing)?$#'],
         ['POST', '#^/api/friendships$#'],

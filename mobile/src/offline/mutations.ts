@@ -394,7 +394,7 @@ export const profileMutations = {
   async addSize(label: string, value: string, note: string | null, sortOrder: number): Promise<LocalSize> {
     const { actor, actingAs } = context();
     const id = uuidv7();
-    const size: LocalSize = { id, '@id': `/api/profile_sizes/${id}`, userId: actor.id, label, value, note, sortOrder };
+    const size: LocalSize = { id, '@id': `/api/profile_sizes/${id}`, userId: actor.id, label, value, note, sortOrder, history: [{ value, since: now() }] };
     await useLocalDb().put('profile_size', [size]);
     await queue({ method: 'POST', path: '/profile_sizes', body: { clientId: id, label, value, note, sortOrder }, actingAs, entities: [{ type: 'profile_size', id }], label: { kind: 'size.create', title: label } });
 
@@ -403,8 +403,22 @@ export const profileMutations = {
 
   async updateSize(id: string, patch: Partial<Pick<ProfileSize, 'label' | 'value' | 'note' | 'sortOrder'>>): Promise<void> {
     const { actingAs } = context();
-    await useLocalDb().patch('profile_size', id, patch);
-    await queue({ method: 'PATCH', path: `/profile_sizes/${id}`, body: patch, actingAs, entities: [{ type: 'profile_size', id }], label: { kind: 'size.update' } });
+    const current = useLocalDb().get<LocalSize>('profile_size', id);
+    const valueChanged = undefined !== patch.value && patch.value !== current?.value;
+    // As the server will record it (spec §11 décision 51): shown at once, even offline.
+    const local: Partial<LocalSize> = valueChanged ? { ...patch, history: [...(current?.history ?? []), { value: patch.value!, since: now() }] } : patch;
+    // Reordering only moves sortOrder; anything else is the size being edited.
+    const edited = Object.keys(patch).some((key) => 'sortOrder' !== key);
+    await useLocalDb().patch<LocalSize>('profile_size', id, local);
+    await queue({ method: 'PATCH', path: `/profile_sizes/${id}`, body: patch, actingAs, entities: [{ type: 'profile_size', id }], label: edited ? { kind: 'size.edit', title: patch.label ?? current?.label } : { kind: 'size.update' } });
+  },
+
+  /** Removes a past value from a size's history — never the current one, which the server refuses. */
+  async removeSizeHistoryEntry(id: string, entryId: string): Promise<void> {
+    const { actingAs } = context();
+    const current = useLocalDb().get<LocalSize>('profile_size', id);
+    await useLocalDb().patch<LocalSize>('profile_size', id, { history: (current?.history ?? []).filter((entry) => entry.id !== entryId) });
+    await queue({ method: 'DELETE', path: `/profile_sizes/${id}/history/${entryId}`, actingAs, entities: [{ type: 'profile_size', id }], label: { kind: 'size.history_delete', title: current?.label } });
   },
 
   async removeSize(id: string): Promise<void> {
