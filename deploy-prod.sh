@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# Déploie (ou met à jour) la stack de production sur le serveur : build
-# des images, démarrage, clés JWT, migrations. Voir docs/DEPLOIEMENT.md.
+# Déploie (ou met à jour) la stack de production sur le serveur : contrôle
+# de .env.prod, build des images, clés JWT, migrations, puis démarrage.
+# Voir docs/DEPLOIEMENT.md.
 #
 # Usage : ./deploy-prod.sh   (depuis un clone du dépôt, avec un .env.prod)
 
@@ -16,8 +17,26 @@ if [ ! -f .env.prod ]; then
   exit 1
 fi
 
-DATA_DIR=$(grep -E '^DATA_DIR=' .env.prod | cut -d= -f2)
-TRAEFIK_NETWORK=$(grep -E '^TRAEFIK_NETWORK=' .env.prod | cut -d= -f2)
+value() { grep -E "^$1=" .env.prod | tail -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/'; }
+
+# Un secret vide ne fait pas échouer Symfony, mais rendrait les liens
+# signés (images, annulation de suppression, désinscription) fabricables.
+missing=()
+for name in APP_HOST TRAEFIK_NETWORK DATA_DIR POSTGRES_PASSWORD APP_SECRET JWT_PASSPHRASE MAILER_DSN \
+            STORAGE_ENDPOINT STORAGE_REGION STORAGE_BUCKET STORAGE_KEY STORAGE_SECRET; do
+  [ -n "$(value "$name")" ] || missing+=("$name")
+done
+if [ ${#missing[@]} -gt 0 ]; then
+  red "À remplir dans .env.prod : ${missing[*]}"
+  exit 1
+fi
+if [ "$(value APP_SECRET | wc -c)" -lt 33 ]; then
+  red "APP_SECRET doit faire au moins 32 caractères (openssl rand -hex 32)."
+  exit 1
+fi
+
+DATA_DIR=$(value DATA_DIR)
+TRAEFIK_NETWORK=$(value TRAEFIK_NETWORK)
 PROJECT=${COMPOSE_PROJECT_NAME:-ideescadeaux}
 
 if ! docker network inspect "$TRAEFIK_NETWORK" > /dev/null 2>&1; then
@@ -25,7 +44,7 @@ if ! docker network inspect "$TRAEFIK_NETWORK" > /dev/null 2>&1; then
   exit 1
 fi
 
-mkdir -p "$DATA_DIR/postgres" "$DATA_DIR/minio" "$DATA_DIR/jwt"
+mkdir -p "$DATA_DIR/postgres" "$DATA_DIR/jwt" "$DATA_DIR/backups"
 
 compose() {
   docker compose -p "$PROJECT" -f docker-compose.prod.yaml --env-file .env.prod "$@"
@@ -34,22 +53,30 @@ compose() {
 blue "→ Build des images"
 compose build
 
-blue "→ Démarrage des conteneurs"
-compose up -d --remove-orphans
+blue "→ Base de données"
+compose up -d postgres
+for _ in $(seq 1 60); do
+  if compose exec -T postgres pg_isready -q; then break; fi
+  sleep 1
+done
 
 blue "→ Clés JWT (générées une seule fois)"
-compose exec -T --user root php sh -c '
+compose run --rm -T --no-deps --user root php sh -c '
   chown www-data:www-data config/jwt
   su www-data -s /bin/sh -c "php bin/console lexik:jwt:generate-keypair --skip-if-exists"
 '
 
+# Avant de démarrer le nouveau code : il ne tourne jamais sur un schéma ancien.
 blue "→ Migrations"
-# Postgres peut mettre quelques secondes à accepter les connexions.
-for _ in $(seq 1 30); do
-  if compose exec -T postgres pg_isready -q; then break; fi
-  sleep 1
-done
-compose exec -T php php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
+compose run --rm -T --no-deps php php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
+
+blue "→ Démarrage des conteneurs"
+compose up -d --remove-orphans
 
 blue "→ Vérification"
-compose exec -T nginx wget -qO- http://127.0.0.1/api/health && echo
+for _ in $(seq 1 30); do
+  if compose exec -T nginx wget -qO- http://127.0.0.1/api/health 2> /dev/null; then echo; exit 0; fi
+  sleep 1
+done
+red "L'API ne répond pas : docker compose -p $PROJECT -f docker-compose.prod.yaml logs php nginx"
+exit 1

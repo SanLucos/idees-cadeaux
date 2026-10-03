@@ -1,8 +1,17 @@
 # Production stack, served behind the Traefik of another stack on the same
 # server through the external network ${TRAEFIK_NETWORK} (docs/DEPLOIEMENT.md).
 # No port is published: nginx is the only service Traefik can reach.
+# Uploaded images live in a hosted S3 bucket in the EU (STORAGE_* in .env.prod).
 #
 #   ./deploy-prod.sh        (reads .env.prod, see .env.prod.example)
+
+# Docker keeps container logs forever by default: cap them.
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
 
 x-php: &php
   build:
@@ -13,17 +22,11 @@ x-php: &php
   restart: unless-stopped
   depends_on:
     - postgres
-    - minio
   env_file: .env.prod
   environment:
     APP_ENV: prod
     APP_DEBUG: "0"
     DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8
-    STORAGE_ENDPOINT: http://minio:9000
-    STORAGE_BUCKET: ${MINIO_BUCKET}
-    STORAGE_KEY: ${MINIO_ROOT_USER}
-    STORAGE_SECRET: ${MINIO_ROOT_PASSWORD}
-    STORAGE_REGION: us-east-1
     DEFAULT_URI: https://${APP_HOST}
     SHARE_LINK_BASE_URL: https://${APP_HOST}
     MEDIA_BASE_URL: https://${APP_HOST}
@@ -34,6 +37,7 @@ x-php: &php
     - ${DATA_DIR}/jwt:/var/www/backend/config/jwt
   labels:
     - traefik.enable=false
+  <<: *logging
 
 services:
   postgres:
@@ -49,32 +53,28 @@ services:
       - ${DATA_DIR}/postgres:/var/lib/postgresql/data
     labels:
       - traefik.enable=false
+    <<: *logging
 
-  minio:
-    image: quay.io/minio/minio:latest
+  # Daily database dump in ${DATA_DIR}/backups, kept 30 days (spec §5.13:
+  # backups purged by rotation within 30 days). docker/backup/backup.sh.
+  backup:
+    image: postgres:16-alpine
     restart: unless-stopped
-    command: server /data
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    volumes:
-      - ${DATA_DIR}/minio:/data
-    labels:
-      - traefik.enable=false
-
-  minio-init:
-    image: quay.io/minio/mc:latest
     depends_on:
-      - minio
-    restart: 'no'
-    entrypoint: >
-      /bin/sh -c "
-      until mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do sleep 1; done;
-      mc mb --ignore-existing local/${MINIO_BUCKET};
-      mc anonymous set none local/${MINIO_BUCKET};
-      "
+      - postgres
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_RETENTION_DAYS: "30"
+    volumes:
+      - ./docker/backup/backup.sh:/backup.sh:ro
+      - ${DATA_DIR}/backups:/backups
     labels:
       - traefik.enable=false
+    <<: *logging
 
   php:
     <<: *php
@@ -104,6 +104,7 @@ services:
       - traefik.http.routers.ideescadeaux.tls=true
       - traefik.http.routers.ideescadeaux.tls.certresolver=${TRAEFIK_CERT_RESOLVER}
       - traefik.http.services.ideescadeaux.loadbalancer.server.port=80
+    <<: *logging
 
 networks:
   proxy:
