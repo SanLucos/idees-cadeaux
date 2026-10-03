@@ -1,7 +1,7 @@
 <template>
   <div class="idea-thumb" :style="style" aria-hidden="true">
     <img v-if="url" :src="url" alt="" loading="lazy" />
-    <ion-icon v-else :icon="giftOutline" />
+    <ion-icon aria-hidden="true" v-else :icon="giftOutline" />
   </div>
 </template>
 
@@ -33,7 +33,7 @@ const style = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 1.625rem;
 }
 
 .idea-thumb img {

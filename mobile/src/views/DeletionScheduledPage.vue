@@ -74,12 +74,12 @@ async function logout(): Promise<void> {
 }
 
 .scheduled ion-icon {
-  font-size: 56px;
+  font-size: 3.5rem;
 }
 
 .scheduled h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 1.75rem;
   line-height: 1.2;
 }
 

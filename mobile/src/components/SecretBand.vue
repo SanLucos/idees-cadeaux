@@ -20,13 +20,13 @@ import { eyeOffOutline } from 'ionicons/icons';
   border-radius: var(--ic-radius-card);
   background: var(--ic-secret-soft);
   color: var(--ion-color-secret);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.4;
 }
 
 ion-icon {
   flex-shrink: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 </style>

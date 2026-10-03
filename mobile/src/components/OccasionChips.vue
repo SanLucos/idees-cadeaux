@@ -1,6 +1,6 @@
 <template>
   <div class="ic-chip-row" role="group" :aria-label="t('ideas.filterByOccasion')">
-    <ion-chip
+    <ion-chip v-press
       class="ic-chip"
       :class="{ 'ic-chip-selected': null === modelValue }"
       :aria-pressed="null === modelValue"
@@ -8,7 +8,7 @@
     >
       {{ allLabel ?? t('ideas.allOccasions') }}
     </ion-chip>
-    <ion-chip
+    <ion-chip v-press
       v-for="o in occasions"
       :key="o.code"
       class="ic-chip"

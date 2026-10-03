@@ -11,6 +11,8 @@
 <style scoped>
 .screen-header {
   display: flex;
+  /* Large text (spec §9): the actions go below rather than squeeze the title. */
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 12px;
   padding-top: calc(var(--ion-safe-area-top, 0px) + 40px);
@@ -18,15 +20,14 @@
 }
 
 .screen-header__text {
-  flex-grow: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 0;
 }
 
 .screen-header__kicker {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--ic-text-secondary);
 }
 

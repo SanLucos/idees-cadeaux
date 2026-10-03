@@ -86,6 +86,6 @@ async function submit(): Promise<void> {
 
 <style scoped>
 .privacy {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 </style>

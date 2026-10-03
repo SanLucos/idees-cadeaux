@@ -22,10 +22,10 @@
         </div>
 
         <div class="ic-chip-row" role="group">
-          <ion-chip class="ic-chip" :class="{ 'ic-chip-selected': null === occasion }" :aria-pressed="null === occasion" @click="setOccasion(null)">
+          <ion-chip v-press class="ic-chip" :class="{ 'ic-chip-selected': null === occasion }" :aria-pressed="null === occasion" @click="setOccasion(null)">
             {{ t('shareLink.guest.all') }}
           </ion-chip>
-          <ion-chip
+          <ion-chip v-press
             v-for="code in view.occasions"
             :key="code"
             class="ic-chip"
@@ -35,7 +35,7 @@
           >
             {{ te(`occasions.${code}`) ? t(`occasions.${code}`) : code }}
           </ion-chip>
-          <ion-chip class="ic-chip" :class="{ 'ic-chip-selected': byPrice }" :aria-pressed="byPrice" @click="togglePrice">
+          <ion-chip v-press class="ic-chip" :class="{ 'ic-chip-selected': byPrice }" :aria-pressed="byPrice" @click="togglePrice">
             {{ t('shareLink.guest.price') }}
           </ion-chip>
         </div>
@@ -170,11 +170,11 @@ async function interact(): Promise<void> {
   align-items: center;
   gap: 8px;
   font-family: var(--ic-font-display);
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .brand__name ion-icon {
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .brand__signin {
@@ -191,7 +191,7 @@ async function interact(): Promise<void> {
   border-radius: var(--ic-radius-field);
   background: var(--ic-primary-soft);
   color: var(--ic-primary-text-on-soft);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .hero {
@@ -205,7 +205,7 @@ async function interact(): Promise<void> {
 
 .hero h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 1.75rem;
   line-height: 1.15;
 }
 
@@ -230,7 +230,7 @@ async function interact(): Promise<void> {
 
 .cta__hint {
   text-align: center;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .bottom-space {

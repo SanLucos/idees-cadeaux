@@ -19,10 +19,10 @@
         <ion-icon slot="start" :icon="giftOutline" aria-hidden="true" />{{ t('shareLink.guest.offer') }}
       </ion-button>
       <ion-button class="ic-button-surface square" :aria-label="t('shareLink.guest.like')" @click="emit('interact')">
-        <ion-icon slot="icon-only" :icon="heartOutline" />
+        <ion-icon aria-hidden="true" slot="icon-only" :icon="heartOutline" />
       </ion-button>
       <ion-button class="ic-button-surface square" :aria-label="t('shareLink.guest.comment')" @click="emit('interact')">
-        <ion-icon slot="icon-only" :icon="chatboxOutline" />
+        <ion-icon aria-hidden="true" slot="icon-only" :icon="chatboxOutline" />
       </ion-button>
     </div>
   </article>
@@ -76,7 +76,7 @@ const occasionLabel = computed(() => {
 }
 
 .guest-card__title {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.3;
 }
@@ -85,7 +85,7 @@ const occasionLabel = computed(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--ic-text-secondary);
 }
 
@@ -96,7 +96,7 @@ const occasionLabel = computed(() => {
 
 .guest-card__note {
   margin: 2px 0 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--ic-text-secondary);
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -106,7 +106,7 @@ const occasionLabel = computed(() => {
 }
 
 .guest-card__link {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--ion-color-primary);
 }

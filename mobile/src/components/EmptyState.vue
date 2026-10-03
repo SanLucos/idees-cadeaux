@@ -24,12 +24,12 @@ defineProps<{ icon?: string }>();
 }
 
 ion-icon {
-  font-size: 32px;
+  font-size: 2rem;
 }
 
 p {
   margin: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.4;
 }
 </style>

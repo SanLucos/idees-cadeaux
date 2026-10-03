@@ -7,7 +7,7 @@
       <div v-for="group in groups" :key="group.category" class="group">
         <h3>{{ t(`profile.preferences.category_${group.category}_plural`) }}</h3>
         <div class="chips">
-          <ion-chip
+          <ion-chip v-press
             v-for="pref in group.items"
             :key="pref['@id']"
             class="pref-chip"
@@ -19,7 +19,7 @@
         </div>
       </div>
       <ion-button v-if="!readonly" fill="clear" class="add" @click="openForm">
-        <ion-icon slot="start" :icon="add" />
+        <ion-icon aria-hidden="true" slot="start" :icon="add" />
         {{ t('profile.preferences.add') }}
       </ion-button>
     </div>
@@ -97,7 +97,7 @@ async function openActions(pref: ProfilePreference): Promise<void> {
 h3 {
   margin: 0 0 8px;
   font-family: var(--ic-font-body);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--ic-text-secondary);
 }

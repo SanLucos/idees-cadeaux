@@ -25,11 +25,11 @@
         <div class="ic-card block">
           <p class="ic-muted">{{ t('notificationSettings.birthdaysHint') }}</p>
           <div class="chips">
-            <ion-chip v-for="day in settings.birthdayReminderDays" :key="day" class="ic-chip" @click="removeDelay(day)">
+            <ion-chip v-press v-for="day in settings.birthdayReminderDays" :key="day" class="ic-chip" @click="removeDelay(day)">
               {{ t('notificationSettings.delay', { days: day }, day) }}
               <ion-icon :icon="closeCircle" :aria-label="t('common.delete')" />
             </ion-chip>
-            <ion-chip v-if="settings.birthdayReminderDays.length < 3" class="ic-chip" @click="addDelay">
+            <ion-chip v-press v-if="settings.birthdayReminderDays.length < 3" class="ic-chip" @click="addDelay">
               <ion-icon :icon="add" aria-hidden="true" />{{ t('notificationSettings.addDelay') }}
             </ion-chip>
           </div>
@@ -42,7 +42,7 @@
             <ion-label>
               <div class="label">{{ t(`notificationSettings.types.${type}`) }}</div>
               <div class="channels">
-                <ion-chip
+                <ion-chip v-press
                   v-for="channel in CHANNELS"
                   :key="channel"
                   class="ic-chip channel"
@@ -145,14 +145,14 @@ async function addDelay(): Promise<void> {
 }
 
 .hint {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--ic-text-secondary);
   white-space: normal;
 }
 
 .note {
   margin: 8px 4px 0;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .block {
@@ -181,7 +181,7 @@ async function addDelay(): Promise<void> {
 
 .channel {
   min-height: 30px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .bottom-space {

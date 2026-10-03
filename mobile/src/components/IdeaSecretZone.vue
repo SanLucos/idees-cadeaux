@@ -29,7 +29,7 @@
         <span class="ic-muted">{{ participantNames }}</span>
       </div>
       <ion-button color="secret" expand="block" :router-link="`/contributions/${contribution.id}`">
-        <ion-icon slot="start" :icon="cashOutline" />
+        <ion-icon aria-hidden="true" slot="start" :icon="cashOutline" />
         {{ t('interactions.seeContribution') }}
       </ion-button>
     </div>
@@ -53,11 +53,11 @@
     <!-- Free: offer it alone or together (FicheIdee: "Idée non réservée") -->
     <div v-else-if="active" class="buttons">
       <ion-button expand="block" :disabled="busy" @click="run(() => interactionsApi.reserve(idea.id))">
-        <ion-icon slot="start" :icon="giftOutline" />
+        <ion-icon aria-hidden="true" slot="start" :icon="giftOutline" />
         {{ t('interactions.reserve') }}
       </ion-button>
       <ion-button color="secret" fill="outline" expand="block" :disabled="busy" @click="openContribution">
-        <ion-icon slot="start" :icon="peopleOutline" />
+        <ion-icon aria-hidden="true" slot="start" :icon="peopleOutline" />
         {{ t('interactions.contributeTogether') }}
       </ion-button>
     </div>
@@ -71,14 +71,14 @@
         :disabled="busy"
         @click="toggleLike"
       >
-        <ion-icon slot="start" :icon="idea.reactions?.likedByMe ? heart : heartOutline" />
+        <ion-icon aria-hidden="true" slot="start" :icon="idea.reactions?.likedByMe ? heart : heartOutline" />
         {{ t('interactions.like', { count: idea.reactions?.count ?? 0 }) }}
       </ion-button>
       <span v-else-if="idea.reactions?.count" class="ic-muted likes-count">
         <ion-icon :icon="heartOutline" aria-hidden="true" /> {{ idea.reactions.count }}
       </span>
       <ion-button v-if="idea.canMarkGifted" class="ic-button-surface" :disabled="busy" @click="markGifted">
-        <ion-icon slot="start" :icon="archiveOutline" />
+        <ion-icon aria-hidden="true" slot="start" :icon="archiveOutline" />
         {{ t('ideas.actions.markGifted') }}
       </ion-button>
     </div>
@@ -108,7 +108,7 @@
           :maxlength="1000"
         />
         <ion-button type="submit" color="secret" shape="round" :aria-label="t('interactions.send')" :disabled="!draft.trim() || busy">
-          <ion-icon slot="icon-only" :icon="sendOutline" />
+          <ion-icon aria-hidden="true" slot="icon-only" :icon="sendOutline" />
         </ion-button>
       </form>
     </div>
@@ -322,7 +322,7 @@ async function deleteComment(comment: Comment): Promise<void> {
   justify-content: space-between;
   align-items: baseline;
   gap: 8px;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .amounts {
@@ -333,7 +333,7 @@ async function deleteComment(comment: Comment): Promise<void> {
 
 .amounts__total {
   font-family: var(--ic-font-display);
-  font-size: 36px;
+  font-size: 2.25rem;
   line-height: 1;
 }
 
@@ -341,7 +341,7 @@ async function deleteComment(comment: Comment): Promise<void> {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .avatars {
@@ -356,11 +356,11 @@ async function deleteComment(comment: Comment): Promise<void> {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .reserved ion-icon {
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .buttons {
@@ -406,7 +406,7 @@ async function deleteComment(comment: Comment): Promise<void> {
 .comments h3 {
   margin: 4px 0 10px;
   font-family: var(--ic-font-body);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -429,12 +429,12 @@ async function deleteComment(comment: Comment): Promise<void> {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .comment__bubble p {
   margin: 4px 0 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.4;
   white-space: pre-line;
   overflow-wrap: anywhere;

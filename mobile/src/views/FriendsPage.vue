@@ -10,7 +10,7 @@
         {{ t('friends.title') }}
         <template #end>
           <ion-button class="ic-round-button" :aria-label="t('friends.add_screen.title')" router-link="/tabs/friends/add">
-            <ion-icon slot="icon-only" :icon="personAddOutline" />
+            <ion-icon aria-hidden="true" slot="icon-only" :icon="personAddOutline" />
           </ion-button>
         </template>
       </ScreenHeader>
@@ -152,7 +152,8 @@ function friendSubtitle(f: Friendship): string {
 <style scoped>
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Three across, fewer with large text (spec §9). */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr));
   gap: 10px;
 }
 
@@ -164,8 +165,12 @@ function friendSubtitle(f: Friendship): string {
   --border-style: solid;
   --border-width: 1px;
   --border-radius: var(--ic-radius-card);
-  height: 76px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  min-height: 76px;
+  height: auto;
   margin: 0;
+  white-space: normal;
 }
 
 .quick-action div {
@@ -173,12 +178,12 @@ function friendSubtitle(f: Friendship): string {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
 .quick-action ion-icon {
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .request-card {
@@ -205,13 +210,13 @@ function friendSubtitle(f: Friendship): string {
 }
 
 .name {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
 }
 
 ion-item ion-label p {
   color: var(--ic-text-secondary);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .birthday-pill {
@@ -222,7 +227,7 @@ ion-item ion-label p {
   border-radius: 999px;
   background: var(--ic-primary-soft);
   color: var(--ic-primary-text-on-soft);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 </style>

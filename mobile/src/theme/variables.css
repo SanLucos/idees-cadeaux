@@ -26,6 +26,9 @@
   --ic-surface-muted: #EDE4D6;
   --ic-text-secondary: #6A5D53;
   --ic-border: #E4D8C6;
+  /* Field outlines: 3:1 against background and cards (WCAG 1.4.11);
+     --ic-border stays for decorative card borders. */
+  --ic-border-field: #958574;
 
   /* Primaire : terracotta */
   --ion-color-primary: #A94A2A;
@@ -69,7 +72,8 @@
   --ion-color-secret-shade: #533761;
   --ion-color-secret-tint: #6E527D;
   --ic-secret-soft: #EFE6F2;
-  --ic-secret-border: #A488B2;
+  /* 3:1 against the secret zone (WCAG 1.4.11; mock-up value #A488B2). */
+  --ic-secret-border: #9B7EAA;
   --ic-secret-zone: #FBF7FC;
 
   /* Pastilles d'avatar (initiales) et vignettes d'idée sans image :
@@ -133,7 +137,7 @@ h1, h2, h3,
   margin: 0;
   font-family: var(--ic-font-display);
   font-weight: 400;
-  font-size: 34px;
+  font-size: 2.125rem;
   line-height: 1.1;
 }
 
@@ -164,7 +168,7 @@ ion-list.ic-card-list ion-item {
 }
 
 ion-list.ic-card-list ion-note {
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--ic-text-secondary);
 }
 
@@ -216,7 +220,7 @@ ion-input.ic-field,
 ion-textarea.ic-field,
 ion-select.ic-field {
   --background: var(--ic-surface);
-  --border-color: var(--ic-border);
+  --border-color: var(--ic-border-field);
   --border-radius: var(--ic-radius-field);
   --highlight-color-focused: var(--ion-color-primary);
 }
@@ -241,12 +245,18 @@ ion-segment.ic-segment ion-segment-button {
   text-transform: none;
   letter-spacing: 0;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 ion-segment.ic-segment ion-label {
   overflow: visible;
   white-space: nowrap;
+}
+
+/* `scrollable` segments: equal share of the width when the labels fit,
+   horizontal scroll rather than cut words with large text (spec §9). */
+ion-segment.ic-segment.segment-scrollable ion-segment-button {
+  flex: 1 0 auto;
 }
 
 /* Puces d'occasion */

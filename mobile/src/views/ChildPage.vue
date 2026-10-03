@@ -214,7 +214,7 @@ async function confirmDelete(): Promise<void> {
 .pending {
   margin-bottom: 12px;
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .deletion {

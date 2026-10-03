@@ -48,11 +48,11 @@ const contributionLabel = computed(() => {
   align-items: center;
   gap: 4px;
   min-height: 28px;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--ic-text-secondary);
 }
 
 .counter ion-icon {
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 </style>

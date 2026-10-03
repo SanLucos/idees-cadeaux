@@ -89,11 +89,11 @@
               <div class="image-buttons">
                 <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden @change="onImagePicked" />
                 <ion-button class="ic-button-surface" @click="fileInput?.click()">
-                  <ion-icon slot="start" :icon="imageOutline" />
+                  <ion-icon aria-hidden="true" slot="start" :icon="imageOutline" />
                   {{ imagePreview ? t('ideaForm.changeImage') : t('ideaForm.addImage') }}
                 </ion-button>
                 <ion-button v-if="imagePreview" class="ic-button-surface" :aria-label="t('ideaForm.removeImage')" @click="clearImage">
-                  <ion-icon slot="icon-only" :icon="trashOutline" />
+                  <ion-icon aria-hidden="true" slot="icon-only" :icon="trashOutline" />
                 </ion-button>
               </div>
             </div>
@@ -116,10 +116,10 @@
         <div class="block">
           <div class="label">{{ t('ideaForm.occasion') }}</div>
           <div class="occasions">
-            <ion-chip class="ic-chip" :class="{ 'ic-chip-selected': null === occasion }" @click="occasion = null">
+            <ion-chip v-press class="ic-chip" :class="{ 'ic-chip-selected': null === occasion }" @click="occasion = null">
               {{ t('ideaForm.noOccasion') }}
             </ion-chip>
-            <ion-chip
+            <ion-chip v-press
               v-for="o in visibleOccasions"
               :key="o.code"
               class="ic-chip"
@@ -533,7 +533,7 @@ fieldset {
 .label {
   margin-bottom: 8px;
   padding: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 
@@ -572,17 +572,22 @@ fieldset {
   background: var(--ic-primary-soft);
 }
 
+/* Rows of fields wrap rather than squeeze them with large text (spec §9). */
 .link-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: end;
   gap: 10px;
+}
+
+.link-row ion-input {
+  flex: 1 1 12rem;
 }
 
 .prefill {
   --background: var(--ion-text-color);
   --color: var(--ic-surface);
-  height: 56px;
+  min-height: 56px;
   margin: 0;
 }
 
@@ -601,7 +606,7 @@ fieldset {
   border-radius: var(--ic-radius-card);
   background: var(--ic-surface-muted);
   color: var(--ion-text-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.4;
 }
 
@@ -613,7 +618,7 @@ fieldset {
 .prefill-status ion-icon {
   flex-shrink: 0;
   margin-top: 2px;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .image-actions {
@@ -628,14 +633,22 @@ fieldset {
 }
 
 .image-source {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--ic-text-secondary);
 }
 
 .price-row {
-  display: grid;
-  grid-template-columns: 1fr 110px;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.price-row ion-input {
+  flex: 1 1 8rem;
+}
+
+.price-row .currency {
+  flex: 0 1 6.875rem;
 }
 
 .image-row {
@@ -657,7 +670,7 @@ fieldset {
   justify-content: center;
   border-radius: var(--ic-radius-field);
   overflow: hidden;
-  font-size: 26px;
+  font-size: 1.625rem;
 }
 
 .image-preview img {
@@ -708,7 +721,7 @@ fieldset {
 
 .visibility-option__hint {
   margin-top: 2px;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--ic-text-secondary);
   white-space: normal;
 }

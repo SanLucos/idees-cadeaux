@@ -7,7 +7,7 @@
         <AppAvatar v-if="auth.user" :id="auth.user.id" :name="auth.user.displayName" :url="auth.user.avatarUrl" :size="96" primary />
         <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden @change="onAvatarChange" />
         <ion-button class="ic-button-surface" size="small" @click="fileInput?.click()">
-          <ion-icon slot="start" :icon="imageOutline" />
+          <ion-icon aria-hidden="true" slot="start" :icon="imageOutline" />
           {{ t('profile.changeAvatar') }}
         </ion-button>
       </div>
@@ -113,7 +113,7 @@ async function onAvatarChange(event: Event): Promise<void> {
 
 .field-label {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .birthday {

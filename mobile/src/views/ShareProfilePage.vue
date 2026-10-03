@@ -196,7 +196,7 @@ async function share(): Promise<void> {
 <style scoped>
 .intro {
   margin: 4px 0 16px;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.45;
 }
 
@@ -220,7 +220,7 @@ async function share(): Promise<void> {
   gap: 4px;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
@@ -235,13 +235,13 @@ async function share(): Promise<void> {
 }
 
 .count {
-  font-size: 13px;
+  font-size: 0.8125rem;
   text-align: end;
 }
 
 .suspended-hint {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--ic-primary-text-on-soft);
 }
 
@@ -250,7 +250,7 @@ async function share(): Promise<void> {
   border-radius: var(--ic-radius-field);
   background: var(--ic-surface-muted);
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-  font-size: 15px;
+  font-size: 0.9375rem;
   word-break: break-all;
   user-select: all;
 }
@@ -285,11 +285,11 @@ async function share(): Promise<void> {
   align-items: center;
   gap: 14px;
   min-height: 44px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .visitor li ion-icon {
-  font-size: 22px;
+  font-size: 1.375rem;
   flex-shrink: 0;
 }
 
@@ -313,7 +313,7 @@ async function share(): Promise<void> {
 
 .hint {
   margin: 6px 4px 12px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .bottom-space {

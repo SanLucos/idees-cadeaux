@@ -22,7 +22,7 @@
             :aria-label="t('common.actionsFor', { name: size.label })"
             @click="openActions(size)"
           >
-            <ion-icon slot="icon-only" :icon="ellipsisHorizontal" />
+            <ion-icon aria-hidden="true" slot="icon-only" :icon="ellipsisHorizontal" />
           </ion-button>
         </ion-item>
       </ion-reorder-group>
@@ -30,7 +30,7 @@
         <ion-label class="ic-muted">{{ t('profile.sizes.empty') }}</ion-label>
       </ion-item>
       <ion-item v-if="!readonly" button :detail="false" @click="openForm()">
-        <ion-icon slot="start" :icon="add" color="primary" />
+        <ion-icon aria-hidden="true" slot="start" :icon="add" color="primary" />
         <ion-label color="primary" class="add-label">{{ t('profile.sizes.add') }}</ion-label>
       </ion-item>
     </ion-list>

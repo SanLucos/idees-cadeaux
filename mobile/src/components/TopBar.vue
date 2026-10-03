@@ -1,7 +1,7 @@
 <template>
   <div class="top-bar">
     <ion-button class="ic-round-button" :aria-label="closeIcon ? t('common.close') : t('common.back')" @click="goBack">
-      <ion-icon slot="icon-only" :icon="closeIcon ? closeOutline : chevronBackOutline" />
+      <ion-icon aria-hidden="true" slot="icon-only" :icon="closeIcon ? closeOutline : chevronBackOutline" />
     </ion-button>
     <div class="top-bar__title"><slot /></div>
     <slot name="end" />
@@ -40,6 +40,6 @@ function goBack(): void {
   flex-grow: 1;
   min-width: 0;
   font-family: var(--ic-font-display);
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 </style>

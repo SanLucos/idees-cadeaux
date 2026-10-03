@@ -27,13 +27,13 @@ withDefaults(defineProps<{ variant?: 'neutral' | 'suggestion' | 'draft' | 'succe
   min-height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .status-pill ion-icon {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .status-pill--neutral {

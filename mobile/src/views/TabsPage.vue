@@ -12,11 +12,8 @@
           <ion-label>{{ t('nav.friends') }}</ion-label>
         </ion-tab-button>
 
-        <div class="tab-add">
-          <ion-button shape="round" :aria-label="t('nav.addIdea')" router-link="/ideas/new">
-            <ion-icon slot="icon-only" :icon="add" />
-          </ion-button>
-        </div>
+        <!-- Room for the « + » button, which sits outside the tab list (only tabs belong in a tablist). -->
+        <div class="tab-add-space" aria-hidden="true" />
 
         <ion-tab-button tab="activity" href="/tabs/activity">
           <ion-icon :icon="notificationsOutline" aria-hidden="true" />
@@ -31,6 +28,9 @@
         </ion-tab-button>
       </ion-tab-bar>
     </ion-tabs>
+    <ion-button class="tab-add" shape="round" :aria-label="t('nav.addIdea')" router-link="/ideas/new">
+      <ion-icon aria-hidden="true" slot="icon-only" :icon="add" />
+    </ion-button>
   </ion-page>
 </template>
 
@@ -89,7 +89,8 @@ ion-tab-bar {
 
 ion-tab-button {
   --ripple-color: transparent;
-  font-size: 11px;
+  /* Grows with the system text size, up to a cap (as iOS does for its own tab bars). */
+  font-size: min(0.6875rem, 14px);
   font-weight: 600;
   overflow: visible;
 }
@@ -102,27 +103,31 @@ ion-tab-button ion-badge {
   --background: var(--ion-color-primary);
   --color: var(--ion-color-primary-contrast);
   min-width: 18px;
-  font-size: 11px;
+  font-size: min(0.6875rem, 14px);
 }
 
 ion-tab-button ion-icon {
-  font-size: 22px;
+  font-size: min(1.375rem, 28px);
 }
 
-.tab-add {
+.tab-add-space {
   flex: 0 0 72px;
-  display: flex;
-  justify-content: center;
 }
 
-.tab-add ion-button {
+/* Over the middle of the tab bar (64px high), overflowing it by 30px. */
+.tab-add {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--ion-safe-area-bottom, 0px) + 38px);
+  transform: translateX(-50%);
+  z-index: 10;
   --border-radius: 28px;
   --padding-start: 0;
   --padding-end: 0;
   --box-shadow: 0 6px 16px rgba(var(--ion-color-primary-rgb), 0.35);
   width: 56px;
   height: 56px;
-  margin: -30px 0 0;
+  margin: 0;
   font-size: 26px;
 }
 </style>

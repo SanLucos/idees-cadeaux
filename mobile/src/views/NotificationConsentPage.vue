@@ -92,7 +92,7 @@ function done(): void {
 }
 
 .consent__icon {
-  font-size: 44px;
+  font-size: 2.75rem;
   color: var(--ion-color-primary);
 }
 
@@ -116,7 +116,7 @@ function done(): void {
   background: var(--ic-secret-soft);
   color: var(--ion-color-secret);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .consent__secret ion-icon {
@@ -129,13 +129,13 @@ function done(): void {
 }
 
 .hint {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--ic-text-secondary);
   white-space: normal;
 }
 
 .small {
-  font-size: 13px;
+  font-size: 0.8125rem;
   text-align: center;
 }
 </style>

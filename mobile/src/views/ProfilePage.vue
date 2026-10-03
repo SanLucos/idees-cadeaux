@@ -50,7 +50,7 @@
             </ion-label>
           </ion-item>
           <ion-item button :detail="false" router-link="/profile/children/new">
-            <ion-icon slot="start" :icon="add" color="primary" />
+            <ion-icon aria-hidden="true" slot="start" :icon="add" color="primary" />
             <ion-label color="primary" class="add-label">{{ t('children.create') }}</ion-label>
           </ion-item>
         </ion-list>
@@ -226,29 +226,29 @@ async function logout(): Promise<void> {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .identity {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 14px;
   margin-top: 16px;
 }
 
 .identity__text {
-  flex-grow: 1;
-  min-width: 0;
+  flex: 1 1 10rem;
 }
 
 .identity__name {
   font-family: var(--ic-font-display);
-  font-size: 28px;
+  font-size: 1.75rem;
   line-height: 1.2;
 }
 
 .name {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -280,7 +280,7 @@ ion-item ion-label p {
 }
 
 .share-entry ion-icon {
-  font-size: 22px;
+  font-size: 1.375rem;
   flex-shrink: 0;
 }
 
@@ -292,11 +292,11 @@ ion-item ion-label p {
 }
 
 .share-entry__text strong {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .share-entry__sub {
-  font-size: 13px;
+  font-size: 0.8125rem;
   opacity: 0.8;
 }
 </style>

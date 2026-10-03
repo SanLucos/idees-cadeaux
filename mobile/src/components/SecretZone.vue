@@ -41,7 +41,7 @@ h2 {
   gap: 8px;
   margin: 0;
   font-family: var(--ic-font-body);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;

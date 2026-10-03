@@ -102,6 +102,6 @@ async function confirmRemove(): Promise<void> {
 
 .identity__name {
   font-family: var(--ic-font-display);
-  font-size: 26px;
+  font-size: 1.625rem;
 }
 </style>

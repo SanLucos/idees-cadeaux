@@ -21,7 +21,7 @@
 
       <SectionTitle>{{ t('friends.add_screen.contactsTitle') }}</SectionTitle>
       <ion-button class="ic-button-surface" expand="block" :disabled="matchingContacts" @click="matchContacts">
-        <ion-icon slot="start" :icon="bookOutline" />
+        <ion-icon aria-hidden="true" slot="start" :icon="bookOutline" />
         {{ t('friends.add_screen.contactsButton') }}
       </ion-button>
 

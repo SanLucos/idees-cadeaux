@@ -91,7 +91,7 @@ function reason(op: OutboxOp): string {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .op__actions {
@@ -105,6 +105,6 @@ function reason(op: OutboxOp): string {
 
 .hint {
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 </style>

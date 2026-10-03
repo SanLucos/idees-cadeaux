@@ -3,7 +3,7 @@
     <ion-content>
       <div class="close">
         <ion-button class="ic-round-button" :aria-label="t('common.close')" @click="later">
-          <ion-icon slot="icon-only" :icon="closeOutline" />
+          <ion-icon aria-hidden="true" slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </div>
 
@@ -201,13 +201,13 @@ function later(): void {
 
 .confirm h1 {
   margin: 0 0 12px;
-  font-size: 30px;
+  font-size: 1.875rem;
   line-height: 1.2;
 }
 
 .confirm p {
   margin: 0 0 8px;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.5;
 }
 

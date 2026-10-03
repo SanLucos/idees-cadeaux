@@ -8,7 +8,7 @@
         </div>
         <template v-if="contribution?.isInitiator && isOpen" #end>
           <ion-button class="ic-round-button" :aria-label="t('common.moreActions')" @click="initiatorMenu">
-            <ion-icon slot="icon-only" :icon="ellipsisHorizontal" />
+            <ion-icon aria-hidden="true" slot="icon-only" :icon="ellipsisHorizontal" />
           </ion-button>
         </template>
       </TopBar>
@@ -254,7 +254,7 @@ async function confirmClose(): Promise<void> {
 <style scoped>
 .subtitle {
   font-family: var(--ic-font-body);
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--ic-text-secondary);
   white-space: nowrap;
   overflow: hidden;
@@ -282,7 +282,7 @@ async function confirmClose(): Promise<void> {
 }
 
 .total__label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -297,18 +297,18 @@ async function confirmClose(): Promise<void> {
 
 .total__value {
   font-family: var(--ic-font-display);
-  font-size: 48px;
+  font-size: 3rem;
   line-height: 1;
 }
 
 .total__remaining {
   display: flex;
   justify-content: space-between;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .name {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -321,7 +321,7 @@ ion-item ion-label p {
   align-items: center;
   gap: 5px;
   color: var(--ic-text-secondary);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .declarative {
@@ -335,13 +335,13 @@ ion-item ion-label p {
 
 .declarative ion-icon {
   flex-shrink: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
   margin-top: 2px;
 }
 
 .declarative p {
   margin: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.45;
 }
 
@@ -357,7 +357,7 @@ ion-item ion-label p {
 }
 
 .label {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 

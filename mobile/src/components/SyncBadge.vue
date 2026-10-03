@@ -42,7 +42,7 @@ async function open(): Promise<void> {
 }
 
 .sync-badge ion-icon {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .sync-badge--synced {

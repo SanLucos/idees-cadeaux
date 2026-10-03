@@ -4,7 +4,7 @@
       <TopBar :default-href="backHref">
         <template v-if="idea && hasActions" #end>
           <ion-button class="ic-round-button" :aria-label="t('common.actionsFor', { name: idea.title })" @click="actions.openSheet(idea)">
-            <ion-icon slot="icon-only" :icon="ellipsisHorizontal" />
+            <ion-icon aria-hidden="true" slot="icon-only" :icon="ellipsisHorizontal" />
           </ion-button>
         </template>
       </TopBar>
@@ -41,18 +41,18 @@
 
         <div class="buttons">
           <ion-button v-if="idea.canEdit" class="ic-button-surface" expand="block" :router-link="`/ideas/${idea.id}/edit`">
-            <ion-icon slot="start" :icon="createOutline" />
+            <ion-icon aria-hidden="true" slot="start" :icon="createOutline" />
             {{ t('ideas.actions.edit') }}
           </ion-button>
           <ion-button v-if="idea.canEdit && 'private' === idea.visibility" expand="block" @click="actions.publish(idea)">
             {{ t('ideas.actions.publish') }}
           </ion-button>
           <ion-button v-if="actions.canMarkReceived(idea)" class="ic-button-surface" expand="block" @click="actions.archive(idea)">
-            <ion-icon slot="start" :icon="checkmarkDoneOutline" />
+            <ion-icon aria-hidden="true" slot="start" :icon="checkmarkDoneOutline" />
             {{ t('ideas.actions.markReceived') }}
           </ion-button>
           <ion-button v-if="!hasSecretZone && actions.canMarkGifted(idea)" class="ic-button-surface" expand="block" @click="actions.archive(idea)">
-            <ion-icon slot="start" :icon="archiveOutline" />
+            <ion-icon aria-hidden="true" slot="start" :icon="archiveOutline" />
             {{ t('ideas.actions.markGifted') }}
           </ion-button>
           <ion-button v-if="idea.canUnarchive" class="ic-button-surface" expand="block" @click="actions.unarchive(idea)">
@@ -180,7 +180,7 @@ useLocalRefresh(load);
   width: 100%;
   border-radius: var(--ic-radius-block);
   overflow: hidden;
-  font-size: 48px;
+  font-size: 3rem;
 }
 
 .hero img {
@@ -198,19 +198,19 @@ useLocalRefresh(load);
 
 .title {
   margin: 14px 0 0;
-  font-size: 28px;
+  font-size: 1.75rem;
   line-height: 1.2;
 }
 
 .price {
   margin-top: 8px;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 700;
 }
 
 .note {
   margin: 10px 0 0;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.5;
   white-space: pre-line;
 }

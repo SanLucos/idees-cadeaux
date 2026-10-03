@@ -8,7 +8,7 @@
       <TopBar default-href="/tabs/friends">
         <template #end>
           <ion-button class="ic-round-button" :aria-label="t('common.moreActions')" @click="openMenu">
-            <ion-icon slot="icon-only" :icon="ellipsisHorizontal" />
+            <ion-icon aria-hidden="true" slot="icon-only" :icon="ellipsisHorizontal" />
           </ion-button>
         </template>
       </TopBar>
@@ -27,11 +27,11 @@
 
         <div class="cta">
           <ion-button class="ic-button-surface" expand="block" :router-link="`/tabs/friends/${userId}/profile`">
-            <ion-icon slot="start" :icon="shirtOutline" />
+            <ion-icon aria-hidden="true" slot="start" :icon="shirtOutline" />
             {{ t('friendList.sizesAndTastes') }}
           </ion-button>
           <ion-button expand="block" :router-link="{ path: '/ideas/new', query: { ownerId: userId } }">
-            <ion-icon slot="start" :icon="add" />
+            <ion-icon aria-hidden="true" slot="start" :icon="add" />
             {{ t('friendList.suggest') }}
           </ion-button>
         </div>
@@ -257,7 +257,7 @@ async function confirmRemove(): Promise<void> {
 
 .identity__name {
   margin: 0;
-  font-size: 32px;
+  font-size: 2rem;
   line-height: 1.1;
 }
 
@@ -267,7 +267,7 @@ async function confirmRemove(): Promise<void> {
   gap: 6px;
   margin-top: 6px;
   color: var(--ic-text-secondary);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .cta {
@@ -302,7 +302,7 @@ async function confirmRemove(): Promise<void> {
   padding: 16px;
   color: var(--ion-text-color);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .archives-link__label {

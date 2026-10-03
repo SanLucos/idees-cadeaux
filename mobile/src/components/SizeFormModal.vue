@@ -11,7 +11,7 @@
     <form class="form" @submit.prevent="submit">
       <ion-input v-model="label" class="ic-field" fill="outline" :label="t('profile.sizes.label')" label-placement="stacked" :maxlength="60" required />
       <div class="ic-chip-row" role="group" :aria-label="t('profile.sizes.suggestions')">
-        <ion-chip v-for="key in COMMON_SIZE_LABELS" :key="key" class="ic-chip" @click="label = t(`profile.sizes.common.${key}`)">
+        <ion-chip v-press v-for="key in COMMON_SIZE_LABELS" :key="key" class="ic-chip" @click="label = t(`profile.sizes.common.${key}`)">
           {{ t(`profile.sizes.common.${key}`) }}
         </ion-chip>
       </div>

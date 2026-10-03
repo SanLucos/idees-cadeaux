@@ -25,7 +25,7 @@
         :aria-label="t('common.actionsFor', { name: idea.title })"
         @click="emit('actions', idea)"
       >
-        <ion-icon slot="icon-only" :icon="ellipsisHorizontal" />
+        <ion-icon aria-hidden="true" slot="icon-only" :icon="ellipsisHorizontal" />
       </ion-button>
     </slot>
   </div>
@@ -97,7 +97,7 @@ const isDraft = computed(() => 'private' === props.idea.visibility);
 }
 
 .idea-card__title {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.3;
 }
@@ -106,7 +106,7 @@ const isDraft = computed(() => 'private' === props.idea.visibility);
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--ic-text-secondary);
 }
 

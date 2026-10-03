@@ -13,7 +13,7 @@
         <template #end>
           <SyncBadge />
           <ion-button class="ic-round-button" :aria-label="t('myList.search')" @click="toggleSearch">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
+            <ion-icon aria-hidden="true" slot="icon-only" :icon="searchOutline" />
           </ion-button>
         </template>
       </ScreenHeader>
@@ -27,7 +27,7 @@
         @ion-input="reload"
       />
 
-      <ion-segment v-model="tab" class="ic-segment" mode="ios" @ion-change="reload">
+      <ion-segment v-model="tab" class="ic-segment" mode="ios" scrollable @ion-change="reload">
         <ion-segment-button value="published">
           <ion-label>{{ t('myList.tabs.published', { count: counts.published }) }}</ion-label>
         </ion-segment-button>
@@ -46,7 +46,7 @@
         <ion-icon :icon="giftOutline" aria-hidden="true" />
         <p><strong>{{ t('myList.surprise.title') }}</strong> {{ t('myList.surprise.body') }}</p>
         <ion-button fill="clear" class="surprise-banner__close" :aria-label="t('myList.surprise.dismiss')" @click="dismissBanner">
-          <ion-icon slot="icon-only" :icon="closeOutline" />
+          <ion-icon aria-hidden="true" slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </div>
 
@@ -55,7 +55,7 @@
       <div class="list-bar">
         <span class="ic-muted">{{ t('ideas.count', { count: totalItems }, totalItems) }}</span>
         <ion-button fill="clear" color="dark" class="sort" @click="chooseSort">
-          <ion-icon slot="start" :icon="swapVerticalOutline" />
+          <ion-icon aria-hidden="true" slot="start" :icon="swapVerticalOutline" />
           {{ t(`ideas.sort.${sort}`) }}
         </ion-button>
       </div>
@@ -281,13 +281,13 @@ function dismissBanner(): void {
 
 .surprise-banner > ion-icon {
   flex-shrink: 0;
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .surprise-banner p {
   flex-grow: 1;
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.4;
 }
 
@@ -307,12 +307,12 @@ function dismissBanner(): void {
   justify-content: space-between;
   align-items: center;
   margin: 6px 0;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .sort {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .private-link {

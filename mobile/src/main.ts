@@ -5,6 +5,7 @@ import router from './router';
 import { i18n } from './i18n';
 import { openLocalDb } from './offline/runtime';
 import { listenForShares } from './services/shareIntake';
+import { press } from './directives/press';
 import { reportError, setErrorRoute } from './services/errorReporter';
 import { setOnDeletionScheduled } from './services/api';
 import { useAuthStore } from './stores/auth';
@@ -51,6 +52,7 @@ import '@fontsource/figtree/700.css';
 import './theme/variables.css';
 
 const app = createApp(App).use(IonicVue).use(createPinia()).use(i18n);
+app.directive('press', press);
 
 // Spec §9: uncaught errors reach the backend's logs (services/errorReporter).
 app.config.errorHandler = (error) => {

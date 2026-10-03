@@ -30,7 +30,7 @@
             :aria-label="t('profile.sizes.history.remove', { value: entry.value })"
             @click="remove(entry)"
           >
-            <ion-icon slot="icon-only" :icon="trashOutline" />
+            <ion-icon aria-hidden="true" slot="icon-only" :icon="trashOutline" />
           </ion-button>
         </ion-item>
       </ion-list>

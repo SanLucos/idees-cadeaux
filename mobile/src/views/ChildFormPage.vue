@@ -88,7 +88,7 @@ async function submit(): Promise<void> {
 
 .field-label {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .birthday {

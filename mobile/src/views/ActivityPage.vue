@@ -10,7 +10,7 @@
         <template #end>
           <ion-button v-if="store.unreadCount" fill="clear" class="read-all" @click="markAllRead">{{ t('activity.markAllRead') }}</ion-button>
           <ion-button class="ic-round-button" :aria-label="t('activity.settings')" router-link="/settings/notifications">
-            <ion-icon slot="icon-only" :icon="optionsOutline" />
+            <ion-icon aria-hidden="true" slot="icon-only" :icon="optionsOutline" />
           </ion-button>
         </template>
       </ScreenHeader>
@@ -222,12 +222,12 @@ function when(iso: string): string {
 
 .item__text {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.4;
 }
 
 .item__time {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--ic-text-secondary);
 }
 
