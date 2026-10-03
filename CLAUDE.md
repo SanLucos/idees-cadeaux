@@ -70,6 +70,7 @@ npm run test:unit -- --run   # Vitest
 npm run build          # vue-tsc + build de prod
 npx cypress run        # tests e2e (nécessite `npm run dev` ou le build servi en parallèle)
 ```
+Tests e2e : stack Docker démarrée (worker compris, les codes sont lus dans Mailpit). Ouvrir l'appli une fois avant de lancer Cypress : au premier démarrage, Vite réoptimise ses dépendances et peut faire échouer le premier test (« Failed to fetch dynamically imported module »).
 
 **Natif (`/mobile/android`, `/mobile/ios`, lot 7)**
 ```
