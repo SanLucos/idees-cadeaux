@@ -1,5 +1,5 @@
-# Stockage objet compatible S3 (spec §2/§9) : MinIO en local, tout
-# service compatible S3 en prod, via les mêmes variables d'env.
+# Stockage objet compatible S3 (spec §2/§9) : Garage en local, S3 hébergé
+# dans l'UE en prod, via les mêmes variables d'env.
 flysystem:
     storages:
         default.storage:
@@ -8,7 +8,7 @@ flysystem:
                 client: 'AsyncAws\S3\S3Client'
                 bucket: '%env(STORAGE_BUCKET)%'
 
-# Tests: local disk instead of S3, so upload tests run in CI (no MinIO
+# Tests: local disk instead of S3, so upload tests run in CI (no S3
 # service there) — same FilesystemOperator API, no extra dependency.
 when@test:
     flysystem:

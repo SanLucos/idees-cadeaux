@@ -31,8 +31,7 @@ jobs:
       APP_SECRET: ci-secret
       JWT_PASSPHRASE: ci-passphrase
       MAILER_DSN: null://null
-      # No MinIO service in CI (services: can't run its custom start
-      # command reliably): the test env stores uploads on local disk
+      # No S3 service in CI: the test env stores uploads on local disk
       # instead (config/packages/flysystem.yaml, when@test).
       STORAGE_ENDPOINT: http://localhost:9000
       STORAGE_BUCKET: idees-cadeaux

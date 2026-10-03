@@ -38,9 +38,9 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
-    # S3-compatible object storage (spec §2 / §9). MinIO locally, any
-    # S3-compatible endpoint in prod; pathStyleEndpoint is needed for
-    # MinIO and most non-AWS S3-compatible providers.
+    # S3-compatible object storage (spec §2 / §9). Garage locally, a
+    # hosted EU S3 in prod; path-style addressing works with both (and
+    # with Scaleway / OVH), no per-bucket DNS needed.
     AsyncAws\S3\S3Client:
         arguments:
             $configuration:

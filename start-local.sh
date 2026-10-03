@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Lance tout l'environnement local : stack Docker (Postgres, PHP,
-# Nginx, Mailpit, MinIO, worker) + serveur de dev du mobile, puis
+# Nginx, Mailpit, Garage, worker) + serveur de dev du mobile, puis
 # ouvre le navigateur. Voir CLAUDE.md > Commandes pour le détail de
 # chaque commande si besoin de les lancer à la main.
 #
@@ -40,11 +40,9 @@ BACKEND_PORT=$(grep -E '^BACKEND_LOCAL_PORT=' .env | cut -d= -f2)
 BACKEND_PORT=${BACKEND_PORT:-8000}
 MAILPIT_PORT=$(grep -E '^MAILPIT_UI_PORT=' .env | cut -d= -f2)
 MAILPIT_PORT=${MAILPIT_PORT:-8026}
-MINIO_CONSOLE_PORT=$(grep -E '^MINIO_CONSOLE_PORT=' .env | cut -d= -f2)
-MINIO_CONSOLE_PORT=${MINIO_CONSOLE_PORT:-9001}
 
-blue "→ Démarrage des conteneurs Docker (postgres, php, nginx, mailpit, minio, worker)..."
-docker compose up -d
+blue "→ Démarrage des conteneurs Docker (postgres, php, nginx, mailpit, garage, worker)..."
+docker compose up -d --remove-orphans
 
 blue "→ Attente de la disponibilité de l'API..."
 api_ready=false
@@ -82,7 +80,6 @@ echo ""
 echo "   App mobile : http://localhost:5173"
 echo "   API        : http://localhost:${BACKEND_PORT}/api"
 echo "   Mailpit    : http://localhost:${MAILPIT_PORT} (codes de vérification par email)"
-echo "   MinIO      : http://localhost:${MINIO_CONSOLE_PORT} (avatars)"
 echo ""
 
 cd mobile
