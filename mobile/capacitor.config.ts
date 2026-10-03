@@ -10,7 +10,7 @@ try {
 }
 
 const config: CapacitorConfig = {
-  appId: process.env.APP_ID ?? 'com.example.ideescadeaux',
+  appId: process.env.APP_ID ?? 'fr.frigologie.ideescadeaux',
   appName: process.env.APP_NAME ?? 'Idées Cadeaux',
   webDir: 'dist',
 };

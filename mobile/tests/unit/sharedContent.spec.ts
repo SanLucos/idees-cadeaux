@@ -30,11 +30,11 @@ describe('shared content (spec §5.6)', () => {
   })
 
   test('deep links from the native side, whatever the app id scheme', () => {
-    expect(parseShareDeepLink('com.example.ideescadeaux://share?url=https%3A%2F%2Fshop.example%2Fa&title=Casque')).toEqual({
+    expect(parseShareDeepLink('fr.frigologie.ideescadeaux://share?url=https%3A%2F%2Fshop.example%2Fa&title=Casque')).toEqual({
       url: 'https://shop.example/a',
       title: 'Casque',
     })
-    expect(parseShareDeepLink('com.example.ideescadeaux://other?url=https%3A%2F%2Fshop.example%2Fa')).toBeNull()
+    expect(parseShareDeepLink('fr.frigologie.ideescadeaux://other?url=https%3A%2F%2Fshop.example%2Fa')).toBeNull()
     expect(parseShareDeepLink('not a link')).toBeNull()
   })
 

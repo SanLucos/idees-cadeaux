@@ -1,4 +1,4 @@
-package com.example.ideescadeaux;
+package fr.frigologie.ideescadeaux;
 
 import android.content.Intent;
 import android.net.Uri;

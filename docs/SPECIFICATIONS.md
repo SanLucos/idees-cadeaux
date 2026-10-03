@@ -44,10 +44,10 @@ Le filtrage se fait **côté serveur**, jamais côté client.
 ### Dépôt
 Monorepo : `/backend` (Symfony/API Platform) et `/mobile` (Ionic Vue). CI qui exécute lint + tests des deux parties.
 
-### Nom de l'application (provisoire)
-- Nom de travail : **« Idées Cadeaux »**. Le nom définitif et l'identité visuelle seront décidés plus tard.
+### Nom de l'application
+- Nom : **« Idées Cadeaux »** (définitif, décision 55). L'identité visuelle pourra encore évoluer.
 - Pour que le changement soit indolore : nom d'affichage, identifiant d'app (bundle ID iOS / `applicationId` Android) et `appId` Capacitor **centralisés en configuration** (`capacitor.config.ts`, variables d'environnement, clé i18n `app.name`), jamais écrits en dur dans le code ou les traductions.
-- Identifiant provisoire de type `com.example.ideescadeaux`. **À remplacer avant la première soumission aux stores** : il ne peut plus être modifié une fois l'app publiée.
+- Identifiant d'app : `fr.frigologie.ideescadeaux` (décision 55). Il ne peut plus être modifié une fois l'app publiée.
 - Thème Ionic par défaut, avec couleurs et polices regroupées dans un seul fichier de variables pour pouvoir changer l'identité visuelle facilement.
 
 ---
@@ -412,3 +412,4 @@ Tous les points ouverts ont été traités et toutes les hypothèses validées.
 52. ✅ **Tranché — stockage des images** (§2) : MinIO ne publie plus d'images Docker. En production, un stockage objet S3 hébergé dans l'UE (Scaleway ou OVH, bucket privé, durabilité assurée par l'hébergeur) ; en développement, Garage (serveur S3 open source) dans la stack Docker. Sauvegarde quotidienne de la base (`pg_dump`, rétention 30 jours) dans la stack de production (docs/DEPLOIEMENT.md).
 53. ✅ **Tranché — domaine** : `ideescadeaux.frigologie.fr` est le domaine définitif (liens de partage `https://ideescadeaux.frigologie.fr/u/…`, App Links / Universal Links, page `/privacy`, API). Il ne dépend pas du nom définitif de l'appli : le changer casserait les liens déjà partagés.
 54. ✅ **Tranché — accessibilité** (§9) : tailles de texte en `rem` (elles suivent la taille de texte du système ; sur Android, la WebView applique déjà l'échelle système) ; mises en page qui passent à la ligne ou défilent au lieu de tronquer, vérifiées à 200 %. Libellés pour lecteurs d'écran : icônes décoratives masquées, boutons à icône nommés, puces filtres utilisables au clavier, zoom autorisé. Contrastes : textes ≥ 4,5:1 ; contours des champs à 3:1 (WCAG 1.4.11), plus foncés que sur les maquettes (`--ic-border-field`), comme la bordure de la zone secrète. Contrôle automatique axe-core (WCAG 2.1 AA) sur les écrans principaux dans les tests e2e.
+55. ✅ **Tranché — nom et identifiant** : « Idées Cadeaux » est le nom définitif ; identifiant d'app `fr.frigologie.ideescadeaux` (bundle ID iOS, `applicationId` Android, schéma `fr.frigologie.ideescadeaux://`), tiré du domaine de la décision 53. Complète la décision 11.
