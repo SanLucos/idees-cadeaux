@@ -41,12 +41,12 @@ Application mobile (iOS/Android) de listes d'idées cadeaux entre amis. Back : S
 
 Copier `.env.example` → `.env` à la racine (et `mobile/.env.example` → `mobile/.env`) avant de démarrer.
 
-**Stack Docker (Postgres, PHP-FPM, Nginx, Mailpit, MinIO, worker Messenger)**
+**Stack Docker (Postgres, PHP-FPM, Nginx, Mailpit, Garage, worker Messenger)**
 ```
 docker compose up -d          # démarre tous les services
 docker compose down           # arrête tout
 ```
-Backend sur `http://localhost:8000`, Mailpit sur `http://localhost:8026`, console MinIO sur `http://localhost:9001` (ports configurables via `.env`). Le service `worker` consomme la file `async` (emails, etc.) : sans lui, rien n'est envoyé.
+Backend sur `http://localhost:8000`, Mailpit sur `http://localhost:8026`, stockage S3 (Garage, bucket et clé créés au démarrage) sur `http://localhost:3900` (ports configurables via `.env`). Le service `worker` consomme la file `async` (emails, etc.) : sans lui, rien n'est envoyé.
 
 **Backend (`/backend`, toutes les commandes via le conteneur `php`)**
 ```
@@ -82,7 +82,9 @@ Partage vers l'appli (spec §5.6) : lien `<APP_ID>://share?url=…` ; Android vi
 
 Lien de partage (lot 7 bis, spec §5.16) : `SHARE_LINK_BASE_URL`, `APP_ID`, `APP_STORE_URL` / `PLAY_STORE_URL`, `ANDROID_CERT_FINGERPRINTS`, `APPLE_TEAM_ID` dans `backend/.env`. La page invité est servie par le back (`/u/<jeton>`). App Links Android : propriété Gradle `shareLinkHost` (`-PshareLinkHost=<domaine>` ou `android/gradle.properties`) ; Universal Links iOS : entitlement Associated Domains à ajouter avec le domaine définitif (lot 8). Test rapide : `adb shell am start -a android.intent.action.VIEW -d "<APP_ID>://u/<jeton>"` ; sur le web, ouvrir `/u/<jeton>`.
 
-RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket, servies par le back via des URL signées (`MEDIA_BASE_URL`, route `/media/…`). Export (ZIP construit par le `worker`, lien 48 h par email) et suppression de compte (14 jours de grâce, effacement par la tâche quotidienne du `worker`). Politique de confidentialité (brouillon) sur `/privacy`. Préparation des stores : `docs/stores/`. Les liens des emails utilisent `DEFAULT_URI`.
+RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en dev, S3 hébergé en prod, décision 52), servies par le back via des URL signées (`MEDIA_BASE_URL`, route `/media/…`). Export (ZIP construit par le `worker`, lien 48 h par email) et suppression de compte (14 jours de grâce, effacement par la tâche quotidienne du `worker`). Politique de confidentialité (brouillon) sur `/privacy`. Préparation des stores : `docs/stores/`. Les liens des emails utilisent `DEFAULT_URI`.
+
+**Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, build mobile de prod).
 
 **CI** : `.github/workflows/ci.yml`, deux jobs (`backend`, `mobile`), lint + tests, déclenchés sur push/PR vers `main`.
 
