@@ -10,8 +10,8 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        // Spec §5.16: domain of share links (App Links), set with the final name (lot 8): -PshareLinkHost=…
-        manifestPlaceholders = [shareLinkHost: (project.findProperty('shareLinkHost') ?: 'localhost')]
+        // Spec §5.16 / §11 décision 53: domain of share links (App Links); -PshareLinkHost=… overrides it.
+        manifestPlaceholders = [shareLinkHost: (project.findProperty('shareLinkHost') ?: 'ideescadeaux.frigologie.fr')]
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61

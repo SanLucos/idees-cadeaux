@@ -1,7 +1,7 @@
 # Google Play — « Sécurité des données » (brouillon)
 
 - **Chiffrement en transit** : oui (HTTPS partout).
-- **Suppression des données** : oui, depuis l'app (Profil → Supprimer mon compte, 14 jours de grâce) ; URL de demande de suppression hors app : **[À COMPLÉTER]** (Google l'exige : page web expliquant la démarche, par ex. `https://<domaine>/privacy#droits`).
+- **Suppression des données** : oui, depuis l'app (Profil → Supprimer mon compte, 14 jours de grâce) ; URL de demande de suppression hors app : `https://ideescadeaux.frigologie.fr/privacy#droits` (section « Vos droits » de la politique, qui explique la démarche).
 - **Partage avec des tiers** : non (les sous-traitants — hébergeur, email, FCM — ne comptent pas comme partage).
 
 | Type Google | Donnée | Collectée | Obligatoire | Finalité |
