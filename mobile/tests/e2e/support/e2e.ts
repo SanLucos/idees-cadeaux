@@ -1,3 +1,4 @@
+import 'cypress-axe';
 import './commands';
 
 // Each journey starts signed out: no tokens, no pending link or share.

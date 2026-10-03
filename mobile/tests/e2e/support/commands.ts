@@ -40,6 +40,8 @@ declare global {
       notSee(text: string): Chainable<void>;
       /** Taps the visible button (or item, link, chip) showing `text` or labelled so. */
       tap(text: string, selector?: string): Chainable<void>;
+      /** axe-core audit of the current screen (WCAG 2.1 AA); fails on any violation. */
+      audit(screen: string): Chainable<void>;
       /** Taps the button of the open ion-alert whose text is `text`. */
       alertButton(text: string): Chainable<void>;
     }
@@ -167,4 +169,26 @@ Cypress.Commands.add('notSee', (text: string) => {
   cy.get('body').should(($body) => {
     expect(visibleWith($body, text).length, `visible « ${text} »`).to.equal(0);
   });
+});
+
+/**
+ * Accessibility audit (spec §9) of what's on screen: axe-core, WCAG 2.1
+ * A/AA rules. Hidden Ionic pages are skipped (axe ignores what isn't
+ * rendered). Violations are printed in the terminal, then fail the test.
+ */
+Cypress.Commands.add('audit', (screen: string) => {
+  cy.injectAxe();
+  cy.checkA11y(
+    undefined,
+    { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] } },
+    (violations) => {
+      const lines = violations.flatMap((v) => [
+        `[${screen}] ${v.impact} ${v.id}: ${v.help}`,
+        ...v.nodes.slice(0, 5).map((n) => `    ${n.target.join(' ')} — ${n.failureSummary?.split('\n').slice(1, 2).join('').trim()}`),
+      ]);
+      cy.task('log', lines.join('\n'));
+    },
+    // CYPRESS_A11Y_REPORT_ONLY=1: list every violation without failing.
+    Boolean(Cypress.env('A11Y_REPORT_ONLY')),
+  );
 });
