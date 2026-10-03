@@ -46,8 +46,18 @@ fi
 
 mkdir -p "$DATA_DIR/postgres" "$DATA_DIR/jwt" "$DATA_DIR/backups"
 
+# Compose v2 (plugin) if present, else the standalone docker-compose.
+if docker compose version > /dev/null 2>&1; then
+  COMPOSE=(docker compose)
+elif command -v docker-compose > /dev/null 2>&1; then
+  COMPOSE=(docker-compose)
+else
+  red "Ni « docker compose » ni « docker-compose » n'est installé."
+  exit 1
+fi
+
 compose() {
-  docker compose -p "$PROJECT" -f docker-compose.prod.yaml --env-file .env.prod "$@"
+  "${COMPOSE[@]}" -p "$PROJECT" -f docker-compose.prod.yaml --env-file .env.prod "$@"
 }
 
 blue "→ Build des images"
@@ -78,5 +88,5 @@ for _ in $(seq 1 30); do
   if compose exec -T nginx wget -qO- http://127.0.0.1/api/health 2> /dev/null; then echo; exit 0; fi
   sleep 1
 done
-red "L'API ne répond pas : docker compose -p $PROJECT -f docker-compose.prod.yaml logs php nginx"
+red "L'API ne répond pas : ${COMPOSE[*]} -p $PROJECT -f docker-compose.prod.yaml logs php nginx"
 exit 1
