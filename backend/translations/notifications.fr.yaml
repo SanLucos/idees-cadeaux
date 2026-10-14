@@ -14,6 +14,8 @@ contribution_goal_reached: "La cotisation pour « %idea% » a atteint son object
 suggestion_gifted: "%actor% a marqué « %idea% » comme offert."
 idea_unpublished: "%actor% a repassé « %idea% » en privé : ce que vous y aviez fait a été supprimé."
 birthday_reminder: "{0} C'est l'anniversaire de %friend% aujourd'hui !|{1} Anniversaire de %friend% demain.|]1,Inf[ Anniversaire de %friend% dans %days% jours."
+manager_invitation_received: "%actor% vous invite à gérer aussi le profil de %child%."
+manager_invitation_accepted: "%actor% gère désormais avec vous le profil de %child%."
 title:
   friend_request_received: "Demande d'ami"
   friend_request_accepted: "Nouvel ami"
@@ -29,6 +31,8 @@ title:
   suggestion_gifted: "Offert"
   idea_unpublished: "Idée repassée en privé"
   birthday_reminder: "Anniversaire"
+  manager_invitation_received: "Gérer un profil enfant"
+  manager_invitation_accepted: "Deuxième gestionnaire"
 email:
   open_app: "Ouvrez l'application pour voir le détail."
   why: "Vous recevez cet email car vous avez accepté les notifications par email."

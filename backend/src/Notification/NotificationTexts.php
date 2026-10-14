@@ -27,6 +27,7 @@ final class NotificationTexts
             '%idea%' => $payload['idea']['title'] ?? '',
             '%owner%' => $payload['owner']['displayName'] ?? '',
             '%friend%' => $payload['friend']['displayName'] ?? '',
+            '%child%' => $payload['child']['displayName'] ?? '',
             '%days%' => (string) ($payload['days'] ?? ''),
             '%count%' => (int) ($payload['days'] ?? 0),
         ];
