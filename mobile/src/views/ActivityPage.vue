@@ -40,6 +40,7 @@
                 <template #owner>{{ item.payload.owner?.displayName }}</template>
                 <template #manager>{{ item.payload.actor?.managedBy }}</template>
                 <template #days>{{ item.payload.days }}</template>
+                <template #child><strong>{{ item.payload.child?.displayName }}</strong></template>
               </i18n-t>
               <span class="item__time">{{ when(item.createdAt) }}</span>
             </div>

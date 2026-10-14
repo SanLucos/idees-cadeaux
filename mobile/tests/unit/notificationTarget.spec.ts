@@ -26,4 +26,9 @@ describe('notificationTarget', () => {
     expect(notificationTarget(n('friend_joined_via_link', { actor: { id: 'u5', displayName: 'Léa' } })).path).toBe('/tabs/friends/u5')
     expect(notificationTarget(n('share_link_suspended', { subject: { id: 'child-1', displayName: 'Jules' } }))).toEqual({ path: '/profile/share', actAs: 'child-1' })
   })
+
+  test('manager invitations (spec §11 décision 60): answered from the profile tab, then the child\'s page', () => {
+    expect(notificationTarget(n('manager_invitation_received', { actor: { id: 'u6', displayName: 'Luc' }, child: { id: 'child-1', displayName: 'Jules' } }))).toEqual({ path: '/tabs/profile', actAs: null })
+    expect(notificationTarget(n('manager_invitation_accepted', { actor: { id: 'u7', displayName: 'Claire' }, child: { id: 'child-1', displayName: 'Jules' } })).path).toBe('/profile/children/child-1')
+  })
 })

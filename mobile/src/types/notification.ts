@@ -12,7 +12,9 @@ export type NotificationType =
   | 'contribution_goal_reached'
   | 'suggestion_gifted'
   | 'idea_unpublished'
-  | 'birthday_reminder';
+  | 'birthday_reminder'
+  | 'manager_invitation_received'
+  | 'manager_invitation_accepted';
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   'friend_request_received',
@@ -28,6 +30,8 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   'suggestion_gifted',
   'idea_unpublished',
   'birthday_reminder',
+  'manager_invitation_received',
+  'manager_invitation_accepted',
   'share_link_suspended',
 ];
 
@@ -48,6 +52,8 @@ export interface AppNotification {
     friend?: Person;
     owner?: Person;
     subject?: Person;
+    /** Manager invitations (spec §11 décision 60): the child concerned. */
+    child?: Person;
     idea?: { id: string; title: string };
     contribution?: { id: string };
     friendship?: { id: string };

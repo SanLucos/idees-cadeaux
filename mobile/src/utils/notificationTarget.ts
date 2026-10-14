@@ -23,6 +23,11 @@ export function notificationTarget(n: AppNotification): NotificationTarget {
         return p.actor ? `/tabs/friends/${p.actor.id}` : '/tabs/friends';
       case 'birthday_reminder':
         return p.friend ? `/tabs/friends/${p.friend.id}` : '/tabs/friends';
+      // Spec §11 décision 60: answered from « Mes enfants », then the child's page.
+      case 'manager_invitation_received':
+        return '/tabs/profile';
+      case 'manager_invitation_accepted':
+        return p.child ? `/profile/children/${p.child.id}` : '/tabs/profile';
       case 'share_link_suspended':
         return '/profile/share';
       case 'contribution_opened':
