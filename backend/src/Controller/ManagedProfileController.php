@@ -83,6 +83,7 @@ final class ManagedProfileController
 
         $child = User::createManaged($me, ProfileFields::displayName($body['displayName'] ?? ''), $id);
         ProfileFields::applyBirthDate($child, $body);
+        self::applySharing($child, $body);
 
         $this->em->persist($child);
         $this->em->flush();
@@ -100,6 +101,7 @@ final class ManagedProfileController
             $child->setDisplayName(ProfileFields::displayName($body['displayName']));
         }
         ProfileFields::applyBirthDate($child, $body);
+        self::applySharing($child, $body);
         $this->em->flush();
 
         return new JsonResponse($this->normalize($child));
@@ -153,6 +155,23 @@ final class ManagedProfileController
         $this->invitationService->invite($child, $me, $email);
 
         return new JsonResponse($this->normalize($child), 202);
+    }
+
+    /**
+     * « Partager avec mes amis » (spec §11 décision 59); the friendships
+     * follow (App\Doctrine\FamilyFriendshipsListener).
+     *
+     * @param array<string, mixed> $body
+     */
+    private static function applySharing(User $child, array $body): void
+    {
+        if (!\array_key_exists('shareWithManagerFriends', $body)) {
+            return;
+        }
+        if (!\is_bool($body['shareWithManagerFriends'])) {
+            throw new ApiProblemException('validation.share_with_manager_friends_invalid', 'shareWithManagerFriends must be a boolean.', 422);
+        }
+        $child->setShareWithManagerFriends($body['shareWithManagerFriends']);
     }
 
     private function mine(string $id, User $me): User

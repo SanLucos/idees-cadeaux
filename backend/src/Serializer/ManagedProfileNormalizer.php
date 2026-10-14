@@ -29,6 +29,8 @@ final class ManagedProfileNormalizer
             'ideaCount' => $this->ideas->countOwnerView($child)['published'],
             'parentalConsentAt' => $child->getParentalConsentAt()?->format(\DATE_ATOM),
             'deletionScheduledAt' => $child->getDeletionScheduledAt()?->format(\DATE_ATOM),
+            // « Partager avec mes amis » (spec §11 décision 59).
+            'shareWithManagerFriends' => $child->isSharedWithManagerFriends(),
             'invitation' => null !== $invitation && $invitation->isUsable()
                 ? ['email' => $invitation->getEmail(), 'expiresAt' => $invitation->getExpiresAt()->format(\DATE_ATOM)]
                 : null,
