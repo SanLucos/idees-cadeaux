@@ -35,6 +35,7 @@ describe('Family', () => {
           cy.location('pathname').should('match', /^\/profile\/children\/[0-9a-f-]{36}$/);
           cy.see('Claire (vous)');
           cy.see('Luc');
+          cy.audit('child page, two managers');
         });
       });
     });
