@@ -39,11 +39,14 @@ import type { ProfilePreference, ProfilePreferenceCategory } from '../types/prof
 
 const CATEGORIES: ProfilePreferenceCategory[] = ['gout', 'marque', 'autre'];
 
-/** Without `entries`, shows and edits my own preferences; with them, a friend's, read-only. */
-const props = defineProps<{ entries?: ProfilePreference[] }>();
+/**
+ * Without `entries`, shows and edits my own preferences (or the active
+ * child's); with them, a friend's, read-only. `profileId`: a child of mine, from its page.
+ */
+const props = defineProps<{ entries?: ProfilePreference[]; profileId?: string }>();
 
 const { t } = useI18n();
-const store = useProfileDetailsStore();
+const store = useProfileDetailsStore(props.profileId);
 const readonly = computed(() => undefined !== props.entries);
 const preferences = computed(() => props.entries ?? store.preferences);
 
@@ -65,7 +68,7 @@ function chipText(pref: ProfilePreference): string {
 }
 
 async function openForm(): Promise<void> {
-  const modal = await modalController.create({ component: PreferenceFormModal, breakpoints: [0, 0.6, 1], initialBreakpoint: 0.6 });
+  const modal = await modalController.create({ component: PreferenceFormModal, componentProps: { profileId: props.profileId }, breakpoints: [0, 0.6, 1], initialBreakpoint: 0.6 });
   await modal.present();
 }
 

@@ -45,8 +45,11 @@ import type { ProfilePreferenceCategory } from '../types/profile';
 
 const CATEGORIES: ProfilePreferenceCategory[] = ['gout', 'marque', 'autre'];
 
+/** `profileId`: a child of mine, from its page; else me or the active child. */
+const props = defineProps<{ profileId?: string }>();
+
 const { t } = useI18n();
-const store = useProfileDetailsStore();
+const store = useProfileDetailsStore(props.profileId);
 const { describe } = useErrorMessage();
 
 const category = ref<ProfilePreferenceCategory>('gout');
