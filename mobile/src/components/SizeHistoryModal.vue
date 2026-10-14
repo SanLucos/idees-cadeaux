@@ -20,14 +20,14 @@
             {{ t('profile.sizes.history.since', { date: formatDate(entry.since) }) }}
             <p v-if="0 === index">{{ t('profile.sizes.history.current') }}</p>
           </ion-label>
-          <span slot="end" class="history-value" :class="{ 'history-value--past': index > 0 }">{{ entry.value }}</span>
+          <span slot="end" class="history-value" :class="{ 'history-value--past': index > 0 }">{{ display(entry) }}</span>
           <!-- Past values the server knows: the current one stays, a change still queued has no id yet. -->
           <ion-button
             v-if="index > 0 && entry.id"
             slot="end"
             fill="clear"
             color="medium"
-            :aria-label="t('profile.sizes.history.remove', { value: entry.value })"
+            :aria-label="t('profile.sizes.history.remove', { value: display(entry) })"
             @click="remove(entry)"
           >
             <ion-icon aria-hidden="true" slot="icon-only" :icon="trashOutline" />
@@ -46,6 +46,7 @@ import { alertController, IonButton, IonButtons, IonContent, IonHeader, IonIcon,
 import { useProfileDetailsStore } from '../stores/profileDetails';
 import SectionTitle from './SectionTitle.vue';
 import type { ProfileSize, SizeHistoryEntry } from '../types/profile';
+import { formatSize } from '../utils/sizeUnits';
 
 /** Every value a size has had — mine or my child's, never a friend's (spec §11 décision 51). */
 const props = defineProps<{ size: ProfileSize }>();
@@ -58,12 +59,13 @@ const current = computed(() => store.sizes.find((s) => s['@id'] === props.size['
 /** Newest first: the current value on top. */
 const entries = computed(() => [...(current.value.history ?? [])].reverse());
 
+const display = (entry: SizeHistoryEntry) => formatSize(entry.value, entry.unit, (u) => t(`profile.sizes.units.${u}`));
 const formatDate = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
 
 async function remove(entry: SizeHistoryEntry): Promise<void> {
   const alert = await alertController.create({
     header: t('profile.sizes.history.removeConfirm.title'),
-    message: t('profile.sizes.history.removeConfirm.message', { value: entry.value }),
+    message: t('profile.sizes.history.removeConfirm.message', { value: display(entry) }),
     buttons: [
       { text: t('common.cancel'), role: 'cancel' },
       { text: t('common.delete'), role: 'destructive', handler: () => void store.removeSizeHistoryEntry(current.value, entry.id!) },

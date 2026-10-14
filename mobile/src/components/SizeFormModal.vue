@@ -15,7 +15,14 @@
           {{ t(`profile.sizes.common.${key}`) }}
         </ion-chip>
       </div>
-      <ion-input v-model="value" class="ic-field" fill="outline" :label="t('profile.sizes.value')" label-placement="stacked" :maxlength="60" required />
+      <div class="value-row">
+        <ion-input v-model="value" class="ic-field value" fill="outline" :label="t('profile.sizes.value')" label-placement="stacked" :maxlength="60" required />
+        <!-- Spec §11 décision 57: no unit by default, one can be chosen at any time. -->
+        <ion-select v-model="unit" class="ic-field unit" fill="outline" :label="t('profile.sizes.unit')" label-placement="stacked" interface="popover">
+          <ion-select-option :value="NO_UNIT">{{ t('profile.sizes.units.none') }}</ion-select-option>
+          <ion-select-option v-for="u in SIZE_UNITS" :key="u" :value="u">{{ t(`profile.sizes.units.${u}`) }}</ion-select-option>
+        </ion-select>
+      </div>
       <ion-input v-model="note" class="ic-field" fill="outline" :label="t('profile.sizes.note')" label-placement="stacked" :maxlength="200" />
       <ion-text v-if="error" color="danger"><p>{{ error }}</p></ion-text>
       <ion-button expand="block" type="submit" :disabled="saving">{{ t(size ? 'common.save' : 'common.add') }}</ion-button>
@@ -26,10 +33,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { IonButton, IonButtons, IonChip, IonContent, IonHeader, IonInput, IonText, IonTitle, IonToolbar, modalController } from '@ionic/vue';
+import { IonButton, IonButtons, IonChip, IonContent, IonHeader, IonInput, IonSelect, IonSelectOption, IonText, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { useProfileDetailsStore } from '../stores/profileDetails';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import type { ProfileSize } from '../types/profile';
+import { SIZE_UNITS, type SizeUnit } from '../utils/sizeUnits';
 
 /** With `size`, edits that entry; without, adds one. */
 const props = defineProps<{ size?: ProfileSize }>();
@@ -43,6 +51,9 @@ const { describe } = useErrorMessage();
 
 const label = ref(props.size?.label ?? '');
 const value = ref(props.size?.value ?? '');
+/** ion-select can't hold null: '' stands for "no unit". */
+const NO_UNIT = '';
+const unit = ref<SizeUnit | typeof NO_UNIT>(props.size?.unit ?? NO_UNIT);
 const note = ref(props.size?.note ?? '');
 const error = ref('');
 const saving = ref(false);
@@ -51,8 +62,9 @@ async function submit(): Promise<void> {
   saving.value = true;
   error.value = '';
   try {
-    if (props.size) await store.updateSize(props.size, label.value.trim(), value.value.trim(), note.value.trim() || null);
-    else await store.addSize(label.value.trim(), value.value.trim(), note.value.trim() || null);
+    const chosen = unit.value || null;
+    if (props.size) await store.updateSize(props.size, label.value.trim(), value.value.trim(), note.value.trim() || null, chosen);
+    else await store.addSize(label.value.trim(), value.value.trim(), note.value.trim() || null, chosen);
     await modalController.dismiss(null, 'saved');
   } catch (e) {
     error.value = describe(e);
@@ -68,5 +80,20 @@ async function submit(): Promise<void> {
   flex-direction: column;
   gap: 14px;
   padding: 16px 0;
+}
+
+/* Side by side, wrapping at large text sizes (spec §11 décision 54). */
+.value-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.value {
+  flex: 2 1 10rem;
+}
+
+.unit {
+  flex: 1 1 7rem;
 }
 </style>

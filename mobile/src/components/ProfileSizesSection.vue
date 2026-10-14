@@ -13,7 +13,7 @@
             {{ size.label }}
             <p v-if="size.note">{{ size.note }}</p>
           </ion-label>
-          <span slot="end" class="size-value">{{ size.value }}</span>
+          <span slot="end" class="size-value">{{ display(size) }}</span>
           <ion-button
             v-if="!readonly"
             slot="end"
@@ -59,6 +59,7 @@ import SectionTitle from './SectionTitle.vue';
 import SizeFormModal from './SizeFormModal.vue';
 import SizeHistoryModal from './SizeHistoryModal.vue';
 import type { ProfileSize } from '../types/profile';
+import { formatSize } from '../utils/sizeUnits';
 
 /** Without `entries`, shows and edits my own sizes; with them, a friend's, read-only. */
 const props = defineProps<{ entries?: ProfileSize[] }>();
@@ -67,6 +68,7 @@ const { t } = useI18n();
 const store = useProfileDetailsStore();
 const readonly = computed(() => undefined !== props.entries);
 const sizes = computed(() => props.entries ?? store.sizes);
+const display = (size: ProfileSize) => formatSize(size.value, size.unit, (u) => t(`profile.sizes.units.${u}`));
 
 onMounted(() => {
   if (!readonly.value) store.fetchSizes();
@@ -94,7 +96,7 @@ async function openHistory(size: ProfileSize): Promise<void> {
 
 async function openActions(size: ProfileSize): Promise<void> {
   const sheet = await actionSheetController.create({
-    header: `${size.label} : ${size.value}`,
+    header: `${size.label} : ${display(size)}`,
     buttons: [
       { text: t('profile.edit'), handler: () => void openForm(size) },
       // Only what the server sent: a size whose value never changed has nothing to show.
