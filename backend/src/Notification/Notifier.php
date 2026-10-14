@@ -58,13 +58,19 @@ final class Notifier
 
         $created = [];
         $seen = [];
+        // A child's notifications go to each of its managers (spec §5.11, §11 décision 60).
+        $deliveries = [];
         foreach ($recipients as $recipient) {
             if (isset($excluded[$recipient->getId()->toRfc4122()]) || $recipient->isSuspended()) {
                 continue;
             }
+            foreach ($recipient->isManaged() ? $recipient->getManagers() : [$recipient] as $target) {
+                $deliveries[] = [$target, $recipient->isManaged() ? $recipient : null];
+            }
+        }
 
-            [$target, $subject] = $recipient->isManaged() ? [$recipient->getManagedBy(), $recipient] : [$recipient, null];
-            if (null === $target || $target->isSuspended()) {
+        foreach ($deliveries as [$target, $subject]) {
+            if (isset($excluded[$target->getId()->toRfc4122()]) || $target->isSuspended()) {
                 continue;
             }
 
