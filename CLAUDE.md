@@ -8,7 +8,7 @@ Application web (point d'entrée principal, spec §11 décision 56) et mobile (i
 
 ## Règles non négociables
 
-1. **Règle d'or de la surprise** : le propriétaire d'une liste ne doit jamais voir ni déduire les suggestions, réservations, commentaires, réactions et cotisations faites par ses amis sur ses idées. Filtrage **côté serveur**, sur tous les canaux (API, compteurs, notifications, `/sync`, cache local, export RGPD, erreurs). Un objet caché renvoie **404 / collection vide**, jamais 403. Seule exception : le gestionnaire d'un profil enfant (section 5.15).
+1. **Règle d'or de la surprise** : le propriétaire d'une liste ne doit jamais voir ni déduire les suggestions, réservations, commentaires, réactions et cotisations faites par ses amis sur ses idées. Filtrage **côté serveur**, sur tous les canaux (API, compteurs, notifications, `/sync`, cache local, export RGPD, erreurs). Un objet caché renvoie **404 / collection vide**, jamais 403. Seule exception : les gestionnaires d'un profil enfant (deux au plus, section 5.15).
 2. **Idées privées** : visibles de leur seul auteur, partout (API, `/sync`, notifications, compteurs, listes d'amis).
 3. **Montants individuels d'une cotisation** : visibles de leur auteur et de l'initiateur uniquement, jamais dans une notification.
 4. **Refus d'ami silencieux** : le statut `declined` n'est jamais exposé au demandeur.
@@ -29,7 +29,7 @@ Application web (point d'entrée principal, spec §11 décision 56) et mobile (i
 
 ## Méthode de travail
 
-- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8, puis 9 (appli web, spec §11 décision 56).
+- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8, 9 (appli web, spec §11 décision 56), puis 10 (icônes et vérification native), 11 (unités des tailles, tailles des enfants), 12 (« Partager avec mes amis », deuxième gestionnaire) — décisions 57 à 61.
 - Ne passe pas au lot suivant si la CI ou la suite de visibilité est rouge.
 - Avant chaque lot : relis les sections concernées, propose un plan court, puis implémente.
 - Écris les tests avec le code (PHPUnit et client de test API Platform côté back, Vitest côté front).
@@ -99,10 +99,10 @@ Aucun secret dans le dépôt (fournir un `.env.example`). Limitation de débit s
 
 ## Hors périmètre de la v1 (ne pas implémenter)
 
-Paiements réels, blocage et signalement, groupes d'amis, chat, invitation par QR code, recherche par pseudo, invitation de non-inscrits, affiliation, modération, révélation du donateur après réception, amitiés entre profils enfants, plusieurs gestionnaires par enfant, transfert de gestion, connexion autonome d'un enfant avant rattachement d'un email.
+Paiements réels, blocage et signalement, groupes d'amis, chat, invitation par QR code, recherche par pseudo, invitation de non-inscrits, affiliation, modération, révélation du donateur après réception, amitiés entre profils enfants, plus de deux gestionnaires par enfant, transfert de gestion, connexion autonome d'un enfant avant rattachement d'un email.
 
 ## Design
-- Les maquettes sont dans `docs/design/`. Avant de coder ou de modifier un écran, lire `docs/design/DESIGN.md`, puis la capture (`captures/`) et le HTML de référence (`maquettes/`) de cet écran.
+- Les maquettes sont dans `docs/design/`, les icônes de l'appli dans `docs/design/icones/` (lot 10). Avant de coder ou de modifier un écran, lire `docs/design/DESIGN.md`, puis la capture (`captures/`) et le HTML de référence (`maquettes/`) de cet écran.
 - Implémenter avec les composants Ionic Vue, les textes via vue-i18n et les couleurs via `src/theme/variables.css` (point de départ : `docs/design/theme/variables.css`). Ne pas recopier le HTML des maquettes.
 - La spécification (`docs/SPECIFICATIONS.md`) prime sur les maquettes. En cas d'écart, poser la question.
 - Zone secrète (prune) : uniquement en vue ami ou gestionnaire, et seulement si l'API renvoie les données. La vue propriétaire n'en montre aucune trace.

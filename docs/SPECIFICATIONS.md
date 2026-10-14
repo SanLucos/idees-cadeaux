@@ -1,6 +1,6 @@
 # Spécifications — Application « Idées Cadeaux »
 
-**Version :** 0.5 (spécifications validées) — 18 septembre 2026
+**Version :** 0.6 — 14 octobre 2026 (0.5 validée le 18 septembre 2026 ; lots 10 à 12 ajoutés)
 **Destinataire :** Claude Code (développement) — à lire en entier avant de coder.
 **Statut :** tous les points ouverts ont été traités et toutes les hypothèses validées ; la section 11 garde la trace des décisions prises.
 
@@ -78,9 +78,9 @@ Monorepo : `/backend` (Symfony/API Platform) et `/mobile` (Ionic Vue). CI qui ex
 | Cotisation et participations | **Rien** | Voient le **total**, le reste à couvrir et les **noms** des participants. **Le montant de chaque participation n'est visible que par son auteur et par l'initiateur de la cotisation.** L'initiateur gère la cotisation, chacun gère sa participation | Rien |
 | Réaction (« j'aime ») | **Rien** | Voient | Rien |
 | Profil (pseudo, avatar, anniversaire, tailles, préférences) | — | Voient | Pseudo + avatar seulement dans une demande d'ami |
-| Historique des tailles (valeurs passées) | Voit, **lui seul** (pour un profil enfant : son **gestionnaire** seul) | **Rien** : uniquement la valeur actuelle | Rien |
+| Historique des tailles (valeurs passées) | Voit, **lui seul** (pour un profil enfant : ses **gestionnaires** seuls) | **Rien** : uniquement la valeur actuelle | Rien |
 | Idée privée (brouillon) | Voit et gère ses propres brouillons, **jamais** ceux d'un ami | **Rien** (seul l'auteur la voit) | Rien |
-| Liste d'un profil enfant | L'enfant n'a pas de connexion : son **gestionnaire** voit tout, y compris les éléments cachés (voir 5.15) | Voient comme pour tout propriétaire | Rien |
+| Liste d'un profil enfant | L'enfant n'a pas de connexion : ses **gestionnaires** (deux au plus) voient tout, y compris les éléments cachés (voir 5.15) | Voient comme pour tout propriétaire, y compris les amis d'un gestionnaire quand « Partager avec mes amis » est actif (5.15) | Rien |
 | Vue invité (lien de partage, sans compte) | — | — | Voient **uniquement** pseudo, avatar et idées personnelles publiées, si le propriétaire a créé un lien (5.16) |
 
 ### Conséquences techniques obligatoires
@@ -106,8 +106,8 @@ Monorepo : `/backend` (Symfony/API Platform) et `/mobile` (Ionic Vue). CI qui ex
 ### 5.2 Profil
 - **Pseudo** (2–30 caractères, non unique, affiché aux amis), **avatar** (upload + recadrage).
 - **Date d'anniversaire** (optionnelle) : jour et mois obligatoires si renseignée, année optionnelle. Sert aux rappels aux amis.
-- **Tailles** : liste **illimitée** d'entrées « libellé + valeur » (+ note optionnelle), par exemple « Pointure : 42 », « T-shirt : M », « Jean : W32 L32 », « Bague : 54 ». Ajout, modification, suppression et réordonnancement libres. Des libellés courants sont proposés à la saisie (Pointure, T-shirt, Pull, Chemise, Pantalon, Jean, Robe, Veste, Bague, Gants, Bonnet…) mais le texte libre est accepté. **Visibles de tous les amis**, jamais des autres utilisateurs. Plafond technique de 100 entrées par utilisateur contre les abus.
-- **Historique des tailles** : chaque valeur prise par une taille est conservée avec sa date. **Visible du seul utilisateur** ; pour un profil enfant, de son **seul gestionnaire** (5.15). Les amis ne voient que la valeur actuelle. Le propriétaire peut retirer une valeur passée de l'historique (détails : section 11, décision 51).
+- **Tailles** : liste **illimitée** d'entrées « libellé + valeur + unité » (+ note optionnelle), par exemple « Pointure : 42 EU », « Tour de taille : 80 cm », « T-shirt : M », « Jean : W32 L32 », « Bague : 54 ». L'**unité** est choisie dans une liste fixe (cm, mm, m, g, kg, ml, L, EU, US, UK) ; « pas d'unité » est la valeur par défaut et celle des tailles saisies avant le lot 11 (détails : section 11, décision 57). Ajout, modification, suppression et réordonnancement libres. Des libellés courants sont proposés à la saisie (Pointure, T-shirt, Pull, Chemise, Pantalon, Jean, Robe, Veste, Bague, Gants, Bonnet…) mais le texte libre est accepté. **Visibles de tous les amis**, jamais des autres utilisateurs. Plafond technique de 100 entrées par utilisateur contre les abus.
+- **Historique des tailles** : chaque valeur prise par une taille est conservée avec sa date. **Visible du seul utilisateur** ; pour un profil enfant, de ses **seuls gestionnaires** (5.15). Les amis ne voient que la valeur actuelle. Le propriétaire peut retirer une valeur passée de l'historique (détails : section 11, décision 51).
 - **Préférences** : liste d'entrées libres classées par catégorie (goût, marque, autre). Visibles des amis.
 - Paramètres : langue, notifications, export des données, suppression du compte.
 
@@ -149,7 +149,7 @@ Monorepo : `/backend` (Symfony/API Platform) et `/mobile` (Ionic Vue). CI qui ex
 - Si rien n'est trouvé, saisie manuelle.
 
 ### 5.6 Partage depuis le navigateur ou une autre app
-- L'utilisateur partage une URL vers l'appli, qui ouvre l'écran de création pré-rempli avec choix du destinataire (soi-même ou un ami, donc suggestion).
+- L'utilisateur partage une URL vers l'appli (l'appli Android/iOS figure dans la liste des applis de partage du téléphone), qui ouvre l'écran de création pré-rempli ; le destinataire est **soi-même par défaut**, un ami restant possible (suggestion). Uniquement dans les applis natives : sur le web, ouvrir `/share?url=…` (décision 56).
 - Android : intent de partage. iOS : **Share Extension** (développement natif partiel, tâche dédiée du lot 7).
 - Hors-ligne : le brouillon est enregistré, le pré-remplissage se complète au retour du réseau.
 
@@ -182,8 +182,8 @@ Canaux : **in-app** (centre de notifications + badge), **email**, **push**. Pré
 |---|---|---|
 | Demande d'ami reçue | Destinataire de la demande | in-app, push, email |
 | Demande d'ami acceptée | Demandeur | in-app, push |
-| Nouvel ami via votre lien de partage | Propriétaire du lien (le gestionnaire pour un profil enfant) | in-app, push |
-| Lien de partage suspendu (plafond atteint) | Propriétaire du lien (le gestionnaire pour un profil enfant) | in-app, push |
+| Nouvel ami via votre lien de partage | Propriétaire du lien (les gestionnaires pour un profil enfant) | in-app, push |
+| Lien de partage suspendu (plafond atteint) | Propriétaire du lien (les gestionnaires pour un profil enfant) | in-app, push |
 | Nouvelle idée personnelle **publiée** par un ami | Amis du propriétaire | in-app |
 | Nouvelle suggestion **publiée** pour X | Amis de X, **sauf X** et l'auteur | in-app |
 | Idée réservée | Auteur de la suggestion, commentateurs, participants, **sauf propriétaire** et acteur | in-app, push |
@@ -195,7 +195,7 @@ Canaux : **in-app** (centre de notifications + badge), **email**, **push**. Pré
 
 - Aucune notification ne doit révéler au propriétaire une activité sur ses idées (règle d'or).
 - **Rappels d'anniversaire** : J-14 et J-2 par défaut. Chaque utilisateur règle ses délais (en jours) et peut les désactiver ; réglage global en v1, pas par ami. Envoi vers 9 h dans le fuseau du destinataire. Un anniversaire au 29 février est fêté le 28 février les années non bissextiles.
-- **Profils enfants** : les notifications destinées à un enfant sont envoyées à son gestionnaire, avec le nom de l'enfant.
+- **Profils enfants** : les notifications destinées à un enfant sont envoyées à chacun de ses gestionnaires, avec le nom de l'enfant. Invitation à cogérer un enfant (5.15) : in-app et email à l'invité ; acceptation : in-app à l'autre gestionnaire.
 - Les notifications ouvrent l'écran concerné (deep link).
 - **Consentement explicite** : écran d'explication avant la demande de permission OS, consentement horodaté par canal (push, email). Sans consentement, aucune notification non essentielle. Désinscription email en un clic. Les emails transactionnels (vérification, mot de passe, export) sont exclus de ce périmètre.
 - Push : enregistrement du token à la connexion, suppression à la déconnexion, nettoyage des tokens invalides.
@@ -224,16 +224,18 @@ Voir section 8.
 
 ### 5.15 Profils enfants gérés (sans email)
 
-**Principe** : un utilisateur adulte, le **gestionnaire**, crée et gère des profils pour ses enfants. Un profil enfant n'a ni email, ni mot de passe, ni connexion : seul son gestionnaire l'utilise. Un profil enfant a **un seul gestionnaire**.
+**Principe** : un utilisateur adulte, le **gestionnaire**, crée et gère des profils pour ses enfants. Un profil enfant n'a ni email, ni mot de passe, ni connexion : seuls ses gestionnaires l'utilisent. Un profil enfant a **un ou deux gestionnaires**, aux droits égaux (deuxième gestionnaire : voir plus bas et décision 60). Dans cette section, « le gestionnaire » désigne chacun d'eux.
 
 - **Création** : depuis « Mes enfants » : pseudo (obligatoire), avatar, date d'anniversaire (optionnelle), case de consentement explicite (« je suis titulaire de l'autorité parentale »). Limite de 10 profils enfants par gestionnaire.
-- **Contenu du profil** : identique à celui d'un utilisateur (anniversaire, tailles, préférences), visible des amis de l'enfant. L'**historique des tailles** de l'enfant n'est visible que de son gestionnaire, jamais de ses amis (5.2).
+- **Contenu du profil** : identique à celui d'un utilisateur (anniversaire, tailles avec unités, préférences), visible des amis de l'enfant. Le gestionnaire tient les tailles et préférences de l'enfant **directement depuis la fiche de l'enfant** (« Mes enfants » → l'enfant), sans avoir à changer de profil actif (décision 58). L'**historique des tailles** de l'enfant n'est visible que de ses gestionnaires, jamais de ses amis (5.2).
 - **Agir au nom de l'enfant** : sélecteur de profil dans l'appli ; côté API, en-tête `X-Acting-As: <id>` vérifié par le serveur. Le gestionnaire crée et gère ainsi les idées de l'enfant (publiées ou privées), les marque « reçues », tient son profil (tailles, préférences) et gère ses amis. Ces actions sont attribuées à l'enfant.
 - **Le gestionnaire voit tout sur la liste de l'enfant** (« vue gestionnaire ») : idées de l'enfant, suggestions des amis, réservations, commentaires, réactions, cotisations avec participants et total. Les **montants individuels** restent visibles de leur seul auteur et de l'initiateur : le gestionnaire n'en voit que s'il est initiateur ou participant. Il peut aussi réserver, commenter, suggérer, réagir et cotiser sur la liste de son enfant en son propre nom, comme un ami. C'est l'exception à la règle d'or.
 - **Amis d'un enfant** : **adultes uniquement** en v1 (comptes avec email). Toute amitié est **initiée par le gestionnaire au nom de l'enfant** (email de l'adulte, contacts, « inviter mes amis » ou lien de partage du profil de l'enfant, voir 5.16). L'adulte reçoit une demande « au nom de [enfant] », avec la mention « profil géré par [gestionnaire] » ; acceptation, refus silencieux et expiration comme en 5.3. Un adulte ne peut pas demander un enfant en ami : les profils enfants sont **exclus de la recherche par email et de la correspondance de contacts**. Le gestionnaire peut retirer un ami de l'enfant, et l'adulte peut retirer l'enfant de ses amis.
-- **Rattacher un email (compte autonome)** : le gestionnaire saisit un email ; celui-ci reçoit une invitation valable 7 jours pour définir un mot de passe ou se connecter avec Google/Apple. À la validation, le profil devient un **compte autonome** et conserve tout (idées, amis, tailles, préférences). L'email ne doit appartenir à aucun compte existant (pas de fusion en v1). Effets : l'accès du gestionnaire **prend fin**, l'ancien enfant devient un propriétaire soumis à la règle d'or, et une amitié est créée automatiquement entre l'ancien gestionnaire et le compte converti (que ce dernier peut retirer).
-- **Suppression et export** : le gestionnaire exporte les données d'un enfant et peut supprimer son profil (14 jours de grâce, comme en 5.13).
-- **Hors-ligne** : le gestionnaire synchronise aussi les données de ses profils enfants (vue gestionnaire), uniquement sur ses appareils.
+- **« Partager avec mes amis »** (option de la fiche de l'enfant, décision 59) : tant qu'elle est active, **tout ami d'un gestionnaire** (actuel ou futur) a accès à l'enfant comme un ami de l'enfant, sans demande à accepter : vue ami de sa liste, tailles, préférences, anniversaire et rappels, réservations, commentaires, cotisations et suggestions comme pour tout ami. L'accès est **calculé côté serveur** (aucune amitié créée) et prend fin dès que l'option est désactivée ou que l'amitié avec le gestionnaire prend fin, sauf amitié directe avec l'enfant. L'ami peut retirer l'enfant de ses amis : l'enfant reste alors masqué pour lui, même si l'option reste active. Cochée par défaut à la création d'un enfant, désactivée pour les enfants existants.
+- **Deuxième gestionnaire** (décision 60) : depuis la fiche de l'enfant, « Ajouter un gestionnaire » invite un de ses **amis adultes** (compte autonome). L'invité reçoit une notification et un email, et accepte en cochant la même case de consentement qu'à la création (« je suis titulaire de l'autorité parentale ») ; l'invitation expire après 7 jours. Un refus ou une expiration n'est jamais distingué (« en attente », puis disparition). **Deux gestionnaires au plus**, aux **droits égaux** : vue gestionnaire, agir au nom de l'enfant, inviter ou retirer l'autre gestionnaire, rattacher un email, exporter, supprimer le profil. Chacun peut se retirer, sauf le dernier gestionnaire. Un gestionnaire retiré perd tout accès immédiatement (ses appareils effacent les données de l'enfant à la synchronisation suivante). La limite de 10 enfants par gestionnaire compte les enfants cogérés.
+- **Rattacher un email (compte autonome)** : un gestionnaire saisit un email ; celui-ci reçoit une invitation valable 7 jours pour définir un mot de passe ou se connecter avec Google/Apple. À la validation, le profil devient un **compte autonome** et conserve tout (idées, amis, tailles, préférences). L'email ne doit appartenir à aucun compte existant (pas de fusion en v1). Effets : l'accès des gestionnaires **prend fin**, l'ancien enfant devient un propriétaire soumis à la règle d'or, et une amitié est créée automatiquement entre chaque ancien gestionnaire et le compte converti (que ce dernier peut retirer). Les accès dérivés de « Partager avec mes amis » prennent fin aussi.
+- **Suppression et export** : le gestionnaire exporte les données d'un enfant (le lien va à celui qui le demande) et peut supprimer son profil (14 jours de grâce, comme en 5.13 ; l'autre gestionnaire est prévenu et chacun peut annuler). Si un gestionnaire supprime son propre compte, l'enfant reste à l'autre ; s'il était le seul, la règle de 5.13 s'applique.
+- **Hors-ligne** : chaque gestionnaire synchronise aussi les données de ses profils enfants (vue gestionnaire), uniquement sur ses appareils.
 
 ### 5.16 Partage du profil par lien
 
@@ -277,12 +279,13 @@ Toutes les entités : `id` **UUID (v7) pouvant être généré par le client**, 
 
 | Entité | Champs principaux |
 |---|---|
-| **User** | type (regular/managed), managedBy (nullable, un seul gestionnaire), email (nullable pour un profil géré), passwordHash (nullable), displayName, avatarPath, birthDay, birthMonth, birthYear (nullable), locale, timezone, emailVerifiedAt, deletionScheduledAt (nullable) |
+| **User** | type (regular/managed), shareWithManagerFriends (profil enfant : « Partager avec mes amis »), email (nullable pour un profil géré), passwordHash (nullable), displayName, avatarPath, birthDay, birthMonth, birthYear (nullable), locale, timezone, emailVerifiedAt, deletionScheduledAt (nullable) |
+| **ChildManager** | child, manager, status (pending/active), invitedBy, expiresAt (invitation + 7 jours), respondedAt. Deux gestionnaires actifs au plus par enfant ; remplace `User.managedBy` (lot 12) |
 | **SocialIdentity** | user, provider (google/apple), providerUserId |
 | **Friendship** | requester, addressee, status (pending/accepted/declined/expired), respondedAt, expiresAt (création + 30 jours), onBehalfOfManager (nullable : gestionnaire ayant agi au nom d'un enfant), origin (request/link/conversion), shareLink (nullable), removedBy (nullable). Une seule demande active par paire |
 | **ShareLink** | owner (utilisateur ou profil enfant), token (aléatoire 128 bits, unique), status (active/revoked), revokedAt, lastUsedAt. Un seul lien actif par propriétaire |
-| **ProfileSize** | user, label, value, note (nullable), sortOrder |
-| **ProfileSizeHistory** | size, value ; `createdAt` = date depuis laquelle la taille a cette valeur. Jamais exposé aux amis |
+| **ProfileSize** | user, label, value, unit (nullable : pas d'unité ; cm, mm, m, g, kg, ml, l, eu, us, uk), note (nullable), sortOrder |
+| **ProfileSizeHistory** | size, value, unit ; `createdAt` = date depuis laquelle la taille a cette valeur. Jamais exposé aux amis |
 | **ProfilePreference** | user, category (goût/marque/autre), label, value |
 | **Occasion** | code, translationKey, sortOrder (table de référence) |
 | **Idea** | owner, author, title, url, priceAmount, priceCurrency, imagePath, note, occasion (nullable), visibility (private/published, défaut published), publishedAt (nullable), status (active/archived), archivedAt, archivedBy (nullable), archiveKind (received/gifted). *Suggestion = author ≠ owner* |
@@ -329,7 +332,7 @@ Principes :
 - **Synchronisation delta** : `GET /sync?since=<curseur>` renvoie créations, modifications et suppressions (tombstones via `deletedAt`) depuis le curseur, **avec le filtrage de visibilité de la section 4**.
 - **Conflits** : dernier écrit gagne, champ par champ, sur l'horodatage serveur. Cas particuliers : réservation concurrente (première synchronisation gagne, voir 5.7), cotisation clôturée entre-temps (participation refusée avec message).
 - **Retrait d'ami ou suppression d'un contenu** : à la synchro suivante, purge locale des données concernées.
-- **Idées privées** : synchronisées uniquement vers les appareils de leur auteur. Les données des profils enfants (vue gestionnaire) ne sont synchronisées que vers les appareils du gestionnaire.
+- **Idées privées** : synchronisées uniquement vers les appareils de leur auteur. Les données des profils enfants (vue gestionnaire) ne sont synchronisées que vers les appareils de ses gestionnaires.
 - **Lien de partage** : rejoindre via un lien nécessite le réseau ; le jeton reçu hors-ligne est conservé et traité au retour du réseau.
 - Authentification : tokens en stockage sécurisé, renouvellement au retour du réseau. Connexion sociale et pré-remplissage de lien demandent le réseau (fallback : saisie manuelle / différé).
 - Indicateurs d'UI : état de synchronisation, actions en attente, erreurs de sync avec possibilité de réessayer.
@@ -350,7 +353,7 @@ Principes :
 
 ## 10. Hors périmètre de la v1
 
-Paiements réels, blocage et signalement d'utilisateurs, groupes d'amis ou listes partagées, chat privé, invitation par QR code, recherche d'ami par pseudo, invitation de non-inscrits par email/SMS, affiliation ou liens marchands, modération de contenu, révélation du donateur après réception, amitiés entre profils enfants, plusieurs gestionnaires par enfant, transfert de gestion d'un enfant, connexion autonome d'un enfant avant rattachement d'un email.
+Paiements réels, blocage et signalement d'utilisateurs, groupes d'amis ou listes partagées, chat privé, invitation par QR code, recherche d'ami par pseudo, invitation de non-inscrits par email/SMS, affiliation ou liens marchands, modération de contenu, révélation du donateur après réception, amitiés entre profils enfants, plus de deux gestionnaires par enfant (deux depuis la décision 60), transfert de gestion d'un enfant, connexion autonome d'un enfant avant rattachement d'un email.
 
 ---
 
@@ -414,3 +417,40 @@ Tous les points ouverts ont été traités et toutes les hypothèses validées.
 54. ✅ **Tranché — accessibilité** (§9) : tailles de texte en `rem` (elles suivent la taille de texte du système ; sur Android, la WebView applique déjà l'échelle système) ; mises en page qui passent à la ligne ou défilent au lieu de tronquer, vérifiées à 200 %. Libellés pour lecteurs d'écran : icônes décoratives masquées, boutons à icône nommés, puces filtres utilisables au clavier, zoom autorisé. Contrastes : textes ≥ 4,5:1 ; contours des champs à 3:1 (WCAG 1.4.11), plus foncés que sur les maquettes (`--ic-border-field`), comme la bordure de la zone secrète. Contrôle automatique axe-core (WCAG 2.1 AA) sur les écrans principaux dans les tests e2e.
 55. ✅ **Tranché — nom et identifiant** : « Idées Cadeaux » est le nom définitif ; identifiant d'app `fr.frigologie.ideescadeaux` (bundle ID iOS, `applicationId` Android, schéma `fr.frigologie.ideescadeaux://`), tiré du domaine de la décision 53. Complète la décision 11.
 56. ✅ **Tranché (lot 9) — appli web, point d'entrée principal** : l'appli Ionic Vue existante est aussi publiée en version web, à la racine de `https://ideescadeaux.frigologie.fr/` (l'API `/api`, `/privacy`, `/media` et les liens des emails restent servis par le back) ; création de compte et toutes les fonctions comprises. Remplace l'exclusion « version web complète » du §10. Sur le web : connexion conservée dans un cookie `httpOnly` (jeton de rafraîchissement, illisible par le JavaScript ; jeton d'accès en mémoire), en ligne uniquement (aucune copie locale dans le navigateur ; une écriture hors ligne est refusée avec un message clair), notifications dans l'onglet Activité et par email (pas de push web), connexion Google/Apple reportée, fonctions propres au téléphone masquées (contacts, partage depuis une autre appli), mise en page mobile centrée sur grand écran. Un lien `/u/…` ouvert dans un navigateur affiche la vue invité de l'appli web (création de compte et « Devenir ami » sur place) ; l'aperçu dans les messageries (pseudo seul) reste produit par le serveur. Ordre des lots : … 8, puis 9 (appli web).
+
+57. ✅ **Tranché (lot 11) — unités des tailles** (§5.2) : chaque taille a une unité choisie dans une liste fixe : **pas d'unité** (par défaut), cm, mm, m, g, kg, ml, L, et les systèmes de pointure et de vêtement EU, US, UK. Codes stables côté API (`null`, `cm`, `mm`, `m`, `g`, `kg`, `ml`, `l`, `eu`, `us`, `uk`, erreur `profile_size.unit_invalid` sinon), libellés traduits dans l'appli. Affichage après la valeur (« 80 cm », « 42 EU »). Les tailles existantes passent à « pas d'unité » sans perdre leur valeur : l'utilisateur peut en choisir une plus tard. Aucune unité n'est déduite du libellé. L'historique garde l'unité de chaque valeur ; changer **seulement l'unité** ne crée pas d'entrée d'historique (correction de la valeur actuelle). Unité modifiable hors-ligne, présente dans `/sync`, l'export et la vue ami ; jamais dans la vue invité (pas de tailles).
+58. ✅ **Tranché (lot 11) — tailles des enfants** (§5.15) : les tailles d'un enfant existaient déjà, mais n'étaient accessibles qu'en changeant de profil actif dans l'onglet Profil. La fiche de l'enfant affiche désormais ses tailles et préférences, modifiables directement (mêmes écrans et mêmes règles, `X-Acting-As`, historique compris). Rien ne change côté serveur.
+59. ✅ **Tranché (lot 12) — « Partager avec mes amis »** (§5.15) : option de la fiche d'un enfant. Active, elle donne aux **amis acceptés de chaque gestionnaire** (actuels et futurs) l'accès d'un ami à l'enfant, sans demande ni amitié créée : accès calculé par le serveur à chaque requête, `/sync` et notification (rappels d'anniversaire compris). Dans « Amis », l'enfant apparaît avec la mention « enfant de [gestionnaire] ». Le gestionnaire voit ces personnes dans la liste des amis de l'enfant, marquées « via vos amis », sans pouvoir les retirer une à une (désactiver l'option, ou retirer l'amitié avec lui). L'option désactivée ou l'amitié avec le gestionnaire terminée, l'accès prend fin (404 ensuite), sauf amitié directe avec l'enfant ; réservations, cotisations et commentaires déjà faits suivent la règle d'un ami retiré (5.3). Un ami qui retire l'enfant de ses amis le garde masqué tant qu'il ne l'ajoute pas à nouveau. Cochée par défaut à la création, désactivée pour les enfants existants (choix explicite du gestionnaire). Suite de visibilité : ami d'un gestionnaire sans l'option → 404 ; avec → vue ami (jamais la vue gestionnaire, ni l'historique des tailles) ; après désactivation ou fin de l'amitié → 404 ; jamais pour un ami d'un ami ni pour un invité.
+60. ✅ **Tranché (lot 12) — deuxième gestionnaire** (§5.15) : remplace « un seul gestionnaire » (décision 15) et l'exclusion « plusieurs gestionnaires par enfant » du §10. Deux gestionnaires au plus, aux droits égaux (y compris retirer l'autre, rattacher un email, supprimer le profil). Invitation réservée aux **amis adultes** du gestionnaire qui invite, acceptée avec la case de consentement « titulaire de l'autorité parentale », valable 7 jours, une seule invitation en cours par enfant ; refus et expiration non distingués pour l'inviteur. Les deux ont la vue gestionnaire (exception à la règle d'or), l'historique des tailles et `X-Acting-As` ; les **montants individuels** d'une cotisation restent visibles du seul auteur et de l'initiateur. Notifications destinées à l'enfant : à chacun des gestionnaires. Les demandes d'ami au nom de l'enfant portent « profil géré par [A] et [B] ». Gestionnaire retiré ou qui se retire : perte d'accès immédiate, données de l'enfant retirées de ses appareils à la synchronisation ; sa relation avec les amis de l'enfant redevient celle d'un ami ordinaire s'il en est un. Migration : `User.managedBy` devient une ligne `ChildManager` active par enfant existant. Suite de visibilité : invité en attente → rien de la vue gestionnaire ; deuxième gestionnaire actif → vue gestionnaire complète sauf montants des autres ; gestionnaire retiré → 404.
+61. ✅ **Tranché (lot 10) — icônes de l'appli** : les icônes définitives (cube-cadeau bleu, ruban rouge, ampoule jaune sur fond prune) sont versionnées dans `docs/design/icones/` (sources SVG et exports). Elles remplacent les icônes par défaut de Capacitor : icône adaptative Android (`mipmap-*`) et icône de repli, `AppIcon` iOS (1024 px, sans transparence), favicon (SVG, ICO), `apple-touch-icon`, icônes et manifeste de l'appli web (`site.webmanifest`, icônes « maskable »), icône 512 px de la fiche Google Play (`docs/stores/`). Non inclus : variantes sombre/teintée d'iOS 18 et icône monochrome d'Android 13. Ordre des lots : … 9, puis 10 (icônes et vérification native), 11 (tailles), 12 (famille).
+
+---
+
+## 12. Plan de livraison (lots)
+
+| Lot | Contenu | Critère de fin |
+|---|---|---|
+| **0. Fondations** | Monorepo, Docker, CI, squelettes API Platform et Ionic Vue, i18n branchée, conventions (UUID client, timestamps, soft delete), harnais de tests de visibilité, modèle de comptes prévoyant les profils gérés (type, gestionnaire, `X-Acting-As`) | CI verte, app vide qui parle à l'API |
+| **1. Comptes** | Inscription/connexion email, vérification, mot de passe oublié, Google/Apple, sessions, profil, onboarding | Un utilisateur crée un compte, se connecte, édite son profil |
+| **2. Amis** | Recherche par email, contacts hachés, demandes, acceptation, retrait | Deux utilisateurs deviennent amis et se retirent |
+| **3. Idées** | CRUD, occasions, suggestions, idées privées et publication, listes, filtres, archives, règles de visibilité | Suite de visibilité verte sur idées et suggestions |
+| **4. Interactions** | Réservation, réactions, commentaires, cotisation, marquage « offert » et archivage des suggestions | Suite de visibilité verte sur tous les objets cachés |
+| **4 bis. Profils enfants** | Création de profils gérés, agir au nom de l'enfant (`X-Acting-As`), vue gestionnaire, amitiés au nom de l'enfant, rattachement d'un email, export et suppression | Suite de visibilité verte avec la vue gestionnaire ; conversion en compte autonome validée |
+| **5. Notifications** | In-app, email, push, préférences, consentement, rappels d'anniversaire | Aucune fuite vers le propriétaire, tests à l'appui |
+| **6. Hors-ligne** | SQLite, outbox, `/sync`, gestion des conflits, UI de synchro | Scénarios hors-ligne complets validés |
+| **7. Confort** | Aperçu de lien, partage Android, Share Extension iOS (tâche dédiée) | Idée créée depuis un partage sur iOS et Android |
+| **7 bis. Partage par lien** | Création, révocation et régénération du lien, page web invité, mode invité dans l'appli, liens universels / App Links, jointure avec confirmation, lien de profil enfant, plafond anti-abus | Tests de visibilité verts avec la vue invité ; un visiteur sans compte voit la liste, s'inscrit, puis devient ami |
+| **8. RGPD et publication** | Export, suppression de compte, finitions i18n, accessibilité, nom et identité définitifs (identifiant d'app, icône, écran de démarrage), préparation stores | Application publiable |
+| **9. Appli web** | L'appli Ionic servie à la racine du domaine, session en cookie `httpOnly`, en ligne uniquement, fonctions du téléphone masquées (décision 56) | Parcours complet dans un navigateur, e2e verts |
+| **10. Icônes et vérification native** | Icônes définitives sur Android, iOS et le web, manifeste web (décision 61) ; build Android de production installé sur un téléphone ou un émulateur : l'appli figure dans la liste de partage, un lien partagé ouvre la création d'idée pour soi-même, pré-remplie (§5.6) | Icônes visibles sur le lanceur Android, l'onglet du navigateur et l'écran d'accueil ; idée créée depuis un partage Android |
+| **11. Tailles** | Unités des tailles avec « pas d'unité » par défaut et migration des tailles existantes (décision 57) ; tailles et préférences de l'enfant sur sa fiche (décision 58) | Tailles existantes intactes, unité choisie après coup ; tests back et front, hors-ligne compris |
+| **12. Famille** | « Partager avec mes amis » sur un profil enfant (décision 59) ; deuxième gestionnaire : invitation, acceptation, droits égaux, retrait, migration de `managedBy` (décision 60) | Suite de visibilité verte avec les nouveaux cas (accès dérivé, deuxième gestionnaire, gestionnaire retiré) ; parcours e2e à deux parents |
+
+---
+
+## 13. Instructions pour Claude Code
+
+- Un `CLAUDE.md` est fourni avec ce document, à la racine du dépôt ; ce document est `docs/SPECIFICATIONS.md`.
+- Avancer **lot par lot**, en mettant à jour les tests à chaque étape. Ne pas passer au lot suivant si la suite de visibilité est rouge.
+- En cas d'ambiguïté ou de conflit avec une décision de la section 11, **poser la question** plutôt que d'inventer.
+- Ne jamais implémenter de paiement réel ni stocker de contacts du téléphone.
