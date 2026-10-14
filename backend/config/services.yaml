@@ -32,6 +32,8 @@ services:
             $playStoreUrl: '%env(PLAY_STORE_URL)%'
             $androidCertFingerprints: '%env(ANDROID_CERT_FINGERPRINTS)%'
             $appleTeamId: '%env(APPLE_TEAM_ID)%'
+            $webAppIndex: '%env(WEB_APP_INDEX)%'
+            $appName: '%env(APP_NAME)%'
 
     Psr\Cache\CacheItemPoolInterface: '@cache.app'
 

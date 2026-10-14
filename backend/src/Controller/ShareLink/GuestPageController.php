@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
 /**
@@ -30,6 +31,11 @@ use Twig\Environment;
  * nothing else — never an idea.
  *
  * Also serves the guest view's signed, short-lived images.
+ *
+ * Once the web app is deployed (WEB_APP_INDEX = its built index.html,
+ * spec §11 décision 56), the link opens the web app instead: its page,
+ * with the same Open Graph preview injected server-side (crawlers run no
+ * script); the app then shows the guest view, sign-up and « Devenir ami ».
  */
 final class GuestPageController
 {
@@ -48,6 +54,9 @@ final class GuestPageController
         private readonly string $appId,
         private readonly string $appStoreUrl,
         private readonly string $playStoreUrl,
+        private readonly TranslatorInterface $translator,
+        private readonly string $webAppIndex,
+        private readonly string $appName,
     ) {
     }
 
@@ -65,7 +74,15 @@ final class GuestPageController
             $link = $this->service->resolve($token);
             $filter = IdeaListFilter::fromRequest($request);
         } catch (ApiProblemException) {
+            if (null !== $shell = $this->webAppShell($locale, null)) {
+                return $shell;
+            }
+
             return $this->render('share/invalid.html.twig', ['locale' => $locale, 'nonce' => $nonce, 'rate_limited' => false], 404, $nonce);
+        }
+
+        if (null !== $shell = $this->webAppShell($locale, (string) $link->getOwner()->getDisplayName())) {
+            return $shell;
         }
 
         $view = $this->guestView->build($link, $filter);
@@ -140,6 +157,38 @@ final class GuestPageController
             'X-Content-Type-Options' => 'nosniff',
             'X-Robots-Tag' => 'noindex',
         ]);
+    }
+
+    /**
+     * The web app's page with the link preview (pseudo only, never an idea)
+     * in its <head>; null when the web app isn't deployed here. An invalid
+     * link gets the same page without a name: the app says it's invalid.
+     */
+    private function webAppShell(string $locale, ?string $ownerName): ?Response
+    {
+        if ('' === $this->webAppIndex || !is_readable($this->webAppIndex)) {
+            return null;
+        }
+
+        $meta = '<meta name="robots" content="noindex, nofollow"><meta name="referrer" content="no-referrer">';
+        if (null !== $ownerName) {
+            $e = static fn (string $text): string => htmlspecialchars($text, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+            $meta .= \sprintf(
+                '<meta property="og:type" content="website"><meta property="og:title" content="%s"><meta property="og:description" content="%s"><meta property="og:site_name" content="%s">',
+                $e($this->translator->trans('guest.og_title', ['%name%' => $ownerName], 'share', $locale)),
+                $e($this->translator->trans('guest.og_description', ['%app%' => $this->appName], 'share', $locale)),
+                $e($this->appName),
+            );
+        }
+
+        $html = (string) file_get_contents($this->webAppIndex);
+        $response = new Response(str_replace('</head>', $meta.'</head>', $html));
+        $response->headers->set('Cache-Control', 'no-store, private');
+        $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+        $response->headers->set('Referrer-Policy', 'no-referrer');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+
+        return $response;
     }
 
     /**

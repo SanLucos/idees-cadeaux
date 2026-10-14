@@ -224,6 +224,36 @@ final class ShareLinkTest extends AuthTestCase
         self::assertStringContainsString('no-store', $invalid->getHeaders(false)['cache-control'][0]);
     }
 
+    public function testWithTheWebAppDeployedTheLinkOpensItWithThePreviewInjected(): void
+    {
+        $this->expect(201, $this->camille, 'POST', '/api/ideas', ['title' => 'Sac à dos']);
+        $token = $this->createLink($this->camille);
+
+        $index = tempnam(sys_get_temp_dir(), 'web').'.html';
+        file_put_contents($index, '<!DOCTYPE html><html><head><title>Idées Cadeaux</title></head><body><div id="app"></div><script type="module" src="/assets/index.js"></script></body></html>');
+        $_ENV['WEB_APP_INDEX'] = $_SERVER['WEB_APP_INDEX'] = $index;
+
+        try {
+            $response = static::createClient()->request('GET', "/u/{$token}", ['headers' => ['Accept-Language' => 'fr']]);
+            self::assertSame(200, $response->getStatusCode());
+            $html = $response->getContent();
+            self::assertStringContainsString('<div id="app"></div>', $html, 'the web app');
+            self::assertStringContainsString('<meta property="og:title" content="Les idées cadeaux de Camille">', $html);
+            self::assertStringNotContainsString('Sac à dos', $html, 'never an idea in the preview');
+            self::assertStringContainsString('noindex', $response->getHeaders()['x-robots-tag'][0]);
+            self::assertStringContainsString('no-store', $response->getHeaders()['cache-control'][0]);
+
+            // An invalid link: the same page, no name — the app says it's invalid.
+            $invalid = static::createClient()->request('GET', '/u/AAAAAAAAAAAAAAAAAAAAAA');
+            self::assertSame(200, $invalid->getStatusCode());
+            self::assertStringContainsString('<div id="app"></div>', $invalid->getContent());
+            self::assertStringNotContainsString('og:title', $invalid->getContent());
+        } finally {
+            $_ENV['WEB_APP_INDEX'] = $_SERVER['WEB_APP_INDEX'] = '';
+            unlink($index);
+        }
+    }
+
     public function testGuestImagesAreSignedShortLivedAndFollowTheLink(): void
     {
         $idea = $this->expect(201, $this->camille, 'POST', '/api/ideas', ['title' => 'With image']);
