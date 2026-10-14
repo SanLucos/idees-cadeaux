@@ -67,7 +67,7 @@ final class SyncService
             return $this->inventory;
         }
 
-        $children = $this->users->findBy(['managedBy' => $me]);
+        $children = $this->users->findChildrenOf($me);
         $friends = array_map(static fn (Friendship $f) => $f->otherParty($me), $this->friendships->findAccepted($me));
 
         $inventory = array_fill_keys(self::TYPES, []);

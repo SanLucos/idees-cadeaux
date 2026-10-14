@@ -117,7 +117,7 @@ final class VisibleToOwnerOrFriendsExtension implements QueryCollectionExtension
     private function visibleOwnerIds(User $user): array
     {
         $ids = $this->friendships->findAcceptedFriendIds($user);
-        foreach ($this->users->findBy(['managedBy' => $user]) as $child) {
+        foreach ($this->users->findChildrenOf($user) as $child) {
             $ids[] = $child->getId()->toRfc4122();
         }
 

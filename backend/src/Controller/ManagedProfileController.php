@@ -43,7 +43,7 @@ final class ManagedProfileController
     {
         return new JsonResponse(array_map(
             fn (User $child) => $this->normalize($child),
-            $this->users->findBy(['managedBy' => $me], ['createdAt' => 'ASC']),
+            $this->users->findChildrenOf($me),
         ));
     }
 
@@ -62,7 +62,7 @@ final class ManagedProfileController
         if (true !== ($body['parentalConsent'] ?? null)) {
             throw new ApiProblemException('managed_profile.consent_required', 'Parental consent is required.', 422);
         }
-        if (\count($this->users->findBy(['managedBy' => $me])) >= self::MAX_PER_MANAGER) {
+        if (\count($this->users->findChildrenOf($me)) >= self::MAX_PER_MANAGER) {
             throw new ApiProblemException('managed_profile.limit_reached', 'Maximum of 10 managed profiles reached.', 422);
         }
 
