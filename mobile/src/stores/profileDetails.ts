@@ -5,6 +5,7 @@ import { profileMutations } from '../offline/mutations';
 import { useAuthStore } from './auth';
 import { useActiveProfileStore } from './activeProfile';
 import type { HydraCollection, ProfilePreference, ProfilePreferenceCategory, ProfileSize } from '../types/profile';
+import type { SizeUnit } from '../utils/sizeUnits';
 
 type Local<T> = T & { id: string };
 
@@ -23,13 +24,13 @@ export const useProfileDetailsStore = defineStore('profileDetails', {
       this.sizes = repo.sizes(selfId()) as Local<ProfileSize>[];
     },
 
-    async addSize(label: string, value: string, note: string | null): Promise<void> {
-      await profileMutations.addSize(label, value, note, this.sizes.length);
+    async addSize(label: string, value: string, note: string | null, unit: SizeUnit | null = null): Promise<void> {
+      await profileMutations.addSize(label, value, note, this.sizes.length, unit);
       await this.fetchSizes();
     },
 
-    async updateSize(size: ProfileSize, label: string, value: string, note: string | null): Promise<void> {
-      await profileMutations.updateSize((size as Local<ProfileSize>).id, { label, value, note });
+    async updateSize(size: ProfileSize, label: string, value: string, note: string | null, unit: SizeUnit | null = null): Promise<void> {
+      await profileMutations.updateSize((size as Local<ProfileSize>).id, { label, value, unit, note });
       await this.fetchSizes();
     },
 

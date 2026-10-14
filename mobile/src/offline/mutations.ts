@@ -6,6 +6,7 @@ import { useActiveProfileStore } from '../stores/activeProfile';
 import { uuidv7 } from '../utils/uuidv7';
 import type { Comment, Contribution, ContributionParticipant, Idea, IdeaArchiveKind, IdeaInput, PersonRef } from '../types/idea';
 import type { ProfilePreference, ProfilePreferenceCategory, ProfileSize } from '../types/profile';
+import type { SizeUnit } from '../utils/sizeUnits';
 import type { AppNotification } from '../types/notification';
 
 /**
@@ -392,22 +393,29 @@ type LocalSize = ProfileSize & { id: string; userId: string };
 type LocalPreference = ProfilePreference & { id: string; userId: string };
 
 export const profileMutations = onlineOnlyOnWeb({
-  async addSize(label: string, value: string, note: string | null, sortOrder: number): Promise<LocalSize> {
+  async addSize(label: string, value: string, note: string | null, sortOrder: number, unit: SizeUnit | null = null): Promise<LocalSize> {
     const { actor, actingAs } = context();
     const id = uuidv7();
-    const size: LocalSize = { id, '@id': `/api/profile_sizes/${id}`, userId: actor.id, label, value, note, sortOrder, history: [{ value, since: now() }] };
+    const size: LocalSize = { id, '@id': `/api/profile_sizes/${id}`, userId: actor.id, label, value, unit, note, sortOrder, history: [{ value, unit, since: now() }] };
     await useLocalDb().put('profile_size', [size]);
-    await queue({ method: 'POST', path: '/profile_sizes', body: { clientId: id, label, value, note, sortOrder }, actingAs, entities: [{ type: 'profile_size', id }], label: { kind: 'size.create', title: label } });
+    await queue({ method: 'POST', path: '/profile_sizes', body: { clientId: id, label, value, unit, note, sortOrder }, actingAs, entities: [{ type: 'profile_size', id }], label: { kind: 'size.create', title: label } });
 
     return size;
   },
 
-  async updateSize(id: string, patch: Partial<Pick<ProfileSize, 'label' | 'value' | 'note' | 'sortOrder'>>): Promise<void> {
+  async updateSize(id: string, patch: Partial<Pick<ProfileSize, 'label' | 'value' | 'unit' | 'note' | 'sortOrder'>>): Promise<void> {
     const { actingAs } = context();
     const current = useLocalDb().get<LocalSize>('profile_size', id);
     const valueChanged = undefined !== patch.value && patch.value !== current?.value;
-    // As the server will record it (spec §11 décision 51): shown at once, even offline.
-    const local: Partial<LocalSize> = valueChanged ? { ...patch, history: [...(current?.history ?? []), { value: patch.value!, since: now() }] } : patch;
+    const unit = undefined !== patch.unit ? patch.unit : (current?.unit ?? null);
+    const history = current?.history ?? [];
+    // As the server will record it (spec §11 décisions 51, 57): shown at once, even offline.
+    // A new unit alone corrects the current value rather than adding one.
+    const local: Partial<LocalSize> = valueChanged
+      ? { ...patch, history: [...history, { value: patch.value!, unit, since: now() }] }
+      : undefined !== patch.unit && history.length
+        ? { ...patch, history: [...history.slice(0, -1), { ...history.at(-1)!, unit }] }
+        : patch;
     // Reordering only moves sortOrder; anything else is the size being edited.
     const edited = Object.keys(patch).some((key) => 'sortOrder' !== key);
     await useLocalDb().patch<LocalSize>('profile_size', id, local);
