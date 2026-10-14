@@ -130,6 +130,20 @@
       "edit": "Modifier la taille",
       "label": "Libellé",
       "value": "Valeur",
+      "unit": "Unité",
+      "units": {
+        "none": "Pas d'unité",
+        "cm": "cm",
+        "mm": "mm",
+        "m": "m",
+        "g": "g",
+        "kg": "kg",
+        "ml": "ml",
+        "l": "L",
+        "eu": "EU",
+        "us": "US",
+        "uk": "UK"
+      },
       "note": "Note (optionnel)",
       "empty": "Aucune taille renseignée.",
       "history": {

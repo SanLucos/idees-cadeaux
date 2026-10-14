@@ -130,6 +130,20 @@
       "edit": "Edit size",
       "label": "Label",
       "value": "Value",
+      "unit": "Unit",
+      "units": {
+        "none": "No unit",
+        "cm": "cm",
+        "mm": "mm",
+        "m": "m",
+        "g": "g",
+        "kg": "kg",
+        "ml": "ml",
+        "l": "L",
+        "eu": "EU",
+        "us": "US",
+        "uk": "UK"
+      },
       "note": "Note (optional)",
       "empty": "No sizes yet.",
       "history": {
