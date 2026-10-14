@@ -40,13 +40,13 @@ import type { ProfileSize } from '../types/profile';
 import { SIZE_UNITS, type SizeUnit } from '../utils/sizeUnits';
 
 /** With `size`, edits that entry; without, adds one. */
-const props = defineProps<{ size?: ProfileSize }>();
+const props = defineProps<{ size?: ProfileSize; profileId?: string }>();
 
 /** Spec §5.2: common labels offered while typing; free text is still accepted. */
 const COMMON_SIZE_LABELS = ['shoe', 'tshirt', 'sweater', 'shirt', 'trousers', 'jeans', 'dress', 'jacket', 'ring', 'gloves', 'beanie'];
 
 const { t } = useI18n();
-const store = useProfileDetailsStore();
+const store = useProfileDetailsStore(props.profileId);
 const { describe } = useErrorMessage();
 
 const label = ref(props.size?.label ?? '');

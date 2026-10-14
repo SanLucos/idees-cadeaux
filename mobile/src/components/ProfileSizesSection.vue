@@ -61,11 +61,14 @@ import SizeHistoryModal from './SizeHistoryModal.vue';
 import type { ProfileSize } from '../types/profile';
 import { formatSize } from '../utils/sizeUnits';
 
-/** Without `entries`, shows and edits my own sizes; with them, a friend's, read-only. */
-const props = defineProps<{ entries?: ProfileSize[] }>();
+/**
+ * Without `entries`, shows and edits my own sizes (or the active child's);
+ * with them, a friend's, read-only. `profileId`: a child of mine, from its page.
+ */
+const props = defineProps<{ entries?: ProfileSize[]; profileId?: string }>();
 
 const { t } = useI18n();
-const store = useProfileDetailsStore();
+const store = useProfileDetailsStore(props.profileId);
 const readonly = computed(() => undefined !== props.entries);
 const sizes = computed(() => props.entries ?? store.sizes);
 const display = (size: ProfileSize) => formatSize(size.value, size.unit, (u) => t(`profile.sizes.units.${u}`));
@@ -85,12 +88,12 @@ async function onReorder(event: CustomEvent<ItemReorderEventDetail>): Promise<vo
 }
 
 async function openForm(size?: ProfileSize): Promise<void> {
-  const modal = await modalController.create({ component: SizeFormModal, componentProps: { size }, breakpoints: [0, 0.75, 1], initialBreakpoint: 0.75 });
+  const modal = await modalController.create({ component: SizeFormModal, componentProps: { size, profileId: props.profileId }, breakpoints: [0, 0.75, 1], initialBreakpoint: 0.75 });
   await modal.present();
 }
 
 async function openHistory(size: ProfileSize): Promise<void> {
-  const modal = await modalController.create({ component: SizeHistoryModal, componentProps: { size }, breakpoints: [0, 0.75, 1], initialBreakpoint: 0.75 });
+  const modal = await modalController.create({ component: SizeHistoryModal, componentProps: { size, profileId: props.profileId }, breakpoints: [0, 0.75, 1], initialBreakpoint: 0.75 });
   await modal.present();
 }
 

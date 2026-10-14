@@ -49,10 +49,10 @@ import type { ProfileSize, SizeHistoryEntry } from '../types/profile';
 import { formatSize } from '../utils/sizeUnits';
 
 /** Every value a size has had — mine or my child's, never a friend's (spec §11 décision 51). */
-const props = defineProps<{ size: ProfileSize }>();
+const props = defineProps<{ size: ProfileSize; profileId?: string }>();
 
 const { t, locale } = useI18n();
-const store = useProfileDetailsStore();
+const store = useProfileDetailsStore(props.profileId);
 
 /** The size as the device holds it now: it changes when a value is removed. */
 const current = computed(() => store.sizes.find((s) => s['@id'] === props.size['@id']) ?? props.size);
