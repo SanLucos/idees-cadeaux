@@ -26,7 +26,7 @@ final class FriendshipEvents
         $person = Notifier::person($actor);
         if ($actor->isManaged()) {
             // « profil géré par X » (spec §5.15).
-            $person['managedBy'] = $actor->getManagedBy()?->getDisplayName();
+            $person['managedBy'] = $actor->getManagersDisplayName();
         }
 
         $this->notifier->notify($type, [$recipient], [

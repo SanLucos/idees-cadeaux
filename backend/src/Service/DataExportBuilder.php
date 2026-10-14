@@ -73,7 +73,7 @@ final class DataExportBuilder
                     'birthYear' => $subject->getBirthYear(),
                     'locale' => $subject->getLocale(),
                     'timezone' => $subject->getTimezone(),
-                    'managedBy' => $subject->getManagedBy()?->getDisplayName(),
+                    'managedBy' => $subject->getManagersDisplayName(),
                     'createdAt' => $subject->getCreatedAt()->format(\DATE_ATOM),
                     'avatar' => isset($images['images/avatar.jpg']) ? 'images/avatar.jpg' : null,
                     'exportedAt' => (new \DateTimeImmutable())->format(\DATE_ATOM),

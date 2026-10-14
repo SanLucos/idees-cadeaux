@@ -88,7 +88,7 @@ final class JoinViaLinkController
                 'avatarUrl' => $this->guestView->avatarUrl($link, $request->getSchemeAndHttpHost()),
                 'isManaged' => $owner->isManaged(),
                 // « profil géré par [gestionnaire] » (spec §5.16).
-                'managedBy' => $owner->isManaged() ? ['displayName' => $owner->getManagedBy()?->getDisplayName()] : null,
+                'managedBy' => $owner->isManaged() ? ['displayName' => $owner->getManagersDisplayName()] : null,
             ],
         ];
     }

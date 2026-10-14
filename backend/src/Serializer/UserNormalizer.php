@@ -61,13 +61,15 @@ final class UserNormalizer
     }
 
     /**
+     * The first manager's id, and every manager's name (spec §11 décision 60).
+     *
      * @return array{id: string, displayName: string|null}|null
      */
     private function managerOf(User $user): ?array
     {
         $manager = $user->isManaged() ? $user->getManagedBy() : null;
 
-        return null !== $manager ? ['id' => $manager->getId()->toRfc4122(), 'displayName' => $manager->getDisplayName()] : null;
+        return null !== $manager ? ['id' => $manager->getId()->toRfc4122(), 'displayName' => $user->getManagersDisplayName()] : null;
     }
 
     private function avatarUrl(User $user): ?string

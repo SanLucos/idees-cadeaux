@@ -62,7 +62,7 @@ final class FriendshipNormalizer
 
         // Spec §5.15: "profil géré par [gestionnaire]" on a request or friend.
         if ($user->isManaged()) {
-            $summary['managedBy'] = ['displayName' => $user->getManagedBy()?->getDisplayName()];
+            $summary['managedBy'] = ['displayName' => $user->getManagersDisplayName()];
         }
 
         return $summary;
