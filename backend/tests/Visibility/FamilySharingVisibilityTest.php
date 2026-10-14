@@ -106,6 +106,24 @@ final class FamilySharingVisibilityTest extends AuthTestCase
         $this->assertHidden($this->marc);
     }
 
+    public function testTheSecondManagersFriendsTooUntilTheyNoLongerManageTheChild(): void
+    {
+        $this->share(true);
+        $claire = $this->registerVerifyAndLogin('fs-claire@example.com');
+        $this->befriend($this->manager, 'fs-manager@example.com', $claire, 'fs-claire@example.com');
+        $this->befriend($claire, 'fs-claire@example.com', $this->stranger, 'fs-stranger@example.com');
+        $this->expect(201, $this->manager, 'POST', "/api/managed-profiles/{$this->jules}/manager-invitation", ['userId' => $this->userId($claire)]);
+        $invitation = $this->expect(200, $claire, 'GET', '/api/manager-invitations')[0];
+        $this->expect(200, $claire, 'POST', "/api/manager-invitations/{$invitation['id']}/accept", ['parentalConsent' => true]);
+
+        $this->expect(200, $this->stranger, 'GET', "/api/users/{$this->jules}/ideas");
+        self::assertSame('manager', $this->expect(200, $claire, 'GET', "/api/users/{$this->jules}/ideas")['member'][0]['view'], 'a manager is no family friend');
+
+        $this->expect(200, $this->manager, 'DELETE', "/api/managed-profiles/{$this->jules}/managers/{$this->userId($claire)}");
+        $this->assertHidden($this->stranger);
+        self::assertSame('friend', $this->expect(200, $claire, 'GET', "/api/users/{$this->jules}/ideas")['member'][0]['view'], 'now a friend of the manager like any other');
+    }
+
     public function testTheChildsSideCantRemoveThemOneByOne(): void
     {
         $this->share(true);
