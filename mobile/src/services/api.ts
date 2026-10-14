@@ -72,6 +72,17 @@ export function lastApiRequestId(): string | null {
 
 let refreshPromise: Promise<void> | null = null;
 
+/**
+ * Cookies only for the web app, whose session is the httpOnly cookie
+ * (spec §11 décision 56). The native apps keep their tokens in secure
+ * storage and call the API cross-origin: asking for credentials there
+ * makes the WebView reject every response, as the API doesn't allow
+ * them for the WebView origins.
+ */
+function credentials(): RequestCredentials {
+  return isWeb() ? 'include' : 'omit';
+}
+
 async function doRefresh(): Promise<void> {
   const web = isWeb();
   const refreshToken = web ? null : await tokenStorage.getRefreshToken();
@@ -84,7 +95,7 @@ async function doRefresh(): Promise<void> {
     method: 'POST',
     headers: web ? { 'X-Client': 'web' } : { 'Content-Type': 'application/json' },
     body: web ? undefined : JSON.stringify({ refresh_token: refreshToken }),
-    credentials: 'include',
+    credentials: credentials(),
   });
 
   if (!response.ok) {
@@ -126,7 +137,7 @@ async function perform(method: string, path: string, options: RequestOptions): P
   }
 
   // A network failure throws here (TypeError): callers treat it as "offline".
-  const response = await fetch(`${baseUrl}${path}`, { method, headers, body, credentials: 'include' });
+  const response = await fetch(`${baseUrl}${path}`, { method, headers, body, credentials: credentials() });
   const payload = 204 === response.status ? {} : await response.json().catch(() => ({}));
 
   return { status: response.status, payload };
