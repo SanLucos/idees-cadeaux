@@ -6,7 +6,8 @@ nelmio_cors:
         # X-Acting-As: spec §5.15 (profils enfants gérés), lot 4 bis.
         # Idempotency-Key: offline replays (spec §11 décision 32).
         # X-Request-Id: ties the app's error reports to the server logs (§9).
-        allow_headers: ['Content-Type', 'Authorization', 'X-Acting-As', 'Idempotency-Key', 'X-Request-Id']
+        # X-Client: web — refresh token in an httpOnly cookie (spec §11 décision 56).
+        allow_headers: ['Content-Type', 'Authorization', 'X-Acting-As', 'Idempotency-Key', 'X-Request-Id', 'X-Client']
         expose_headers: ['Link', 'X-Request-Id']
         max_age: 3600
     paths:
