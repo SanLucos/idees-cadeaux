@@ -1,6 +1,18 @@
 # Production images, built from the repo root (see docker-compose.prod.yaml):
 #   --target php    PHP-FPM with the backend code (also runs the worker)
-#   --target nginx  nginx with the backend's public/ directory
+#   --target nginx  nginx with the web app and the backend's public/ directory
+
+# The web app (spec §11 décision 56): the Ionic Vue app built for the
+# browser, its API on the same origin.
+FROM node:22-alpine AS web
+WORKDIR /app
+ENV CYPRESS_INSTALL_BINARY=0
+COPY mobile/package.json mobile/package-lock.json ./
+COPY mobile/scripts ./scripts
+RUN npm ci --no-audit --no-fund
+COPY mobile/ ./
+RUN VITE_API_BASE_URL=/api npm run build
+
 FROM php:8.3-fpm AS php
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -44,7 +56,11 @@ RUN composer dump-autoload --no-dev --classmap-authoritative \
     && php bin/console cache:clear \
     && php bin/console assets:install public
 
+# The web app's page, for the /u/<token> link previews (WEB_APP_INDEX).
+COPY --from=web /app/dist/index.html /var/www/web/index.html
+
 FROM nginx:alpine AS nginx
 
-COPY docker/nginx/backend.vhost.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx/prod.vhost.conf /etc/nginx/conf.d/default.conf
 COPY --from=php /var/www/backend/public /var/www/backend/public
+COPY --from=web /app/dist /var/www/web

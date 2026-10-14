@@ -1,6 +1,7 @@
 # Production stack, served behind the Traefik of another stack on the same
 # server through the external network ${TRAEFIK_NETWORK} (docs/DEPLOIEMENT.md).
-# No port is published: nginx is the only service Traefik can reach.
+# No port is published: nginx is the only service Traefik can reach; it
+# serves the web app at the root and hands Symfony its own paths.
 # Uploaded images live in a hosted S3 bucket in the EU (STORAGE_* in .env.prod).
 #
 #   ./deploy-prod.sh        (reads .env.prod, see .env.prod.example)
@@ -30,6 +31,8 @@ x-php: &php
     DEFAULT_URI: https://${APP_HOST}
     SHARE_LINK_BASE_URL: https://${APP_HOST}
     MEDIA_BASE_URL: https://${APP_HOST}
+    # The web app's page, for the /u/<token> previews (spec §11 décision 56).
+    WEB_APP_INDEX: /var/www/web/index.html
     # Requests arrive through Traefik then nginx, both on private Docker
     # networks: trust their X-Forwarded-* headers (client IP, https).
     SYMFONY_TRUSTED_PROXIES: private_ranges

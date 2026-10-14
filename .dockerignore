@@ -2,6 +2,7 @@
 *
 !backend
 !docker
+!mobile
 backend/vendor
 backend/var
 backend/tests
@@ -12,3 +13,11 @@ backend/.env.local.php
 backend/config/jwt/*.pem
 backend/public/bundles
 backend/compose*.yaml
+mobile/node_modules
+mobile/dist
+mobile/android
+mobile/ios
+mobile/tests
+mobile/.env
+mobile/.env.*.local
+mobile/public/assets/sql-wasm.wasm
