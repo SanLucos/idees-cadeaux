@@ -17,7 +17,9 @@ use Symfony\Component\Uid\Uuid;
 /**
  * A regular (autonomous) or managed (profil enfant, spec §5.15) account.
  * A managed profile has no email/password and is only ever acted upon
- * by its managedBy, via the X-Acting-As header (App\Security\ActingAsContext).
+ * by its managers, via the X-Acting-As header (App\Security\ActingAsContext):
+ * managedBy, and coManagedBy once a second manager accepted (spec §11
+ * décision 60). Both have the same rights.
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'app_user')]
@@ -34,6 +36,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
     #[ORM\ManyToOne(targetEntity: self::class)]
     #[ORM\JoinColumn(name: 'managed_by_id', nullable: true, onDelete: 'CASCADE')]
     private ?self $managedBy = null;
+
+    /** The second manager (spec §11 décision 60), same rights as managedBy. */
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(name: 'co_managed_by_id', nullable: true, onDelete: 'SET NULL')]
+    private ?self $coManagedBy = null;
+
+    /**
+     * Not stored: which of the managers acts as this profile in the
+     * current request (App\Security\ActingContext), with two managers
+     * (spec §11 décision 60).
+     */
+    private ?self $actingManager = null;
+
+    /** Child profiles only: their managers' friends are its friends (spec §11 décision 59). */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $shareWithManagerFriends = false;
 
     #[ORM\Column(length: 180, nullable: true)]
     private ?string $email = null;
@@ -120,15 +138,81 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
         $this->managedBy = $managedBy;
     }
 
+    public function getCoManagedBy(): ?self
+    {
+        return $this->coManagedBy;
+    }
+
+    /**
+     * Spec §11 décision 60: one or two managers, the one who created the
+     * profile first.
+     *
+     * @return list<self>
+     */
+    public function getManagers(): array
+    {
+        return $this->isManaged() ? array_values(array_filter([$this->managedBy, $this->coManagedBy])) : [];
+    }
+
+    /** Spec §11 décision 60: a second manager, who accepted the invitation. */
+    public function addManager(self $manager): void
+    {
+        if (null === $this->managedBy) {
+            $this->managedBy = $manager;
+        } elseif (null === $this->coManagedBy && $this->managedBy !== $manager) {
+            $this->coManagedBy = $manager;
+        }
+    }
+
+    /** The other manager, if any, becomes the first; the last one can't leave (see the caller). */
+    public function removeManager(self $manager): void
+    {
+        if ($this->coManagedBy === $manager) {
+            $this->coManagedBy = null;
+        } elseif ($this->managedBy === $manager) {
+            $this->managedBy = $this->coManagedBy;
+            $this->coManagedBy = null;
+        }
+    }
+
     public function isManaged(): bool
     {
         return UserType::Managed === $this->type;
     }
 
-    /** Spec §5.15: `$manager` is this managed profile's one manager. */
+    /** Spec §5.15, §11 décision 60: `$manager` is one of this managed profile's managers. */
     public function isManagedBy(self $manager): bool
     {
-        return $this->isManaged() && $this->managedBy === $manager;
+        return $this->isManaged() && ($this->managedBy === $manager || $this->coManagedBy === $manager);
+    }
+
+    /** « profil géré par A & B » (spec §5.15, §11 décision 60); null for an adult. */
+    public function getManagersDisplayName(): ?string
+    {
+        $names = array_map(static fn (self $m) => (string) $m->getDisplayName(), $this->getManagers());
+
+        return [] !== $names ? implode(' & ', $names) : null;
+    }
+
+    /** The adult acting as this profile in this request, else its first manager. */
+    public function getActingManager(): ?self
+    {
+        return $this->actingManager ?? $this->managedBy;
+    }
+
+    public function setActingManager(?self $manager): void
+    {
+        $this->actingManager = $manager;
+    }
+
+    public function isSharedWithManagerFriends(): bool
+    {
+        return $this->isManaged() && $this->shareWithManagerFriends;
+    }
+
+    public function setShareWithManagerFriends(bool $share): void
+    {
+        $this->shareWithManagerFriends = $share;
     }
 
     public static function createManaged(self $manager, string $displayName, ?Uuid $id = null): self
@@ -157,10 +241,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
         rsort($this->birthdayReminderDays);
     }
 
-    /** Spec §5.13: during the 14-day grace period nothing is sent to or about the account. */
+    /**
+     * Spec §5.13: during the 14-day grace period nothing is sent to or
+     * about the account — nor about a child whose managers are all leaving.
+     */
     public function isSuspended(): bool
     {
-        return null !== $this->deletionScheduledAt || ($this->isManaged() && null !== $this->managedBy?->getDeletionScheduledAt());
+        if (null !== $this->deletionScheduledAt) {
+            return true;
+        }
+        if (!$this->isManaged()) {
+            return false;
+        }
+
+        return [] === array_filter($this->getManagers(), static fn (self $m) => null === $m->getDeletionScheduledAt());
     }
 
     public function getParentalConsentAt(): ?\DateTimeImmutable
@@ -176,6 +270,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
     {
         $this->type = UserType::Regular;
         $this->managedBy = null;
+        $this->coManagedBy = null;
+        $this->shareWithManagerFriends = false;
         $this->email = $email;
         $this->emailVerifiedAt = new \DateTimeImmutable();
     }
