@@ -13,6 +13,9 @@ const config: CapacitorConfig = {
   appId: process.env.APP_ID ?? 'fr.frigologie.ideescadeaux',
   appName: process.env.APP_NAME ?? 'Idées Cadeaux',
   webDir: 'dist',
+  // Emulator against the local backend (.env.native.local, http://10.0.2.2:8000/api):
+  // CAP_LOCAL_BACKEND=1 npx cap sync android. Never for a release build.
+  ...('1' === process.env.CAP_LOCAL_BACKEND ? { server: { cleartext: true }, android: { allowMixedContent: true } } : {}),
 };
 
 export default config;
