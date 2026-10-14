@@ -46,6 +46,10 @@
             <ion-button class="ic-button-surface" expand="block" type="submit" :disabled="busy">{{ t('common.save') }}</ion-button>
           </form>
 
+          <!-- Spec §11 décision 58: the child's sizes and preferences, on its page. -->
+          <ProfileSizesSection :profile-id="child.id" />
+          <ProfilePreferencesSection :profile-id="child.id" />
+
           <!-- Spec §5.15 "rattacher un email" -->
           <SectionTitle>{{ t('children.attachTitle') }}</SectionTitle>
           <p class="ic-muted explain">{{ t('children.attachExplain', { name: child.displayName }) }}</p>
@@ -78,6 +82,8 @@ import { useActiveProfileStore } from '../stores/activeProfile';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import AppAvatar from '../components/AppAvatar.vue';
 import EmptyState from '../components/EmptyState.vue';
+import ProfilePreferencesSection from '../components/ProfilePreferencesSection.vue';
+import ProfileSizesSection from '../components/ProfileSizesSection.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import TopBar from '../components/TopBar.vue';
 
