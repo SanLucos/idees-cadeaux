@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Friendship;
 
+use App\Entity\Enum\FriendshipOrigin;
 use App\Entity\User;
 use App\Exception\ApiProblemException;
 use App\Repository\FriendshipRepository;
@@ -43,6 +44,12 @@ final class RemoveFriendController
 
         if (null === $friendship || !$friendship->involves($me) || !$friendship->isAccepted()) {
             throw new ApiProblemException('resource.not_found', 'Friendship not found.', 404);
+        }
+
+        // Spec §11 décision 59: the child's side ends them all at once, by
+        // turning « Partager avec mes amis » off; the friend may hide the child.
+        if (FriendshipOrigin::Family === $friendship->getOrigin() && $me->isManaged()) {
+            throw new ApiProblemException('friendship.family_managed', 'Turn « Partager avec mes amis » off instead.', 422);
         }
 
         $friendship->remove($me);

@@ -49,6 +49,7 @@ final class AccountDeletion
         private readonly MessageBusInterface $bus,
         private readonly UrlGeneratorInterface $urls,
         private readonly LoggerInterface $logger,
+        private readonly FamilyFriendships $family,
         private readonly string $secret,
     ) {
     }
@@ -130,6 +131,7 @@ final class AccountDeletion
     public function erase(User $user): void
     {
         // A child with a second manager stays with them (spec §11 décision 60).
+        $kept = $this->connection->fetchFirstColumn('SELECT id FROM app_user WHERE managed_by_id = :id AND co_managed_by_id IS NOT NULL', ['id' => $user->getId()->toRfc4122()]);
         $this->connection->executeStatement(
             'UPDATE app_user SET managed_by_id = co_managed_by_id, co_managed_by_id = NULL WHERE managed_by_id = :id AND co_managed_by_id IS NOT NULL',
             ['id' => $user->getId()->toRfc4122()],
@@ -159,6 +161,14 @@ final class AccountDeletion
             $db->executeStatement('DELETE FROM app_user WHERE id IN (:ids)', $params, $types);
         });
         $this->em->clear();
+
+        // Their friends shared through the leaving manager no longer are (spec §11 décision 59).
+        foreach ($kept as $childId) {
+            if (null !== $child = $this->users->find($childId)) {
+                $this->family->refresh($child);
+            }
+        }
+        $this->em->flush();
 
         foreach ($images as $path) {
             try {
