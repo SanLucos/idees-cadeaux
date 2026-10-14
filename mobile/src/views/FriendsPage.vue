@@ -141,7 +141,10 @@ function upcoming(f: Friendship): number | null {
 function friendSubtitle(f: Friendship): string {
   const parts: string[] = [];
   if ('link' === f.origin) parts.push(t('friends.addedViaLink'));
-  if (f.user.managedBy) parts.push(t('children.managedBy', { name: f.user.managedBy.displayName }));
+  // Spec §11 décision 59: a child shared by its managers, or (acting as the child) one of their friends.
+  if ('family' === f.origin && f.user.managedBy) parts.push(t('friends.childOf', { name: f.user.managedBy.displayName }));
+  else if (f.user.managedBy) parts.push(t('children.managedBy', { name: f.user.managedBy.displayName }));
+  if ('family' === f.origin && !f.user.managedBy) parts.push(t('friends.viaFriends'));
   if (typeof f.ideaCount === 'number') parts.push(t('friends.ideaCount', { count: f.ideaCount }, f.ideaCount));
   if (f.user.birthDay && f.user.birthMonth) {
     parts.push(t('friends.birthdayOn', { date: formatBirthday(f.user.birthDay, f.user.birthMonth, locale.value) }));

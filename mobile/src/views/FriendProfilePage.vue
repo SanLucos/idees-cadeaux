@@ -17,7 +17,8 @@
         <ProfileSizesSection :entries="sizes" />
         <ProfilePreferencesSection :entries="preferences" />
 
-        <ion-button expand="block" color="danger" fill="clear" class="ion-margin-top" @click="confirmRemove">
+        <!-- Spec §11 décision 59: the child's side ends « via vos amis » ones all at once, with the option. -->
+        <ion-button v-if="!sharedByMyFamily" expand="block" color="danger" fill="clear" class="ion-margin-top" @click="confirmRemove">
           {{ t('friends.remove') }}
         </ion-button>
       </template>
@@ -26,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { alertController, IonButton, IonContent, IonPage } from '@ionic/vue';
@@ -48,6 +49,8 @@ interface FriendProfile {
   birthDay: number | null;
   birthMonth: number | null;
   birthYear: number | null;
+  /** A child profile: its managers (spec §5.15). */
+  managedBy?: { id: string; displayName: string | null } | null;
 }
 
 const { t, locale } = useI18n();
@@ -60,6 +63,7 @@ const userId = String(route.params.id);
 const profile = ref<FriendProfile | null>(null);
 const sizes = ref<ProfileSize[]>([]);
 const preferences = ref<ProfilePreference[]>([]);
+const sharedByMyFamily = computed(() => 'family' === friendsStore.friends.find((f) => f.user.id === userId)?.origin && !profile.value?.managedBy);
 
 onMounted(async () => {
   profile.value = (repo.user(userId) as FriendProfile | null) ?? (await api.get<FriendProfile>(`/users/${userId}`));
