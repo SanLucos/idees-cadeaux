@@ -1,6 +1,6 @@
 # CLAUDE.md — Application « Idées Cadeaux »
 
-Application mobile (iOS/Android) de listes d'idées cadeaux entre amis. Back : Symfony + API Platform. Front : Ionic Vue + Capacitor.
+Application web (point d'entrée principal, spec §11 décision 56) et mobile (iOS/Android) de listes d'idées cadeaux entre amis. Back : Symfony + API Platform. Front : Ionic Vue + Capacitor.
 
 ## Source de vérité
 
@@ -29,7 +29,7 @@ Application mobile (iOS/Android) de listes d'idées cadeaux entre amis. Back : S
 
 ## Méthode de travail
 
-- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8.
+- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8, puis 9 (appli web, spec §11 décision 56).
 - Ne passe pas au lot suivant si la CI ou la suite de visibilité est rouge.
 - Avant chaque lot : relis les sections concernées, propose un plan court, puis implémente.
 - Écris les tests avec le code (PHPUnit et client de test API Platform côté back, Vitest côté front).
@@ -95,7 +95,7 @@ Aucun secret dans le dépôt (fournir un `.env.example`). Limitation de débit s
 
 ## Hors périmètre de la v1 (ne pas implémenter)
 
-Paiements réels, blocage et signalement, groupes d'amis, chat, invitation par QR code, recherche par pseudo, invitation de non-inscrits, affiliation, version web complète (seule la page invité en lecture seule existe, 5.16), modération, révélation du donateur après réception, amitiés entre profils enfants, plusieurs gestionnaires par enfant, transfert de gestion, connexion autonome d'un enfant avant rattachement d'un email.
+Paiements réels, blocage et signalement, groupes d'amis, chat, invitation par QR code, recherche par pseudo, invitation de non-inscrits, affiliation, modération, révélation du donateur après réception, amitiés entre profils enfants, plusieurs gestionnaires par enfant, transfert de gestion, connexion autonome d'un enfant avant rattachement d'un email.
 
 ## Design
 - Les maquettes sont dans `docs/design/`. Avant de coder ou de modifier un écran, lire `docs/design/DESIGN.md`, puis la capture (`captures/`) et le HTML de référence (`maquettes/`) de cet écran.
