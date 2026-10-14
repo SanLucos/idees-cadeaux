@@ -1,6 +1,6 @@
 # Déploiement en production
 
-Le back (API, page invité `/u/…`, `/privacy`, images `/media/…`) tourne sur le serveur de Frigologie, sous `https://ideescadeaux.frigologie.fr`, derrière le Traefik de la stack Frigologie.
+L'appli web (point d'entrée principal, spec §11 décision 56) et le back (API `/api`, liens de partage `/u/…`, `/privacy`, images `/media/…`, liens des emails) tournent sur le serveur de Frigologie, sous `https://ideescadeaux.frigologie.fr`, derrière le Traefik de la stack Frigologie. L'image `nginx` contient l'appli web construite (étape `web` de `docker/php/Dockerfile.prod`, configuration `docker/nginx/prod.vhost.conf`) : elle est servie à la racine, et nginx passe à Symfony ses propres chemins.
 
 Les deux stacks sont indépendantes. Leur seul point commun est le réseau Docker externe `proxy` : Traefik y est branché, notre `nginx` aussi, et les labels Traefik sont déclarés ici (`docker-compose.prod.yaml`). Rien d'Idées Cadeaux ne figure dans la config de Frigologie.
 
@@ -57,16 +57,17 @@ $P exec backup sh -c 'dropdb --if-exists "$PGDATABASE" && createdb "$PGDATABASE"
 $P start php worker
 ```
 
-## Appli mobile de production
+## Appli web
 
-Construire l'appli contre ce serveur (`mobile/.env` ou variables de CI) :
+Rien à faire en plus : `./deploy-prod.sh` la construit et la publie avec le reste. La connexion y est gardée dans un cookie `httpOnly` (jamais lisible par le JavaScript), l'appli ne garde aucune copie locale et fonctionne en ligne uniquement.
+
+## Appli mobile (Android / iOS)
+
+Les builds natifs utilisent l'adresse complète de l'API, dans `mobile/.env.native` (déjà réglée sur ce serveur) :
 
 ```
-VITE_API_BASE_URL=https://ideescadeaux.frigologie.fr/api
-APP_ID=<identifiant d'app>          # le même que APP_ID dans .env.prod
-```
-
-puis `npm run build && npx cap sync`. Pour que les liens `https://ideescadeaux.frigologie.fr/u/…` ouvrent l'appli :
+npm run build -- --mode native && npx cap sync
+``` Pour que les liens `https://ideescadeaux.frigologie.fr/u/…` ouvrent l'appli :
 
 - Android : propriété Gradle `shareLinkHost=ideescadeaux.frigologie.fr` (`mobile/android/gradle.properties`), et l'empreinte SHA-256 du certificat de signature dans `ANDROID_CERT_FINGERPRINTS` (`.env.prod`).
 - iOS : capacité *Associated Domains* `applinks:ideescadeaux.frigologie.fr` sur la cible `App`, et `APPLE_TEAM_ID` dans `.env.prod`.

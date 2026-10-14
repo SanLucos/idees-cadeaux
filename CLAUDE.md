@@ -64,10 +64,11 @@ Push (lot 5) : `FCM_PROJECT_ID` / `FCM_SERVICE_ACCOUNT_JSON` dans `backend/.env`
 **Mobile (`/mobile`, sur l'hôte, Node ≥ 20)**
 ```
 npm install
-npm run dev          # serveur de dev Vite
+npm run dev          # serveur de dev Vite = l'appli web ; relaie /api, /media… vers le back (localhost:8000)
 npm run lint          # ESLint
 npm run test:unit -- --run   # Vitest
-npm run build          # vue-tsc + build de prod
+npm run build          # vue-tsc + build web (API sur la même origine, /api)
+npm run build -- --mode native   # build pour Android/iOS (API en adresse complète, .env.native)
 npx cypress run        # tests e2e (nécessite `npm run dev` ou le build servi en parallèle)
 ```
 Tests e2e : stack Docker démarrée (worker compris, les codes sont lus dans Mailpit). Ouvrir l'appli une fois avant de lancer Cypress : au premier démarrage, Vite réoptimise ses dépendances et peut faire échouer le premier test (« Failed to fetch dynamically imported module »).
@@ -78,6 +79,7 @@ npm run build && npx cap sync   # copie le build web et les plugins dans les pro
 npx cap open android            # Android Studio (SDK Android requis)
 npx cap open ios                # Xcode (macOS), cibles App + ShareExtension
 ```
+Avant `npx cap sync`, toujours `npm run build -- --mode native` (sinon l'appli native chercherait l'API sur sa propre origine).
 Build Android en ligne de commande (SDK dans `~/Android/Sdk`, JDK 21 requis par Capacitor 8 — sur cette machine `~/.local/share/jdk-21.0.12.1+1`, le JDK système est en 17) : `cd mobile/android && JAVA_HOME=~/.local/share/jdk-21.0.12.1+1 ./gradlew assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`. iOS : uniquement sur macOS (Xcode).
 Partage vers l'appli (spec §5.6) : lien `<APP_ID>://share?url=…` ; Android via l'intent `ACTION_SEND` (`MainActivity`), iOS via la cible `ShareExtension`. Test rapide sans partage : `adb shell am start -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "https://…" <APP_ID>` ; sur le web, ouvrir `/share?url=…`. L'identifiant `fr.frigologie.ideescadeaux` (définitif, décision 55) est aussi écrit dans les projets natifs (namespace, bundle id, cible `ShareExtension`).
 
@@ -85,7 +87,9 @@ Lien de partage (lot 7 bis, spec §5.16) : `SHARE_LINK_BASE_URL`, `APP_ID`, `APP
 
 RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en dev, S3 hébergé en prod, décision 52), servies par le back via des URL signées (`MEDIA_BASE_URL`, route `/media/…`). Export (ZIP construit par le `worker`, lien 48 h par email) et suppression de compte (14 jours de grâce, effacement par la tâche quotidienne du `worker`). Politique de confidentialité (brouillon) sur `/privacy`. Préparation des stores : `docs/stores/`. Les liens des emails utilisent `DEFAULT_URI`.
 
-**Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, build mobile de prod).
+**Appli web** (lot 9, spec §11 décision 56) : la même appli Ionic, servie à la racine du domaine en production (image `nginx`, `docker/nginx/prod.vhost.conf`). Sur le web : session dans un cookie `httpOnly` (`X-Client: web`), en ligne uniquement (`src/offline/onlineOnly.ts`), fonctions propres au téléphone masquées (`src/utils/platform.ts`), mise en page mobile centrée sur grand écran.
+
+**Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, builds web et natifs).
 
 **CI** : `.github/workflows/ci.yml`, deux jobs (`backend`, `mobile`), lint + tests, déclenchés sur push/PR vers `main`.
 

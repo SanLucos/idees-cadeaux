@@ -11,7 +11,7 @@ describe('Account data', () => {
       cy.see("C'est parti");
 
       cy.mailLink(nina.email, '/exports/').then((link) => {
-        cy.request({ url: link.replace(/^https?:\/\/[^/]+/, 'http://localhost:8000'), encoding: 'binary' }).then((response) => {
+        cy.request({ url: link.replace(/^https?:\/\/[^/]+/, new URL(Cypress.env('apiUrl')).origin), encoding: 'binary' }).then((response) => {
           expect(response.status).to.eq(200);
           expect(response.headers['content-type']).to.eq('application/zip');
         });
