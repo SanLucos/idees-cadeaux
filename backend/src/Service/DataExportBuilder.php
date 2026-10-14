@@ -138,15 +138,15 @@ final class DataExportBuilder
     {
         $history = [];
         foreach ($this->rows(
-            'SELECT h.size_id, h.value, h.created_at AS since
+            'SELECT h.size_id, h.value, h.unit, h.created_at AS since
              FROM profile_size_history h JOIN profile_size s ON s.id = h.size_id
              WHERE s.user_id = :id AND s.deleted_at IS NULL AND h.deleted_at IS NULL ORDER BY h.created_at, h.id',
             $id,
         ) as $entry) {
-            $history[(string) $entry['size_id']][] = ['value' => $entry['value'], 'since' => $entry['since']];
+            $history[(string) $entry['size_id']][] = ['value' => $entry['value'], 'unit' => $entry['unit'], 'since' => $entry['since']];
         }
 
-        $sizes = $this->rows('SELECT id, label, value, note, sort_order, created_at FROM profile_size WHERE user_id = :id AND deleted_at IS NULL ORDER BY sort_order', $id);
+        $sizes = $this->rows('SELECT id, label, value, unit, note, sort_order, created_at FROM profile_size WHERE user_id = :id AND deleted_at IS NULL ORDER BY sort_order', $id);
         foreach ($sizes as &$size) {
             $size['history'] = $history[(string) $size['id']] ?? [];
             unset($size['id']);

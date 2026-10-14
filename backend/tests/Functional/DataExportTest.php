@@ -42,7 +42,7 @@ final class DataExportTest extends AuthTestCase
             'extra' => ['files' => ['image' => new UploadedFile($path, 'photo.png', 'image/png', null, true)]],
         ]);
         $this->expect(201, $this->camille, 'POST', '/api/ideas', ['title' => 'Pour Hugo', 'ownerId' => $this->userId($hugo)]);
-        $this->expect(201, $this->camille, 'POST', '/api/profile_sizes', ['label' => 'Chaussures', 'value' => '38']);
+        $this->expect(201, $this->camille, 'POST', '/api/profile_sizes', ['label' => 'Chaussures', 'value' => '38', 'unit' => 'eu']);
 
         self::assertSame('auth.reauthentication_required', $this->expect(422, $this->camille, 'POST', '/api/account/export', [])['code']);
         $pending = $this->expect(202, $this->camille, 'POST', '/api/account/export', ['password' => 'correcthorsebattery']);
@@ -62,7 +62,8 @@ final class DataExportTest extends AuthTestCase
         self::assertNull($ideas['Platine vinyle']['suggested_to']);
         self::assertSame('Hugo', $ideas['Pour Hugo']['suggested_to'], 'suggestions made to others are mine too');
         self::assertArrayHasKey($ideas['Platine vinyle']['image'], $files, 'uploaded images are in the archive');
-        self::assertSame('Chaussures', json_decode($files['sizes.json'], true)[0]['label']);
+        $size = json_decode($files['sizes.json'], true)[0];
+        self::assertSame(['Chaussures', 'eu', 'eu'], [$size['label'], $size['unit'], $size['history'][0]['unit']], 'with its unit (spec §11 décision 57)');
         self::assertSame('Hugo', json_decode($files['friends.json'], true)['friends'][0]['displayName']);
 
         // The link: wrong token, or past 48 h, gives nothing; then the purge takes it.

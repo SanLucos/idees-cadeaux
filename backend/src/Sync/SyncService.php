@@ -151,7 +151,7 @@ final class SyncService
                 'comment' => $this->interactionNormalizer->comment($entity, $me),
                 'profile_size' => [
                     'id' => $id, '@id' => '/api/profile_sizes/'.$id, 'userId' => $entity->getUser()->getId()->toRfc4122(),
-                    'label' => $entity->getLabel(), 'value' => $entity->getValue(), 'note' => $entity->getNote(), 'sortOrder' => $entity->getSortOrder(),
+                    'label' => $entity->getLabel(), 'value' => $entity->getValue(), 'unit' => $entity->getUnit(), 'note' => $entity->getNote(), 'sortOrder' => $entity->getSortOrder(),
                     // Mine or my child's only: a friend's size comes without it.
                 ] + (ProfileSizeHistoryView::isReadableBy($entity, $me) ? ['history' => ProfileSizeHistoryView::entries($entity)] : []),
                 'profile_preference' => [
