@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Also run before every production deployment (deploy.yml).
+  workflow_call:
 
 jobs:
   backend:

@@ -35,8 +35,21 @@ Le certificat Let's Encrypt est demandé par Traefik à la première requête.
 
 ## Mise à jour
 
+**Automatique, par tag** (`.github/workflows/deploy.yml`) : pousser un tag de version sur un commit de `main`.
+
 ```
-git pull && ./deploy-prod.sh
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+GitHub Actions relance toute la CI, vérifie que le tag est sur `main`, puis sur le serveur : récupère le tag, le place (`git checkout --detach`) et lance `./deploy-prod.sh`. Un seul déploiement à la fois ; le suivi est dans l'onglet Actions du dépôt (environnement `production`).
+
+Mise en place, une seule fois : une clé SSH dédiée autorisée pour `deploy` sur le serveur (`~/.ssh/authorized_keys`), et deux secrets du dépôt GitHub (Settings → Secrets and variables → Actions) : `DEPLOY_SSH_KEY` (la clé privée) et `DEPLOY_SSH_KNOWN_HOSTS` (sortie de `ssh-keyscan -p 1138 frigologie.fr`).
+
+**À la main**, si besoin :
+
+```
+ssh -p 1138 deploy@frigologie.fr 'cd ~/ideescadeaux && git fetch --tags --force origin && git checkout --force --detach origin/main && ./deploy-prod.sh'
 ```
 
 Les migrations passent **avant** le redémarrage : le nouveau code ne tourne jamais sur un schéma ancien.

@@ -1,0 +1,60 @@
+# Production deployment on a version tag (docs/DEPLOIEMENT.md):
+#
+#   git tag v1.2.0 && git push origin v1.2.0
+#
+# Runs the whole CI first, checks the tag is on main, then on the server:
+# fetch the tag, check it out, ./deploy-prod.sh (build, migrations,
+# restart, health check). One deployment at a time.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   DEPLOY_SSH_KEY          private key allowed for deploy@frigologie.fr
+#   DEPLOY_SSH_KNOWN_HOSTS  output of: ssh-keyscan -p 1138 frigologie.fr
+name: Deploy
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy to ideescadeaux.frigologie.fr
+    needs: ci
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://ideescadeaux.frigologie.fr
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: The tag must be on main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: SSH access
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host prod\n  HostName frigologie.fr\n  Port 1138\n  User deploy\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n' > ~/.ssh/config
+
+      - name: Deploy the tag
+        run: |
+          ssh prod "cd ~/ideescadeaux \
+            && git fetch --tags --force origin \
+            && git checkout --force --detach '${GITHUB_REF_NAME}' \
+            && ./deploy-prod.sh"
+
+      - name: Check it is online
+        run: curl --fail --silent --show-error --retry 5 --retry-delay 5 https://ideescadeaux.frigologie.fr/api/health
