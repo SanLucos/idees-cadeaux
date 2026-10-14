@@ -92,14 +92,17 @@ final class ManagedProfileInvitations
     private function convert(ManagedProfileInvitation $invitation): User
     {
         $profile = $invitation->getProfile();
-        $manager = $profile->getManagedBy();
+        $managers = $profile->getManagers();
 
         $profile->convertToAutonomous($invitation->getEmail());
         $this->invitations->deleteForProfile($profile);
 
-        // Spec §5.15: an automatic friendship the new account may remove.
-        if (null !== $manager && null === $this->friendships->findActiveBetween($manager, $profile)) {
-            $this->em->persist(Friendship::createAccepted($manager, $profile, FriendshipOrigin::Conversion));
+        // Spec §5.15, §11 décision 60: an automatic friendship with each
+        // former manager, which the new account may remove.
+        foreach ($managers as $manager) {
+            if (null === $this->friendships->findActiveBetween($manager, $profile)) {
+                $this->em->persist(Friendship::createAccepted($manager, $profile, FriendshipOrigin::Conversion));
+            }
         }
 
         $this->em->flush();

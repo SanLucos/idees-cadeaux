@@ -129,6 +129,12 @@ final class AccountDeletion
 
     public function erase(User $user): void
     {
+        // A child with a second manager stays with them (spec §11 décision 60).
+        $this->connection->executeStatement(
+            'UPDATE app_user SET managed_by_id = co_managed_by_id, co_managed_by_id = NULL WHERE managed_by_id = :id AND co_managed_by_id IS NOT NULL',
+            ['id' => $user->getId()->toRfc4122()],
+        );
+
         $ids = array_map(
             static fn (array $row) => (string) $row['id'],
             $this->connection->fetchAllAssociative('SELECT id FROM app_user WHERE id = :id OR managed_by_id = :id', ['id' => $user->getId()->toRfc4122()]),
@@ -200,9 +206,10 @@ final class AccountDeletion
             return null !== $user->getEmail() ? new SendAccountEmail('deleted', $user->getEmail(), $user->getLocale()) : null;
         }
 
-        // A child profile deleted on its own: its manager is told (unless leaving too).
-        $manager = $user->getManagedBy();
-        if (null === $manager || null === $manager->getEmail() || null !== $manager->getDeletionScheduledAt()) {
+        // A child profile deleted on its own: a manager is told (unless leaving too).
+        $managers = array_filter($user->getManagers(), static fn (User $m) => null !== $m->getEmail() && null === $m->getDeletionScheduledAt());
+        $manager = reset($managers);
+        if (false === $manager) {
             return null;
         }
 
