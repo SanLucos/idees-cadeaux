@@ -40,6 +40,21 @@
       <ProfilePreferencesSection :key="`prefs-${activeProfile.activeId ?? 'me'}`" />
 
       <template v-if="!activeProfile.isActing">
+        <!-- Spec §11 décision 60: invited to manage someone's child with them. -->
+        <template v-if="activeProfile.managerInvitations.length">
+          <SectionTitle>{{ t('children.invitationsTitle') }}</SectionTitle>
+          <div v-for="invitation in activeProfile.managerInvitations" :key="invitation.id" class="ic-card invitation">
+            <AppAvatar :id="invitation.child.id" :name="invitation.child.displayName" :url="invitation.child.avatarUrl" :size="44" />
+            <div class="invitation__body">
+              <p>{{ t('children.invitationFrom', { inviter: invitation.invitedBy.displayName, child: invitation.child.displayName }) }}</p>
+              <div class="invitation__actions">
+                <ion-button size="small" @click="acceptInvitation(invitation)">{{ t('children.acceptInvitation') }}</ion-button>
+                <ion-button size="small" fill="clear" color="medium" @click="activeProfile.declineManagerInvitation(invitation.id)">{{ t('children.declineInvitation') }}</ion-button>
+              </div>
+            </div>
+          </div>
+        </template>
+
         <SectionTitle>{{ t('children.title') }}</SectionTitle>
         <ion-list class="ic-card-list" lines="inset">
           <ion-item v-for="child in activeProfile.children" :key="child.id" :router-link="`/profile/children/${child.id}`" button detail>
@@ -99,7 +114,8 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { add, chevronDown, chevronForward, downloadOutline, globeOutline, logOutOutline, notificationsOutline, shareSocialOutline, shieldCheckmarkOutline, trashOutline } from 'ionicons/icons';
-import { actionSheetController, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPage } from '@ionic/vue';
+import { actionSheetController, alertController, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPage, onIonViewWillEnter, toastController, useIonRouter } from '@ionic/vue';
+import { useErrorMessage } from '../composables/useErrorMessage';
 import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import { useNotificationsStore } from '../stores/notifications';
@@ -113,7 +129,7 @@ import ProfilePreferencesSection from '../components/ProfilePreferencesSection.v
 import ProfileSizesSection from '../components/ProfileSizesSection.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import SectionTitle from '../components/SectionTitle.vue';
-import type { ManagedProfile } from '../types/user';
+import type { ManagedProfile, ManagerInvitation } from '../types/user';
 import type { ShareLink } from '../types/shareLink';
 
 const { t, locale } = useI18n();
@@ -144,6 +160,34 @@ onMounted(() => {
   activeProfile.fetchChildren();
   void loadShareLink();
 });
+onIonViewWillEnter(() => {
+  if (!activeProfile.isActing) void activeProfile.fetchManagerInvitations();
+});
+
+const ionRouter = useIonRouter();
+const { describe } = useErrorMessage();
+
+/** Spec §11 décision 60: accepted with the same consent as at a child's creation. */
+async function acceptInvitation(invitation: ManagerInvitation): Promise<void> {
+  const alert = await alertController.create({
+    header: t('children.acceptConfirm.title', { child: invitation.child.displayName }),
+    inputs: [{ type: 'checkbox', label: t('children.acceptConfirm.consent'), value: 'consent' }],
+    buttons: [
+      { text: t('common.cancel'), role: 'cancel' },
+      { text: t('children.acceptInvitation'), role: 'confirm' },
+    ],
+  });
+  await alert.present();
+  const { role, data } = await alert.onDidDismiss<{ values?: string[] }>();
+  if ('confirm' !== role || !data?.values?.includes('consent')) return;
+  try {
+    const child = await activeProfile.acceptManagerInvitation(invitation.id);
+    ionRouter.push(`/profile/children/${child.id}`);
+  } catch (e) {
+    await (await toastController.create({ message: describe(e), duration: 4000, color: 'danger' })).present();
+    await activeProfile.fetchManagerInvitations();
+  }
+}
 
 /** The share entry's status line; undefined while unknown (e.g. offline). */
 const shareLink = ref<ShareLink | null | undefined>(undefined);
@@ -298,5 +342,26 @@ ion-item ion-label p {
 .share-entry__sub {
   font-size: 0.8125rem;
   opacity: 0.8;
+}
+.invitation {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.invitation__body p {
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+
+.invitation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.invitation__actions ion-button {
+  margin: 0;
 }
 </style>
