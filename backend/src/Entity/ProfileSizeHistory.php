@@ -32,12 +32,16 @@ class ProfileSizeHistory implements TimestampableInterface, SoftDeletableInterfa
     #[ORM\Column(length: 60)]
     private string $value;
 
-    public function __construct(ProfileSize $size, string $value)
+    #[ORM\Column(length: 4, nullable: true)]
+    private ?string $unit;
+
+    public function __construct(ProfileSize $size, string $value, ?string $unit = null)
     {
         $this->initializeId();
         $this->initializeTimestamps();
         $this->size = $size;
         $this->value = $value;
+        $this->unit = $unit;
     }
 
     public function getSize(): ProfileSize
@@ -48,5 +52,16 @@ class ProfileSizeHistory implements TimestampableInterface, SoftDeletableInterfa
     public function getValue(): string
     {
         return $this->value;
+    }
+
+    public function getUnit(): ?string
+    {
+        return $this->unit;
+    }
+
+    /** Only for the current value, whose unit was corrected (ProfileSize::setUnit()). */
+    public function setUnit(?string $unit): void
+    {
+        $this->unit = $unit;
     }
 }

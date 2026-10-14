@@ -11,9 +11,11 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\ApiResource\Input\ProfileSizeInput;
+use App\Entity\Enum\ProfileSizeUnit;
 use App\Entity\Trait\IdentifiableTrait;
 use App\Entity\Trait\SoftDeletableTrait;
 use App\Entity\Trait\TimestampableTrait;
+use App\Exception\ApiProblemException;
 use App\Repository\ProfileSizeRepository;
 use App\State\ProfileSizeCreateProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -23,7 +25,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A free "label + value" entry (e.g. "Pointure : 42"), spec §5.2.
+ * A free "label + value" entry with an optional unit (e.g. "Pointure : 42
+ * EU"), spec §5.2 and §11 décision 57.
  * Read (Get/GetCollection) is scoped to the owner and their accepted
  * friends by App\Doctrine\Extension\VisibleToOwnerOrFriendsExtension —
  * anyone else gets a 404, not a 403. Writes (Patch/Delete) are further
@@ -68,6 +71,11 @@ class ProfileSize implements TimestampableInterface, SoftDeletableInterface, Own
     #[ORM\Column(length: 60)]
     private string $value;
 
+    /** A ProfileSizeUnit value, or null: no unit. */
+    #[Groups(['profile_size:read', 'profile_size:write'])]
+    #[ORM\Column(length: 4, nullable: true)]
+    private ?string $unit = null;
+
     #[Groups(['profile_size:read', 'profile_size:write'])]
     #[ORM\Column(length: 200, nullable: true)]
     private ?string $note = null;
@@ -81,7 +89,7 @@ class ProfileSize implements TimestampableInterface, SoftDeletableInterface, Own
     #[ORM\OrderBy(['createdAt' => 'ASC', 'id' => 'ASC'])]
     private Collection $history;
 
-    public function __construct(User $user, string $label, string $value, ?string $note = null, int $sortOrder = 0, ?Uuid $id = null)
+    public function __construct(User $user, string $label, string $value, ?string $note = null, int $sortOrder = 0, ?Uuid $id = null, ?string $unit = null)
     {
         $this->initializeId($id);
         $this->initializeTimestamps();
@@ -90,7 +98,8 @@ class ProfileSize implements TimestampableInterface, SoftDeletableInterface, Own
         $this->value = $value;
         $this->note = $note;
         $this->sortOrder = $sortOrder;
-        $this->history = new ArrayCollection([new ProfileSizeHistory($this, $value)]);
+        $this->unit = self::checkedUnit($unit);
+        $this->history = new ArrayCollection([new ProfileSizeHistory($this, $value, $this->unit)]);
     }
 
     public function getUser(): User
@@ -120,7 +129,37 @@ class ProfileSize implements TimestampableInterface, SoftDeletableInterface, Own
         }
 
         $this->value = $value;
-        $this->history->add(new ProfileSizeHistory($this, $value));
+        $this->history->add(new ProfileSizeHistory($this, $value, $this->unit));
+    }
+
+    public function getUnit(): ?string
+    {
+        return $this->unit;
+    }
+
+    /**
+     * A new unit alone is no new value (spec §11 décision 57): it
+     * corrects the current one, whose history entry takes it too.
+     */
+    public function setUnit(?string $unit): void
+    {
+        $this->unit = self::checkedUnit($unit);
+        $current = $this->history->last();
+        if ($current instanceof ProfileSizeHistory) {
+            $current->setUnit($this->unit);
+        }
+    }
+
+    private static function checkedUnit(?string $unit): ?string
+    {
+        if (null === $unit || '' === $unit) {
+            return null;
+        }
+        if (null === ProfileSizeUnit::tryFrom($unit)) {
+            throw new ApiProblemException('profile_size.unit_invalid', 'Unknown unit.', 422);
+        }
+
+        return $unit;
     }
 
     /**
