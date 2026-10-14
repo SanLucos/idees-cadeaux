@@ -46,6 +46,42 @@
             <ion-button class="ic-button-surface" expand="block" type="submit" :disabled="busy">{{ t('common.save') }}</ion-button>
           </form>
 
+          <!-- Spec §11 décision 59: « Partager avec mes amis ». -->
+          <ion-list class="ic-card-list share" lines="none">
+            <ion-item>
+              <ion-toggle :checked="child.shareWithManagerFriends" :disabled="busy" @ion-change="toggleShare($event.detail.checked)">
+                {{ t('children.share') }}
+              </ion-toggle>
+            </ion-item>
+          </ion-list>
+          <p class="ic-muted explain">{{ t('children.shareHint', { name: child.displayName }) }}</p>
+
+          <!-- Spec §11 décision 60: one or two managers, same rights. -->
+          <SectionTitle>{{ t('children.managersTitle') }}</SectionTitle>
+          <ion-list class="ic-card-list" lines="inset">
+            <ion-item v-for="manager in child.managers" :key="manager.id">
+              <AppAvatar slot="start" :id="manager.id" :name="manager.displayName" :url="manager.avatarUrl" :size="36" />
+              <ion-label>{{ manager.id === myId ? `${manager.displayName ?? ''} (${t('children.you')})` : manager.displayName }}</ion-label>
+              <ion-button
+                v-if="child.managers.length > 1"
+                slot="end"
+                fill="clear"
+                color="danger"
+                @click="confirmRemoveManager(manager)"
+              >
+                {{ manager.id === myId ? t('children.leave') : t('children.removeManager', { name: manager.displayName }) }}
+              </ion-button>
+            </ion-item>
+          </ion-list>
+          <div v-if="child.managerInvitation" class="ic-card pending" role="status">
+            {{ t('children.managerInvitationPending', { name: child.managerInvitation.user.displayName, date: date(child.managerInvitation.expiresAt) }) }}
+            <ion-button fill="clear" size="small" @click="run(() => activeProfile.cancelManagerInvitation(id))">{{ t('children.cancelManagerInvitation') }}</ion-button>
+          </div>
+          <template v-else-if="child.managers.length < 2">
+            <p class="ic-muted explain">{{ t('children.managersHint') }}</p>
+            <ion-button class="ic-button-surface" expand="block" :disabled="busy" @click="pickManager">{{ t('children.addManager') }}</ion-button>
+          </template>
+
           <!-- Spec §11 décision 58: the child's sizes and preferences, on its page. -->
           <ProfileSizesSection :profile-id="child.id" />
           <ProfilePreferencesSection :profile-id="child.id" />
@@ -77,8 +113,12 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { alertController, IonButton, IonContent, IonInput, IonPage, IonText, onIonViewWillEnter, toastController, useIonRouter } from '@ionic/vue';
+import { alertController, IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonPage, IonText, IonToggle, onIonViewWillEnter, toastController, useIonRouter } from '@ionic/vue';
+import { api } from '../services/api';
 import { useActiveProfileStore } from '../stores/activeProfile';
+import { useAuthStore } from '../stores/auth';
+import type { Friendship } from '../types/friendship';
+import type { ManagerSummary } from '../types/user';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import AppAvatar from '../components/AppAvatar.vue';
 import EmptyState from '../components/EmptyState.vue';
@@ -91,6 +131,7 @@ const { t, locale } = useI18n();
 const route = useRoute();
 const ionRouter = useIonRouter();
 const activeProfile = useActiveProfileStore();
+const myId = useAuthStore().user?.id;
 const { describe } = useErrorMessage();
 
 const id = String(route.params.id);
@@ -158,6 +199,49 @@ async function attach(): Promise<void> {
   }
 }
 
+function toggleShare(on: boolean): Promise<boolean> {
+  return run(() => activeProfile.update(id, { shareWithManagerFriends: on }));
+}
+
+/** Spec §11 décision 60: among my adult friends; they have to accept. */
+async function pickManager(): Promise<void> {
+  let friends: Friendship[] = [];
+  if (!(await run(async () => { friends = await api.get<Friendship[]>('/friendships', { acting: false }); }))) return;
+  const adults = friends.filter((f) => !f.user.managedBy);
+  const alert = await alertController.create({
+    header: t('children.pickFriend', { name: child.value?.displayName }),
+    message: adults.length ? t('children.pickFriendHint') : t('children.noFriendToInvite'),
+    inputs: adults.map((f, index) => ({ type: 'radio' as const, label: f.user.displayName ?? '', value: f.user.id, checked: 0 === index })),
+    buttons: [
+      { text: t('common.cancel'), role: 'cancel' },
+      ...(adults.length ? [{ text: t('children.addManager'), role: 'confirm' }] : []),
+    ],
+  });
+  await alert.present();
+  const { role, data } = await alert.onDidDismiss<{ values?: string }>();
+  if ('confirm' === role && data?.values) await run(() => activeProfile.inviteManager(id, data.values!));
+}
+
+async function confirmRemoveManager(manager: ManagerSummary): Promise<void> {
+  const leaving = manager.id === myId;
+  const other = child.value?.managers.find((m) => m.id !== manager.id);
+  const alert = await alertController.create({
+    header: leaving ? t('children.leaveConfirm.title', { child: child.value?.displayName }) : t('children.removeManagerConfirm.title', { name: manager.displayName }),
+    message: leaving
+      ? t('children.leaveConfirm.message', { name: other?.displayName })
+      : t('children.removeManagerConfirm.message', { name: manager.displayName, child: child.value?.displayName }),
+    buttons: [
+      { text: t('common.cancel'), role: 'cancel' },
+      { text: leaving ? t('children.leave') : t('children.removeManager', { name: manager.displayName }), role: 'destructive' },
+    ],
+  });
+  await alert.present();
+  if ('destructive' !== (await alert.onDidDismiss()).role) return;
+  if (await run(() => activeProfile.removeManager(id, manager.id, myId ?? '')) && leaving) {
+    ionRouter.navigate('/tabs/profile', 'back', 'replace');
+  }
+}
+
 async function confirmDelete(): Promise<void> {
   const alert = await alertController.create({
     header: t('children.deleteConfirm.title', { name: child.value?.displayName }),
@@ -215,6 +299,10 @@ async function confirmDelete(): Promise<void> {
 .explain {
   margin: 0 0 12px;
   line-height: 1.4;
+}
+
+.share {
+  margin-top: 20px;
 }
 
 .pending {

@@ -22,6 +22,11 @@
           <ion-input v-model.number="birthMonth" class="ic-field" fill="outline" :label="t('onboarding.birthMonth')" label-placement="stacked" type="number" :min="1" :max="12" />
         </div>
 
+        <!-- Spec §11 décision 59: ticked by default for a new child. -->
+        <ion-checkbox v-model="share" label-placement="end" justify="start" class="consent">
+          <span class="consent__text">{{ t('children.shareOnCreate') }}</span>
+        </ion-checkbox>
+
         <!-- Spec §5.15 / §5.13: explicit consent, recorded with a timestamp. -->
         <ion-checkbox v-model="consent" label-placement="end" justify="start" class="consent">
           <span class="consent__text">{{ t('children.consent') }}</span>
@@ -52,6 +57,7 @@ const { describe } = useErrorMessage();
 const displayName = ref('');
 const birthDay = ref<number | null>(null);
 const birthMonth = ref<number | null>(null);
+const share = ref(true);
 const consent = ref(false);
 const saving = ref(false);
 const error = ref('');
@@ -65,6 +71,7 @@ async function submit(): Promise<void> {
       birthDay: birthDay.value || null,
       birthMonth: birthMonth.value || null,
       parentalConsent: consent.value,
+      shareWithManagerFriends: share.value,
     });
     ionRouter.navigate(`/profile/children/${child.id}`, 'forward', 'replace');
   } catch (e) {
