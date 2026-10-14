@@ -57,7 +57,9 @@
     "daysBefore": "D-{days}",
     "addedViaLink": "Added via your link",
     "ideaCount": "no ideas | {count} idea | {count} ideas",
-    "birthdayOn": "birthday on {date}"
+    "birthdayOn": "birthday on {date}",
+    "viaFriends": "via your friends",
+    "childOf": "child of {name}"
   },
   "auth": {
     "email": "Email",
@@ -299,7 +301,11 @@
     "managed_profile": {
       "consent_required": "Parental consent is required.",
       "limit_reached": "Limit of 10 child profiles reached.",
-      "deletion_scheduled": "This profile is being deleted."
+      "deletion_scheduled": "This profile is being deleted.",
+      "managers_full": "This profile already has two managers.",
+      "manager_invitation_pending": "An invitation is already pending.",
+      "manager_not_a_friend": "Invite one of your friends.",
+      "last_manager": "A child profile keeps at least one manager."
     },
     "invitation": {
       "invalid": "Invalid or expired code.",
@@ -327,6 +333,9 @@
     },
     "account": {
       "deletion_scheduled": "Your account is being deleted: cancel the deletion to continue."
+    },
+    "friendship": {
+      "family_managed": "Turn « Share with my friends » off to remove your friends."
     }
   },
   "locales": {
@@ -361,7 +370,9 @@
       "contribution_goal_reached": "The contribution for “{idea}” reached its goal.",
       "suggestion_gifted": "{actor} marked “{idea}” as given.",
       "idea_unpublished": "{actor} made “{idea}” private again: what you had done on it was deleted.",
-      "birthday_reminder": "It's {friend}'s birthday today! | {friend}'s birthday is tomorrow. Have a look at their list. | {friend}'s birthday is in {days} days. Have a look at their list."
+      "birthday_reminder": "It's {friend}'s birthday today! | {friend}'s birthday is tomorrow. Have a look at their list. | {friend}'s birthday is in {days} days. Have a look at their list.",
+      "manager_invitation_received": "{actor} invites you to manage {child}'s profile too.",
+      "manager_invitation_accepted": "{actor} now manages {child}'s profile with you."
     }
   },
   "occasions": {
@@ -608,7 +619,37 @@
       "message": "The profile will be deleted in 14 days, with its ideas and everything attached. You can cancel until then."
     },
     "deletionOn": "Will be deleted on {date}",
-    "cancelDeletion": "Cancel deletion"
+    "cancelDeletion": "Cancel deletion",
+    "share": "Share with my friends",
+    "shareHint": "Your friends see {name}'s list, sizes and preferences, as friends do, with no request to accept. So do the other manager's.",
+    "shareOnCreate": "Share with my friends: they'll see the list with no request to accept.",
+    "managersTitle": "Managers",
+    "managersHint": "Two managers at most, with the same rights: list, profile, friends, deletion.",
+    "you": "you",
+    "addManager": "Add a manager",
+    "pickFriend": "Who will manage {name} with you?",
+    "pickFriendHint": "One of your friends. They'll have to accept.",
+    "noFriendToInvite": "Add this person to your friends first.",
+    "managerInvitationPending": "Invitation sent to {name}, pending until {date}.",
+    "cancelManagerInvitation": "Cancel the invitation",
+    "removeManager": "Remove {name}",
+    "removeManagerConfirm": {
+      "title": "Remove {name}?",
+      "message": "{name} will no longer manage {child}'s profile."
+    },
+    "leave": "Stop managing this profile",
+    "leaveConfirm": {
+      "title": "Stop managing {child}?",
+      "message": "You'll no longer have access to their profile. {name} will keep managing it."
+    },
+    "invitationsTitle": "Invitations to manage a child",
+    "invitationFrom": "{inviter} invites you to manage {child}'s profile too.",
+    "acceptInvitation": "Accept",
+    "declineInvitation": "Decline",
+    "acceptConfirm": {
+      "title": "Manage {child}'s profile",
+      "consent": "I hold parental authority for this child."
+    }
   },
   "invitation": {
     "link": "I have an invitation",
@@ -667,7 +708,9 @@
       "contribution_goal_reached": "Contribution goal reached",
       "suggestion_gifted": "Suggestion given",
       "idea_unpublished": "Idea made private",
-      "birthday_reminder": "Birthday reminder"
+      "birthday_reminder": "Birthday reminder",
+      "manager_invitation_received": "Invitation to manage a child",
+      "manager_invitation_accepted": "Second manager added"
     }
   },
   "sync": {

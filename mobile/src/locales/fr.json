@@ -57,7 +57,9 @@
     "daysBefore": "J-{days}",
     "addedViaLink": "Ajouté via votre lien",
     "ideaCount": "aucune idée | {count} idée | {count} idées",
-    "birthdayOn": "anniversaire le {date}"
+    "birthdayOn": "anniversaire le {date}",
+    "viaFriends": "via vos amis",
+    "childOf": "enfant de {name}"
   },
   "auth": {
     "email": "Email",
@@ -299,7 +301,11 @@
     "managed_profile": {
       "consent_required": "Le consentement parental est obligatoire.",
       "limit_reached": "Limite de 10 profils enfants atteinte.",
-      "deletion_scheduled": "Ce profil est en cours de suppression."
+      "deletion_scheduled": "Ce profil est en cours de suppression.",
+      "managers_full": "Ce profil a déjà deux gestionnaires.",
+      "manager_invitation_pending": "Une invitation est déjà en attente.",
+      "manager_not_a_friend": "Invitez une personne de vos amis.",
+      "last_manager": "Un profil enfant garde au moins un gestionnaire."
     },
     "invitation": {
       "invalid": "Code invalide ou expiré.",
@@ -327,6 +333,9 @@
     },
     "account": {
       "deletion_scheduled": "Votre compte doit être supprimé : annulez la suppression pour continuer."
+    },
+    "friendship": {
+      "family_managed": "Désactivez « Partager avec mes amis » pour retirer les amis de vos amis."
     }
   },
   "locales": {
@@ -361,7 +370,9 @@
       "contribution_goal_reached": "La cotisation pour « {idea} » a atteint son objectif.",
       "suggestion_gifted": "{actor} a marqué « {idea} » comme offert.",
       "idea_unpublished": "{actor} a repassé « {idea} » en privé : ce que vous y aviez fait a été supprimé.",
-      "birthday_reminder": "C'est l'anniversaire de {friend} aujourd'hui ! | Anniversaire de {friend} demain. Jetez un œil à sa liste. | Anniversaire de {friend} dans {days} jours. Jetez un œil à sa liste."
+      "birthday_reminder": "C'est l'anniversaire de {friend} aujourd'hui ! | Anniversaire de {friend} demain. Jetez un œil à sa liste. | Anniversaire de {friend} dans {days} jours. Jetez un œil à sa liste.",
+      "manager_invitation_received": "{actor} vous invite à gérer aussi le profil de {child}.",
+      "manager_invitation_accepted": "{actor} gère désormais avec vous le profil de {child}."
     }
   },
   "occasions": {
@@ -608,7 +619,37 @@
       "message": "Le profil sera supprimé dans 14 jours, avec ses idées et tout ce qui s'y rattache. Vous pouvez annuler d'ici là."
     },
     "deletionOn": "Sera supprimé le {date}",
-    "cancelDeletion": "Annuler la suppression"
+    "cancelDeletion": "Annuler la suppression",
+    "share": "Partager avec mes amis",
+    "shareHint": "Vos amis voient la liste de {name}, ses tailles et ses préférences, comme ses amis, sans demande à accepter. Ceux de l'autre gestionnaire aussi.",
+    "shareOnCreate": "Partager avec mes amis : ils verront sa liste sans demande à accepter.",
+    "managersTitle": "Gestionnaires",
+    "managersHint": "Deux gestionnaires au plus, avec les mêmes droits : liste, profil, amis, suppression.",
+    "you": "vous",
+    "addManager": "Ajouter un gestionnaire",
+    "pickFriend": "Qui gérera {name} avec vous ?",
+    "pickFriendHint": "Parmi vos amis. La personne devra accepter.",
+    "noFriendToInvite": "Ajoutez d'abord cette personne à vos amis.",
+    "managerInvitationPending": "Invitation envoyée à {name}, en attente jusqu'au {date}.",
+    "cancelManagerInvitation": "Annuler l'invitation",
+    "removeManager": "Retirer {name}",
+    "removeManagerConfirm": {
+      "title": "Retirer {name} ?",
+      "message": "{name} ne pourra plus gérer le profil de {child}."
+    },
+    "leave": "Ne plus gérer ce profil",
+    "leaveConfirm": {
+      "title": "Ne plus gérer {child} ?",
+      "message": "Vous n'aurez plus accès à son profil. {name} continuera de le gérer."
+    },
+    "invitationsTitle": "Invitations à gérer un enfant",
+    "invitationFrom": "{inviter} vous invite à gérer aussi le profil de {child}.",
+    "acceptInvitation": "Accepter",
+    "declineInvitation": "Refuser",
+    "acceptConfirm": {
+      "title": "Gérer le profil de {child}",
+      "consent": "Je suis titulaire de l'autorité parentale pour cet enfant."
+    }
   },
   "invitation": {
     "link": "J'ai une invitation",
@@ -667,7 +708,9 @@
       "contribution_goal_reached": "Objectif de cotisation atteint",
       "suggestion_gifted": "Suggestion offerte",
       "idea_unpublished": "Idée repassée en privé",
-      "birthday_reminder": "Rappel d'anniversaire"
+      "birthday_reminder": "Rappel d'anniversaire",
+      "manager_invitation_received": "Invitation à gérer un enfant",
+      "manager_invitation_accepted": "Deuxième gestionnaire ajouté"
     }
   },
   "sync": {
