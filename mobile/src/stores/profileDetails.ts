@@ -9,78 +9,92 @@ import type { SizeUnit } from '../utils/sizeUnits';
 
 type Local<T> = T & { id: string };
 
-function selfId(): string {
-  return useActiveProfileStore().activeId ?? useAuthStore().user?.id ?? '';
+const definitions = new Map<string, ReturnType<typeof define>>();
+
+/**
+ * Sizes and preferences of me (or the active child), offline-capable
+ * (spec §8). With `profileId`, those of that child of mine, written to
+ * from its own page whichever profile is active (spec §11 décision 58):
+ * a store of its own, so the profile tab's stays as it is.
+ */
+export function useProfileDetailsStore(profileId?: string) {
+  const key = profileId ?? '';
+  if (!definitions.has(key)) definitions.set(key, define(profileId));
+
+  return definitions.get(key)!();
 }
 
-/** Sizes and preferences of me (or the active child), offline-capable (spec §8). */
-export const useProfileDetailsStore = defineStore('profileDetails', {
-  state: () => ({
-    sizes: [] as Local<ProfileSize>[],
-    preferences: [] as Local<ProfilePreference>[],
-  }),
-  actions: {
-    async fetchSizes(): Promise<void> {
-      this.sizes = repo.sizes(selfId()) as Local<ProfileSize>[];
+function define(profileId?: string) {
+  const selfId = (): string => profileId ?? useActiveProfileStore().activeId ?? useAuthStore().user?.id ?? '';
+
+  return defineStore(profileId ? `profileDetails:${profileId}` : 'profileDetails', {
+    state: () => ({
+      sizes: [] as Local<ProfileSize>[],
+      preferences: [] as Local<ProfilePreference>[],
+    }),
+    actions: {
+      async fetchSizes(): Promise<void> {
+        this.sizes = repo.sizes(selfId()) as Local<ProfileSize>[];
+      },
+
+      async addSize(label: string, value: string, note: string | null, unit: SizeUnit | null = null): Promise<void> {
+        await profileMutations.addSize(label, value, note, this.sizes.length, unit, profileId);
+        await this.fetchSizes();
+      },
+
+      async updateSize(size: ProfileSize, label: string, value: string, note: string | null, unit: SizeUnit | null = null): Promise<void> {
+        await profileMutations.updateSize((size as Local<ProfileSize>).id, { label, value, unit, note }, profileId);
+        await this.fetchSizes();
+      },
+
+      /** Drag-and-drop: persist the new sortOrder of every entry that moved. */
+      async moveSize(from: number, to: number): Promise<void> {
+        const sizes = [...this.sizes];
+        const [moved] = sizes.splice(from, 1);
+        sizes.splice(to, 0, moved);
+        this.sizes = sizes;
+        for (const [index, size] of sizes.entries()) {
+          if (size.sortOrder !== index) await profileMutations.updateSize(size.id, { sortOrder: index }, profileId);
+        }
+        await this.fetchSizes();
+      },
+
+      async removeSizeHistoryEntry(size: ProfileSize, entryId: string): Promise<void> {
+        await profileMutations.removeSizeHistoryEntry((size as Local<ProfileSize>).id, entryId, profileId);
+        await this.fetchSizes();
+      },
+
+      async removeSize(size: ProfileSize): Promise<void> {
+        await profileMutations.removeSize((size as Local<ProfileSize>).id, profileId);
+        await this.fetchSizes();
+      },
+
+      async fetchPreferences(): Promise<void> {
+        this.preferences = repo.preferences(selfId()) as Local<ProfilePreference>[];
+      },
+
+      async addPreference(category: ProfilePreferenceCategory, label: string, value: string): Promise<void> {
+        await profileMutations.addPreference(category, label, value, profileId);
+        await this.fetchPreferences();
+      },
+
+      async removePreference(preference: ProfilePreference): Promise<void> {
+        await profileMutations.removePreference((preference as Local<ProfilePreference>).id, profileId);
+        await this.fetchPreferences();
+      },
+
+      /** Read-only: a friend's (or child's) entries — from the device when synced, else online. */
+      async fetchSizesFor(userId: string): Promise<ProfileSize[]> {
+        if (repo.user(userId)) return repo.sizes(userId);
+
+        return (await api.get<HydraCollection<ProfileSize>>(`/profile_sizes?userId=${userId}`)).member;
+      },
+
+      async fetchPreferencesFor(userId: string): Promise<ProfilePreference[]> {
+        if (repo.user(userId)) return repo.preferences(userId);
+
+        return (await api.get<HydraCollection<ProfilePreference>>(`/profile_preferences?userId=${userId}`)).member;
+      },
     },
-
-    async addSize(label: string, value: string, note: string | null, unit: SizeUnit | null = null): Promise<void> {
-      await profileMutations.addSize(label, value, note, this.sizes.length, unit);
-      await this.fetchSizes();
-    },
-
-    async updateSize(size: ProfileSize, label: string, value: string, note: string | null, unit: SizeUnit | null = null): Promise<void> {
-      await profileMutations.updateSize((size as Local<ProfileSize>).id, { label, value, unit, note });
-      await this.fetchSizes();
-    },
-
-    /** Drag-and-drop: persist the new sortOrder of every entry that moved. */
-    async moveSize(from: number, to: number): Promise<void> {
-      const sizes = [...this.sizes];
-      const [moved] = sizes.splice(from, 1);
-      sizes.splice(to, 0, moved);
-      this.sizes = sizes;
-      for (const [index, size] of sizes.entries()) {
-        if (size.sortOrder !== index) await profileMutations.updateSize(size.id, { sortOrder: index });
-      }
-      await this.fetchSizes();
-    },
-
-    async removeSizeHistoryEntry(size: ProfileSize, entryId: string): Promise<void> {
-      await profileMutations.removeSizeHistoryEntry((size as Local<ProfileSize>).id, entryId);
-      await this.fetchSizes();
-    },
-
-    async removeSize(size: ProfileSize): Promise<void> {
-      await profileMutations.removeSize((size as Local<ProfileSize>).id);
-      await this.fetchSizes();
-    },
-
-    async fetchPreferences(): Promise<void> {
-      this.preferences = repo.preferences(selfId()) as Local<ProfilePreference>[];
-    },
-
-    async addPreference(category: ProfilePreferenceCategory, label: string, value: string): Promise<void> {
-      await profileMutations.addPreference(category, label, value);
-      await this.fetchPreferences();
-    },
-
-    async removePreference(preference: ProfilePreference): Promise<void> {
-      await profileMutations.removePreference((preference as Local<ProfilePreference>).id);
-      await this.fetchPreferences();
-    },
-
-    /** Read-only: a friend's (or child's) entries — from the device when synced, else online. */
-    async fetchSizesFor(userId: string): Promise<ProfileSize[]> {
-      if (repo.user(userId)) return repo.sizes(userId);
-
-      return (await api.get<HydraCollection<ProfileSize>>(`/profile_sizes?userId=${userId}`)).member;
-    },
-
-    async fetchPreferencesFor(userId: string): Promise<ProfilePreference[]> {
-      if (repo.user(userId)) return repo.preferences(userId);
-
-      return (await api.get<HydraCollection<ProfilePreference>>(`/profile_preferences?userId=${userId}`)).member;
-    },
-  },
-});
+  });
+}

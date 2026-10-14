@@ -25,11 +25,20 @@ const cents = (amount: string | null | undefined) => Math.round(Number(amount ??
 const money = (value: number) => (value / 100).toFixed(2);
 const now = () => new Date().toISOString();
 
-function context() {
+/**
+ * `profileId`: a child of mine written to from its own page (spec §11
+ * décision 58), whichever profile is active; else the active profile.
+ */
+function context(profileId?: string) {
   const auth = useAuthStore();
   const active = useActiveProfileStore();
   const user = auth.user!;
   const me: PersonRef = { id: user.id, displayName: user.displayName, avatarUrl: user.avatarUrl };
+  if (profileId && profileId !== user.id) {
+    const child = active.children.find((c) => c.id === profileId);
+
+    return { me, actor: { id: profileId, displayName: child?.displayName ?? null, avatarUrl: child?.avatarUrl ?? null } as PersonRef, actingAs: profileId };
+  }
   // activeId is the source of truth for X-Acting-As: the actor must match it
   // even before the child's full profile is loaded.
   const child = active.active;
@@ -393,8 +402,8 @@ type LocalSize = ProfileSize & { id: string; userId: string };
 type LocalPreference = ProfilePreference & { id: string; userId: string };
 
 export const profileMutations = onlineOnlyOnWeb({
-  async addSize(label: string, value: string, note: string | null, sortOrder: number, unit: SizeUnit | null = null): Promise<LocalSize> {
-    const { actor, actingAs } = context();
+  async addSize(label: string, value: string, note: string | null, sortOrder: number, unit: SizeUnit | null = null, profileId?: string): Promise<LocalSize> {
+    const { actor, actingAs } = context(profileId);
     const id = uuidv7();
     const size: LocalSize = { id, '@id': `/api/profile_sizes/${id}`, userId: actor.id, label, value, unit, note, sortOrder, history: [{ value, unit, since: now() }] };
     await useLocalDb().put('profile_size', [size]);
@@ -403,8 +412,8 @@ export const profileMutations = onlineOnlyOnWeb({
     return size;
   },
 
-  async updateSize(id: string, patch: Partial<Pick<ProfileSize, 'label' | 'value' | 'unit' | 'note' | 'sortOrder'>>): Promise<void> {
-    const { actingAs } = context();
+  async updateSize(id: string, patch: Partial<Pick<ProfileSize, 'label' | 'value' | 'unit' | 'note' | 'sortOrder'>>, profileId?: string): Promise<void> {
+    const { actingAs } = context(profileId);
     const current = useLocalDb().get<LocalSize>('profile_size', id);
     const valueChanged = undefined !== patch.value && patch.value !== current?.value;
     const unit = undefined !== patch.unit ? patch.unit : (current?.unit ?? null);
@@ -423,21 +432,21 @@ export const profileMutations = onlineOnlyOnWeb({
   },
 
   /** Removes a past value from a size's history — never the current one, which the server refuses. */
-  async removeSizeHistoryEntry(id: string, entryId: string): Promise<void> {
-    const { actingAs } = context();
+  async removeSizeHistoryEntry(id: string, entryId: string, profileId?: string): Promise<void> {
+    const { actingAs } = context(profileId);
     const current = useLocalDb().get<LocalSize>('profile_size', id);
     await useLocalDb().patch<LocalSize>('profile_size', id, { history: (current?.history ?? []).filter((entry) => entry.id !== entryId) });
     await queue({ method: 'DELETE', path: `/profile_sizes/${id}/history/${entryId}`, actingAs, entities: [{ type: 'profile_size', id }], label: { kind: 'size.history_delete', title: current?.label } });
   },
 
-  async removeSize(id: string): Promise<void> {
-    const { actingAs } = context();
+  async removeSize(id: string, profileId?: string): Promise<void> {
+    const { actingAs } = context(profileId);
     await useLocalDb().remove('profile_size', [id]);
     await queue({ method: 'DELETE', path: `/profile_sizes/${id}`, actingAs, entities: [{ type: 'profile_size', id }], label: { kind: 'size.delete' } });
   },
 
-  async addPreference(category: ProfilePreferenceCategory, label: string, value: string): Promise<LocalPreference> {
-    const { actor, actingAs } = context();
+  async addPreference(category: ProfilePreferenceCategory, label: string, value: string, profileId?: string): Promise<LocalPreference> {
+    const { actor, actingAs } = context(profileId);
     const id = uuidv7();
     const preference: LocalPreference = { id, '@id': `/api/profile_preferences/${id}`, userId: actor.id, category, label, value };
     await useLocalDb().put('profile_preference', [preference]);
@@ -446,8 +455,8 @@ export const profileMutations = onlineOnlyOnWeb({
     return preference;
   },
 
-  async removePreference(id: string): Promise<void> {
-    const { actingAs } = context();
+  async removePreference(id: string, profileId?: string): Promise<void> {
+    const { actingAs } = context(profileId);
     await useLocalDb().remove('profile_preference', [id]);
     await queue({ method: 'DELETE', path: `/profile_preferences/${id}`, actingAs, entities: [{ type: 'profile_preference', id }], label: { kind: 'preference.delete' } });
   },
