@@ -65,7 +65,7 @@ final class IdeaAccess
     /** The adult behind a request: the manager when acting as a managed profile. */
     public static function humanBehind(User $viewer): User
     {
-        return $viewer->isManaged() ? ($viewer->getManagedBy() ?? $viewer) : $viewer;
+        return $viewer->isManaged() ? ($viewer->getActingManager() ?? $viewer) : $viewer;
     }
 
     public function canView(Idea $idea, User $viewer): bool

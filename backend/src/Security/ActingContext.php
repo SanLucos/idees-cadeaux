@@ -57,6 +57,8 @@ final class ActingContext implements ResetInterface
             throw new ApiProblemException('acting_as.forbidden', 'You cannot act as this profile.', 403);
         }
 
+        $profile->setActingManager($human);
+
         return $this->actor = $profile;
     }
 
