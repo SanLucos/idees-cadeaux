@@ -16,7 +16,8 @@
         </p>
 
         <ion-list class="ic-card-list" lines="inset">
-          <ion-item>
+          <!-- No push on the web: the Activité tab and email (spec §11 décision 56). -->
+          <ion-item v-if="!web">
             <ion-toggle v-model="pushWanted" justify="space-between">
               <div class="label">{{ t('consent.push') }}</div>
               <div class="hint">{{ t('consent.pushHint') }}</div>
@@ -47,6 +48,7 @@ import { eyeOffOutline, notificationsOutline } from 'ionicons/icons';
 import { IonButton, IonContent, IonIcon, IonItem, IonList, IonPage, IonText, IonToggle, useIonRouter } from '@ionic/vue';
 import { notificationsApi } from '../services/notifications';
 import { usePushConsent } from '../composables/usePushConsent';
+import { isWeb } from '../utils/platform';
 
 /**
  * Spec §5.11 / §5.1 onboarding: our explanation comes first; the
@@ -56,7 +58,8 @@ const { t } = useI18n();
 const ionRouter = useIonRouter();
 const pushConsent = usePushConsent();
 
-const pushWanted = ref(true);
+const web = isWeb();
+const pushWanted = ref(!web);
 const emailWanted = ref(false);
 const saving = ref(false);
 const denied = ref(false);

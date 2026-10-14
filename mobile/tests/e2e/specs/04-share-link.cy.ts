@@ -28,6 +28,7 @@ describe('Share link', () => {
 
           // Lucas, signed out: the guest view, read-only.
           cy.clearAllLocalStorage();
+          cy.clearAllCookies();
           cy.visit(`/u/${token}`);
           cy.see('Les idées cadeaux de Camille');
           cy.see('Vue invité · lecture seule');

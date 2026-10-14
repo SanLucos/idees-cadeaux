@@ -22,7 +22,7 @@
             <span>{{ t('friends.byEmail') }}</span>
           </div>
         </ion-button>
-        <ion-button class="quick-action" :router-link="{ name: 'AddFriend', query: { contacts: '1' } }">
+        <ion-button v-if="!web" class="quick-action" :router-link="{ name: 'AddFriend', query: { contacts: '1' } }">
           <div>
             <ion-icon :icon="bookOutline" color="primary" aria-hidden="true" />
             <span>{{ t('friends.byContacts') }}</span>
@@ -106,6 +106,7 @@ import {
   IonRefresherContent,
 } from '@ionic/vue';
 import { useFriendsStore } from '../stores/friends';
+import { isWeb } from '../utils/platform';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import { useLocalRefresh } from '../composables/useLocalRefresh';
 import AppAvatar from '../components/AppAvatar.vue';
@@ -117,6 +118,7 @@ import type { Friendship } from '../types/friendship';
 
 const { t, locale } = useI18n();
 const store = useFriendsStore();
+const web = isWeb();
 const activeProfile = useActiveProfileStore();
 
 // Switching profile shows the other profile's friends.

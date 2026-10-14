@@ -302,3 +302,22 @@ ion-chip.ic-chip.ic-chip-selected {
 .ic-section {
   margin-top: 20px;
 }
+
+/* Large screens — the web app on a computer (spec §11 décision 56): the
+   phone layout, in a centred column. Modals, alerts and toasts live in
+   ion-app, so they stay inside the column too. */
+@media (min-width: 640px) {
+  body {
+    background: var(--ic-surface-muted);
+  }
+
+  ion-app {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    border-inline: 1px solid var(--ic-border);
+    background: var(--ion-background-color);
+  }
+}

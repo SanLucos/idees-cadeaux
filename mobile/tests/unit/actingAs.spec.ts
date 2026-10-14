@@ -7,6 +7,9 @@ import { useAuthStore } from '@/stores/auth'
 import { useLocalDb } from '@/offline/db'
 import { ideaMutations } from '@/offline/mutations'
 
+// The phone apps' offline engine (in jsdom the app would otherwise run as the web app).
+vi.mock('@/utils/platform', () => ({ isWeb: () => false }))
+
 vi.mock('@aparajita/capacitor-secure-storage', () => ({
   SecureStorage: {
     getItem: vi.fn(async () => 'access-token'),

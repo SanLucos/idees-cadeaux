@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { api, isNetworkError, SessionExpiredError } from '../services/api';
 import { uuidv7 } from '../utils/uuidv7';
+import { isWeb } from '../utils/platform';
 import { useLocalDb } from './db';
 import { DOC_TYPES, type Doc, type DocType, type OutboxOp } from './localStore';
 
@@ -76,7 +77,23 @@ export const useSync = defineStore('sync', {
         nextAttemptAt: 0,
         createdAt: new Date().toISOString(),
       });
+      if (isWeb()) {
+        // The web app keeps its queue in memory only (spec §11 décision 56):
+        // send now and let the action wait, so leaving the page or reloading
+        // right after can't lose the write.
+        await this.sendNow();
+        return;
+      }
       this.schedule();
+    },
+
+    /** Runs a sync now, after the one in progress if any. */
+    async sendNow(): Promise<void> {
+      if (this.timer) clearTimeout(this.timer);
+      for (let waited = 0; this.running && waited < 30_000; waited += 50) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      await this.run(true);
     },
 
     /** Debounced: a burst of taps becomes one round trip. */

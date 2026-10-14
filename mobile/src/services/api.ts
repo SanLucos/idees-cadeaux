@@ -1,6 +1,7 @@
 import { tokenStorage } from './tokenStorage';
+import { isWeb } from '../utils/platform';
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
+const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 export class ApiError extends Error {
   constructor(
@@ -72,15 +73,18 @@ export function lastApiRequestId(): string | null {
 let refreshPromise: Promise<void> | null = null;
 
 async function doRefresh(): Promise<void> {
-  const refreshToken = await tokenStorage.getRefreshToken();
-  if (!refreshToken) {
+  const web = isWeb();
+  const refreshToken = web ? null : await tokenStorage.getRefreshToken();
+  if (!web && !refreshToken) {
     throw new SessionExpiredError();
   }
 
+  // Web: the httpOnly cookie carries the refresh token (spec §11 décision 56).
   const response = await fetch(`${baseUrl}/auth/refresh`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: refreshToken }),
+    headers: web ? { 'X-Client': 'web' } : { 'Content-Type': 'application/json' },
+    body: web ? undefined : JSON.stringify({ refresh_token: refreshToken }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -99,6 +103,7 @@ async function perform(method: string, path: string, options: RequestOptions): P
   // PATCH/DELETE, so it needs the full JSON-LD/Hydra shape.
   lastRequestId = newRequestId();
   const headers: Record<string, string> = { Accept: 'application/ld+json', 'X-Request-Id': lastRequestId, ...options.headers };
+  if (isWeb()) headers['X-Client'] = 'web';
   let body: BodyInit | undefined;
 
   if (options.formData) {
@@ -121,7 +126,7 @@ async function perform(method: string, path: string, options: RequestOptions): P
   }
 
   // A network failure throws here (TypeError): callers treat it as "offline".
-  const response = await fetch(`${baseUrl}${path}`, { method, headers, body });
+  const response = await fetch(`${baseUrl}${path}`, { method, headers, body, credentials: 'include' });
   const payload = 204 === response.status ? {} : await response.json().catch(() => ({}));
 
   return { status: response.status, payload };
@@ -184,8 +189,24 @@ export function isNetworkError(error: unknown): boolean {
   return error instanceof TypeError;
 }
 
+/**
+ * Web app start: a new access token from the session cookie, if there is
+ * one. False = signed out (no cookie, expired or revoked).
+ */
+async function resumeWebSession(): Promise<boolean> {
+  try {
+    await doRefresh();
+
+    return true;
+  } catch (e) {
+    if (e instanceof SessionExpiredError) return false;
+    throw e;
+  }
+}
+
 export const api = {
   send,
+  resumeWebSession,
   get: <T>(path: string, options?: RequestOptions) => request<T>('GET', path, options),
   post: <T>(path: string, options?: RequestOptions) => request<T>('POST', path, options),
   put: <T>(path: string, options?: RequestOptions) => request<T>('PUT', path, options),

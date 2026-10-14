@@ -54,7 +54,8 @@
         <router-link to="/open-link">{{ t('shareLink.open.link') }}</router-link>
       </ion-text>
 
-      <SocialLoginButtons class="ion-margin-top" @error="(message) => (error = message)" />
+      <!-- Google/Apple on the web come later (spec §11 décision 56). -->
+      <SocialLoginButtons v-if="!web" class="ion-margin-top" @error="(message) => (error = message)" />
     </ion-content>
   </ion-page>
 </template>
@@ -78,6 +79,9 @@ import {
 import { useAuthStore } from '../../stores/auth';
 import { useErrorMessage } from '../../composables/useErrorMessage';
 import SocialLoginButtons from '../../components/SocialLoginButtons.vue';
+import { isWeb } from '../../utils/platform';
+
+const web = isWeb();
 
 const { t } = useI18n();
 const router = useRouter();

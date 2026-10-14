@@ -6,10 +6,17 @@ import { MemoryStore } from './memoryStore';
 import { SqliteStore } from './sqliteStore';
 import { useSync } from './sync';
 import { completePendingPrefills } from './pendingPrefill';
+import { isWeb } from '../utils/platform';
 
 /** Open the device database before the first screen reads it. */
 export async function openLocalDb(): Promise<void> {
   const db = useLocalDb();
+  // The web app keeps nothing of the account in the browser (spec §11
+  // décision 56): in memory only, gone when the tab closes.
+  if (isWeb()) {
+    await db.open(new MemoryStore());
+    return;
+  }
   try {
     const sqlite = new SqliteStore();
     await sqlite.open();

@@ -9,6 +9,8 @@ import { press } from './directives/press';
 import { reportError, setErrorRoute } from './services/errorReporter';
 import { setOnDeletionScheduled } from './services/api';
 import { useAuthStore } from './stores/auth';
+import { useLocalDb } from './offline/db';
+import { isWeb } from './utils/platform';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -69,6 +71,13 @@ setOnDeletionScheduled(() => {
     .then(() => router.replace({ name: 'DeletionScheduled' }))
     .catch(() => undefined);
 });
+// Web app: a write still on its way to the server when the page is closed
+// would be lost (memory only, spec §11 décision 56) — let the browser warn.
+if (isWeb()) {
+  window.addEventListener('beforeunload', (event) => {
+    if (useLocalDb().outbox.some((op) => 'pending' === op.status)) event.preventDefault();
+  });
+}
 // The route's name, not its path: paths may hold share tokens.
 router.afterEach((to) => setErrorRoute(String(to.name ?? '')));
 

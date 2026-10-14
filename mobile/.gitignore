@@ -31,6 +31,7 @@ npm-debug.log*
 /plugins
 /www
 /.env
+/.env.*.local
 
 # Cypress artefacts
 tests/e2e/screenshots/

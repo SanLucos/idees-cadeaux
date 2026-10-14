@@ -1,3 +1,4 @@
+import { onlineOnlyOnWeb } from './onlineOnly';
 import { useLocalDb } from './db';
 import { useSync, type NewOp } from './sync';
 import { useAuthStore } from '../stores/auth';
@@ -51,7 +52,7 @@ async function patchIdea(id: string, patch: Partial<Idea>): Promise<Idea> {
 
 // ---------------------------------------------------------------- ideas
 
-export const ideaMutations = {
+export const ideaMutations = onlineOnlyOnWeb({
   async create(input: IdeaInput, image?: { dataUrl: string; filename: string }): Promise<Idea> {
     const { me, actor, actingAs } = context();
     const id = uuidv7();
@@ -197,7 +198,7 @@ export const ideaMutations = {
 
     return idea;
   },
-};
+});
 
 // --------------------------------------------------------- interactions
 
@@ -238,7 +239,7 @@ function newContribution(idea: Idea, me: PersonRef): Contribution {
   };
 }
 
-export const interactionMutations = {
+export const interactionMutations = onlineOnlyOnWeb({
   async reserve(ideaId: string): Promise<Idea> {
     const { me } = context();
     const id = uuidv7();
@@ -376,7 +377,7 @@ export const interactionMutations = {
 
     return idea;
   },
-};
+});
 
 function ideaOfContribution(contributionId: string): Idea {
   const idea = useLocalDb().all<Idea>('idea').find((i) => i.contribution?.id === contributionId);
@@ -390,7 +391,7 @@ function ideaOfContribution(contributionId: string): Idea {
 type LocalSize = ProfileSize & { id: string; userId: string };
 type LocalPreference = ProfilePreference & { id: string; userId: string };
 
-export const profileMutations = {
+export const profileMutations = onlineOnlyOnWeb({
   async addSize(label: string, value: string, note: string | null, sortOrder: number): Promise<LocalSize> {
     const { actor, actingAs } = context();
     const id = uuidv7();
@@ -442,11 +443,11 @@ export const profileMutations = {
     await useLocalDb().remove('profile_preference', [id]);
     await queue({ method: 'DELETE', path: `/profile_preferences/${id}`, actingAs, entities: [{ type: 'profile_preference', id }], label: { kind: 'preference.delete' } });
   },
-};
+});
 
 // -------------------------------------------------------- notifications
 
-export const notificationMutations = {
+export const notificationMutations = onlineOnlyOnWeb({
   async markRead(id: string): Promise<void> {
     await useLocalDb().patch<AppNotification>('notification', id, { readAt: now() });
     await queue({ method: 'POST', path: `/notifications/${id}/read`, entities: [{ type: 'notification', id }], label: { kind: 'notification.read' } });
@@ -458,4 +459,4 @@ export const notificationMutations = {
     await db.put('notification', unread.map((n) => ({ ...n, readAt: now() })));
     await queue({ method: 'POST', path: '/notifications/read-all', entities: unread.map((n) => ({ type: 'notification' as const, id: n.id })), label: { kind: 'notification.readAll' } });
   },
-};
+});

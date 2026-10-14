@@ -23,6 +23,7 @@ describe('Surprise', () => {
 
           // Camille sees her idea, and nothing of that.
           cy.clearAllLocalStorage();
+          cy.clearAllCookies();
           cy.loginUi(camille);
           cy.see('Casque audio');
           cy.notSee('Réservé');

@@ -33,7 +33,15 @@ describe('Account data', () => {
       cy.see('Votre compte sera supprimé le');
       cy.mailLink(omar.email, '/account/cancel-deletion/').should('contain', '/account/cancel-deletion/');
 
-      // Nothing else is reachable meanwhile.
+      // Every session was revoked (spec §5.13): a reload signs the web app out…
+      cy.visit('/tabs/friends');
+      cy.location('pathname').should('eq', '/login');
+
+      // …and signing in again only leads to the grace-period screen.
+      cy.fillField('Email', omar.email);
+      cy.fillField('Mot de passe', omar.password);
+      cy.tap('Se connecter', 'ion-button');
+      cy.location('pathname').should('eq', '/account/deletion-scheduled');
       cy.visit('/tabs/friends');
       cy.location('pathname').should('eq', '/account/deletion-scheduled');
 

@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { lastApiRequestId } from './api';
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
+const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api';
 const MAX_PER_SESSION = 20;
 
 let sent = 0;

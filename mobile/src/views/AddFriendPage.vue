@@ -19,6 +19,8 @@
         <ion-button expand="block" type="submit" :disabled="loading">{{ t('friends.add_screen.submit') }}</ion-button>
       </form>
 
+      <!-- The phone's contacts: only in the iOS/Android app (spec §11 décision 56). -->
+      <template v-if="!web">
       <SectionTitle>{{ t('friends.add_screen.contactsTitle') }}</SectionTitle>
       <ion-button class="ic-button-surface" expand="block" :disabled="matchingContacts" @click="matchContacts">
         <ion-icon aria-hidden="true" slot="start" :icon="bookOutline" />
@@ -42,6 +44,7 @@
         </ion-item>
       </ion-list>
       <EmptyState v-else-if="contactsSearched">{{ t('friends.add_screen.contactsEmpty') }}</EmptyState>
+      </template>
     </ion-content>
   </ion-page>
 </template>
@@ -59,15 +62,17 @@ import TopBar from '../components/TopBar.vue';
 import { useFriendsStore } from '../stores/friends';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { ContactsPermissionDeniedError } from '../services/contactsMatch';
+import { isWeb } from '../utils/platform';
 
 const { t } = useI18n();
 const store = useFriendsStore();
 const { describe } = useErrorMessage();
 const route = useRoute();
+const web = isWeb();
 
 onMounted(() => {
   // "Mes contacts" on the friends screen lands here and starts matching straight away.
-  if ('1' === route.query.contacts) {
+  if ('1' === route.query.contacts && !web) {
     matchContacts();
   }
 });

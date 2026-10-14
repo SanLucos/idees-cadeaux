@@ -5,6 +5,8 @@ import { applyLocale } from '../i18n';
 import { isNetworkError } from '../services/api';
 import { useLocalDb } from '../offline/db';
 import { useSync } from '../offline/sync';
+import { assertCanWrite } from '../offline/onlineOnly';
+import { isWeb } from '../utils/platform';
 import type { User } from '../types/user';
 
 interface LoginResponse {
@@ -26,10 +28,16 @@ export const useAuthStore = defineStore('auth', {
     async bootstrap(): Promise<void> {
       this.isBootstrapping = true;
       try {
-        const accessToken = await tokenStorage.getAccessToken();
-        const refreshToken = await tokenStorage.getRefreshToken();
-        if (accessToken && refreshToken) {
-          await this.fetchMe();
+        if (isWeb()) {
+          // The session lives in the httpOnly cookie (spec §11 décision 56):
+          // no cookie, or an expired one, simply means signed out.
+          if (await api.resumeWebSession()) await this.fetchMe();
+        } else {
+          const accessToken = await tokenStorage.getAccessToken();
+          const refreshToken = await tokenStorage.getRefreshToken();
+          if (accessToken && refreshToken) {
+            await this.fetchMe();
+          }
         }
       } catch (e) {
         // Offline start (spec §8): keep the session and the last known profile.
@@ -115,6 +123,7 @@ export const useAuthStore = defineStore('auth', {
      */
     async updateProfile(patch: Partial<Pick<User, 'displayName' | 'birthDay' | 'birthMonth' | 'birthYear' | 'locale'>>): Promise<void> {
       if (!this.user) return;
+      assertCanWrite();
       // Same rule as the server (User::isOnboarded): a pseudo means onboarded,
       // without waiting for the queued PATCH.
       this.user = { ...this.user, ...patch, isOnboarded: this.user.isOnboarded || !!patch.displayName };

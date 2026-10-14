@@ -54,6 +54,7 @@ describe('Accessibility', () => {
 
             // Hugo: the friend view with its secret zone.
             cy.clearAllLocalStorage();
+            cy.clearAllCookies();
             cy.loginUi(hugo);
             cy.visit(`/tabs/friends/${camille.id}`);
             cy.see('Casque audio');
@@ -64,6 +65,7 @@ describe('Accessibility', () => {
 
             // Signed out: the guest view.
             cy.clearAllLocalStorage();
+            cy.clearAllCookies();
             cy.visit(`/u/${share.link.token}`);
             cy.see('Vue invité · lecture seule');
             cy.audit('guest view');
