@@ -154,6 +154,23 @@ class FriendshipRepository extends ServiceEntityRepository
     }
 
     /**
+     * A child's friendships with its managers' friends (spec §11 décision 59).
+     *
+     * @return Friendship[]
+     */
+    public function findFamilyOf(User $child): array
+    {
+        return $this->createQueryBuilder('f')
+            ->andWhere('f.requester = :child OR f.addressee = :child')
+            ->andWhere('f.status = :accepted AND f.origin = :family')
+            ->setParameter('child', $child->getId(), 'uuid')
+            ->setParameter('accepted', FriendshipStatus::Accepted)
+            ->setParameter('family', FriendshipOrigin::Family)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @return Friendship[]
      */
     public function findPendingIncoming(User $user): array
