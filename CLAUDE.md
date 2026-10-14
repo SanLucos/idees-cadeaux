@@ -89,6 +89,8 @@ RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en
 
 **Appli web** (lot 9, spec §11 décision 56) : la même appli Ionic, servie à la racine du domaine en production (image `nginx`, `docker/nginx/prod.vhost.conf`). Sur le web : session dans un cookie `httpOnly` (`X-Client: web`), en ligne uniquement (`src/offline/onlineOnly.ts`), fonctions propres au téléphone masquées (`src/utils/platform.ts`), mise en page mobile centrée sur grand écran.
 
+**Tailles et famille** (lots 11 et 12, spec §11 décisions 57 à 60) : unité optionnelle des tailles (`App\Entity\Enum\ProfileSizeUnit`, `src/utils/sizeUnits.ts`), tailles et préférences d'un enfant sur sa fiche. « Partager avec mes amis » : amitiés d'origine `family` tenues à jour par `App\Service\FamilyFriendships` (déclenché par `App\Doctrine\FamilyFriendshipsListener`), jamais écrites à la main. Deuxième gestionnaire : `User.coManagedBy`, invitations `ManagerInvitation` ; utiliser `isManagedBy()` / `getManagers()` / `UserRepository::findChildrenOf()`, jamais `managedBy` seul.
+
 **Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, builds web et natifs).
 
 **CI** : `.github/workflows/ci.yml`, deux jobs (`backend`, `mobile`), lint + tests, déclenchés sur push/PR vers `main`.
