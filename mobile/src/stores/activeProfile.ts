@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { api, isNetworkError, setActingAs } from '../services/api';
 import { repo } from '../offline/repo';
 import { uuidv7 } from '../utils/uuidv7';
-import type { ManagedProfile } from '../types/user';
+import type { ManagedProfile, ManagerInvitation } from '../types/user';
 
 const STORAGE_KEY = 'ic.activeProfileId';
 
@@ -35,6 +35,8 @@ export const useActiveProfileStore = defineStore('activeProfile', {
   state: () => ({
     children: [] as ManagedProfile[],
     activeId: null as string | null,
+    /** Children of others I'm invited to manage (spec §11 décision 60). */
+    managerInvitations: [] as ManagerInvitation[],
   }),
   getters: {
     active: (state): ManagedProfile | null => state.children.find((c) => c.id === state.activeId) ?? null,
@@ -61,14 +63,14 @@ export const useActiveProfileStore = defineStore('activeProfile', {
       storeId(id);
     },
 
-    async create(input: { displayName: string; birthDay: number | null; birthMonth: number | null; parentalConsent: boolean }): Promise<ManagedProfile> {
+    async create(input: { displayName: string; birthDay: number | null; birthMonth: number | null; parentalConsent: boolean; shareWithManagerFriends: boolean }): Promise<ManagedProfile> {
       const child = await api.post<ManagedProfile>('/managed-profiles', { json: { id: uuidv7(), ...input }, ...OWN });
       this.children.push(child);
 
       return child;
     },
 
-    async update(id: string, patch: Partial<Pick<ManagedProfile, 'displayName' | 'birthDay' | 'birthMonth'>>): Promise<ManagedProfile> {
+    async update(id: string, patch: Partial<Pick<ManagedProfile, 'displayName' | 'birthDay' | 'birthMonth' | 'shareWithManagerFriends'>>): Promise<ManagedProfile> {
       return this.replace(await api.patch<ManagedProfile>(`/managed-profiles/${id}`, { json: patch, ...OWN }));
     },
 
@@ -100,6 +102,49 @@ export const useActiveProfileStore = defineStore('activeProfile', {
       return this.replace(await api.post<ManagedProfile>(`/managed-profiles/${id}/cancel-deletion`, OWN));
     },
 
+    // ---- second manager (spec §11 décision 60)
+
+    async inviteManager(id: string, userId: string): Promise<ManagedProfile> {
+      return this.replace(await api.post<ManagedProfile>(`/managed-profiles/${id}/manager-invitation`, { json: { userId }, ...OWN }));
+    },
+
+    async cancelManagerInvitation(id: string): Promise<ManagedProfile> {
+      return this.replace(await api.delete<ManagedProfile>(`/managed-profiles/${id}/manager-invitation`, OWN));
+    },
+
+    /** The other manager, or me: then the child is no longer mine. */
+    async removeManager(id: string, managerId: string, me: string): Promise<void> {
+      if (managerId === me) {
+        await api.delete(`/managed-profiles/${id}/managers/${managerId}`, OWN);
+        if (this.activeId === id) this.switchTo(null);
+        this.children = this.children.filter((c) => c.id !== id);
+
+        return;
+      }
+      this.replace(await api.delete<ManagedProfile>(`/managed-profiles/${id}/managers/${managerId}`, OWN));
+    },
+
+    async fetchManagerInvitations(): Promise<void> {
+      try {
+        this.managerInvitations = await api.get<ManagerInvitation[]>('/manager-invitations', OWN);
+      } catch (e) {
+        if (!isNetworkError(e)) throw e;
+      }
+    },
+
+    async acceptManagerInvitation(invitationId: string): Promise<ManagedProfile> {
+      const child = await api.post<ManagedProfile>(`/manager-invitations/${invitationId}/accept`, { json: { parentalConsent: true }, ...OWN });
+      this.managerInvitations = this.managerInvitations.filter((i) => i.id !== invitationId);
+      this.children = [...this.children.filter((c) => c.id !== child.id), child];
+
+      return child;
+    },
+
+    async declineManagerInvitation(invitationId: string): Promise<void> {
+      await api.post(`/manager-invitations/${invitationId}/decline`, OWN);
+      this.managerInvitations = this.managerInvitations.filter((i) => i.id !== invitationId);
+    },
+
     replace(child: ManagedProfile): ManagedProfile {
       this.children = this.children.map((c) => (c.id === child.id ? child : c));
 
@@ -109,6 +154,7 @@ export const useActiveProfileStore = defineStore('activeProfile', {
     /** On logout: never carry a child's header into another session. */
     reset(): void {
       this.children = [];
+      this.managerInvitations = [];
       this.switchTo(null);
     },
   },

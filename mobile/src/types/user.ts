@@ -30,4 +30,24 @@ export interface ManagedProfile {
   parentalConsentAt: string | null;
   deletionScheduledAt: string | null;
   invitation: { email: string; expiresAt: string } | null;
+  /** « Partager avec mes amis » (spec §11 décision 59). */
+  shareWithManagerFriends: boolean;
+  /** One or two, same rights (spec §11 décision 60). */
+  managers: ManagerSummary[];
+  /** The second manager invited, until they answer or it expires. */
+  managerInvitation: { user: { id: string; displayName: string | null }; expiresAt: string } | null;
+}
+
+export interface ManagerSummary {
+  id: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+}
+
+/** An invitation to manage someone's child with them (spec §11 décision 60). */
+export interface ManagerInvitation {
+  id: string;
+  expiresAt: string;
+  invitedBy: { id: string; displayName: string | null };
+  child: { id: string; displayName: string | null; avatarUrl: string | null };
 }

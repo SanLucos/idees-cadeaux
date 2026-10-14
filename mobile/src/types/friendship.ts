@@ -14,6 +14,7 @@ export type FriendshipStatus = 'pending' | 'accepted' | 'declined' | 'expired';
 export interface Friendship {
   id: string;
   status: FriendshipStatus;
+  /** `family`: a child shared with its managers' friends (spec §11 décision 59), never removed one by one. */
   origin: string;
   direction: 'incoming' | 'outgoing';
   createdAt: string;
