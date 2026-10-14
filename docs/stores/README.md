@@ -9,6 +9,7 @@ Brouillons à relire avant la première soumission. Tout ce qui dépend des comp
 ## Liste de contrôle avant soumission
 
 1. ✅ **Nom et identifiant** (spec §11 décisions 53 et 55) : « Idées Cadeaux », `fr.frigologie.ideescadeaux`, domaine `ideescadeaux.frigologie.fr` — déjà appliqués partout.
+1 bis. ✅ **Icônes** (spec §11 décision 61) : installées dans l'appli (Android, iOS, web) ; icône 512 px de la fiche Google Play : [`play-store-512.png`](play-store-512.png). L'App Store prend l'icône 1024 px du build. Sources : `docs/design/icones/`.
 2. **Liens universels** (spec §11 décision 43) : propriété Gradle `shareLinkHost` ; sur iOS, capacité *Associated Domains* `applinks:ideescadeaux.frigologie.fr` sur la cible `App` ; `ANDROID_CERT_FINGERPRINTS` et `APPLE_TEAM_ID` côté back.
 3. **Connexion** : `GOOGLE_CLIENT_ID`, `APPLE_CLIENT_ID` ; *Sign in with Apple* activé sur l'App ID (obligatoire dès qu'une connexion Google est proposée).
 4. **Push** : projet Firebase, `FCM_PROJECT_ID` / `FCM_SERVICE_ACCOUNT_JSON`, clé APNs téléversée dans Firebase, `google-services.json` / `GoogleService-Info.plist`.
