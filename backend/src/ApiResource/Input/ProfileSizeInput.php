@@ -24,6 +24,10 @@ final class ProfileSizeInput
     #[Assert\Length(max: 60)]
     public string $value = '';
 
+    /** A ProfileSizeUnit value, or null (spec §11 décision 57); checked by ProfileSize. */
+    #[Groups(['profile_size:write'])]
+    public ?string $unit = null;
+
     #[Groups(['profile_size:write'])]
     #[Assert\Length(max: 200)]
     public ?string $note = null;

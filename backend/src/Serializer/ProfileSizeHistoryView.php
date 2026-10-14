@@ -30,12 +30,12 @@ final class ProfileSizeHistoryView
     }
 
     /**
-     * @return list<array{id: string, value: string, since: string}> oldest first; the last one is the current value
+     * @return list<array{id: string, value: string, unit: string|null, since: string}> oldest first; the last one is the current value
      */
     public static function entries(ProfileSize $size): array
     {
         return array_map(
-            static fn (ProfileSizeHistory $entry) => ['id' => $entry->getId()->toRfc4122(), 'value' => $entry->getValue(), 'since' => $entry->getCreatedAt()->format(\DATE_ATOM)],
+            static fn (ProfileSizeHistory $entry) => ['id' => $entry->getId()->toRfc4122(), 'value' => $entry->getValue(), 'unit' => $entry->getUnit(), 'since' => $entry->getCreatedAt()->format(\DATE_ATOM)],
             $size->getHistory(),
         );
     }

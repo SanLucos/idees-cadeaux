@@ -50,7 +50,7 @@ final class ProfileSizeCreateProcessor implements ProcessorInterface
             throw new ApiProblemException('profile_size.limit_reached', 'Maximum of 100 sizes reached.', 422);
         }
 
-        $entity = new ProfileSize($user, $data->label, $data->value, $data->note, $data->sortOrder, $id);
+        $entity = new ProfileSize($user, $data->label, $data->value, $data->note, $data->sortOrder, $id, $data->unit);
 
         $this->em->persist($entity);
         $this->em->flush();
