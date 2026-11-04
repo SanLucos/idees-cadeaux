@@ -19,6 +19,8 @@ x-php: &php
     context: .
     dockerfile: docker/php/Dockerfile.prod
     target: php
+    args: &build-args
+      APP_BUILD: ${APP_BUILD:-}
   image: ideescadeaux-php:latest
   restart: unless-stopped
   depends_on:
@@ -92,6 +94,7 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile.prod
       target: nginx
+      args: *build-args
     image: ideescadeaux-nginx:latest
     restart: unless-stopped
     depends_on:

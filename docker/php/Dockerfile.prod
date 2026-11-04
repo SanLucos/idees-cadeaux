@@ -11,7 +11,9 @@ COPY mobile/package.json mobile/package-lock.json ./
 COPY mobile/scripts ./scripts
 RUN npm ci --no-audit --no-fund
 COPY mobile/ ./
-RUN VITE_API_BASE_URL=/api npm run build
+# The commit shown in Profil (no .git in the build context): deploy-prod.sh passes it.
+ARG APP_BUILD=""
+RUN APP_BUILD=$APP_BUILD VITE_API_BASE_URL=/api npm run build
 
 FROM php:8.3-fpm AS php
 

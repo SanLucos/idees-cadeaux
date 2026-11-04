@@ -61,6 +61,9 @@ compose() {
 }
 
 blue "→ Build des images"
+# Commit shown in Profil (« Version 0.0.3 · abc1234 »): the image has no .git.
+APP_BUILD=$(git rev-parse --short HEAD 2>/dev/null || true)
+export APP_BUILD
 compose build
 
 blue "→ Base de données"
