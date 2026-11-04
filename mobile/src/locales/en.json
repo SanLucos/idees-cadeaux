@@ -892,5 +892,27 @@
       "text": "Until then it's suspended. You can still cancel the deletion or export your data.",
       "cancel": "Cancel the deletion"
     }
+  },
+  "myGifts": {
+    "title": "My gifts for my friends",
+    "toOffer": "no gift to give | {count} gift to give | {count} gifts to give",
+    "secretBand": "Your reservations and contributions stay hidden from the friends they are for.",
+    "filterByKind": "Filter by kind of gift",
+    "filterByFriend": "Filter by friend",
+    "allFriends": "All my friends",
+    "kinds": {
+      "all": "All · {count}",
+      "reserved": "Reserved · {count}",
+      "contribution": "Group gifts · {count}",
+      "given": "Given · {count}"
+    },
+    "received": "Received",
+    "given": "Given",
+    "viaContribution": "Group gift",
+    "myPledge": "my share: {amount}",
+    "empty": {
+      "none": "You haven't reserved anything yet. On a friend's list, tap “I'll give it” or “Chip in together”.",
+      "filtered": "No gift matches these filters."
+    }
   }
 }

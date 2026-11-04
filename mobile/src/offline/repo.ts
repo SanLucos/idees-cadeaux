@@ -1,5 +1,5 @@
 import { useLocalDb } from './db';
-import type { Comment, Contribution, Idea, IdeaListQuery, IdeaPage, Occasion, PrivateIdea } from '../types/idea';
+import type { Comment, Contribution, Idea, IdeaListQuery, IdeaPage, MyGift, Occasion, PrivateIdea } from '../types/idea';
 import type { Friendship } from '../types/friendship';
 import type { ManagedProfile, User } from '../types/user';
 import type { ProfilePreference, ProfileSize } from '../types/profile';
@@ -70,6 +70,42 @@ export const repo = {
     return mine
       .sort(comparator('recent'))
       .map((i) => ({ ...i, recipient: { id: i.ownerId, displayName: db.get<User>('user', i.ownerId)?.displayName ?? null } }));
+  },
+
+  /**
+   * « Mes cadeaux pour mes amis » (spec §11 décision 62): the ideas I
+   * reserved or contributed to, on the lists of my friends and children,
+   * newest first (archived ones by archive date). Only the synced friend
+   * and manager views carry these fields, already filtered by the server:
+   * my own list (owner view) never shows here.
+   */
+  myGifts(): MyGift[] {
+    const db = useLocalDb();
+    const gifts: MyGift[] = [];
+    for (const idea of db.all<Idea>('idea')) {
+      if ('owner' === idea.view || 'published' !== idea.visibility) continue;
+      const c = idea.contribution;
+      const contributed = !!c && (c.isInitiator || null !== c.myPledge || (c.participants ?? []).some((p) => p.isMe));
+      const via = idea.reservation?.isMine ? 'reservation' : contributed ? 'contribution' : null;
+      if (null === via) continue;
+
+      const person = db.get<User>('user', idea.ownerId) ?? db.get<ManagedProfile>('managed_profile', idea.ownerId);
+      gifts.push({
+        idea,
+        via,
+        kind: 'archived' === idea.status ? 'given' : 'reservation' === via ? 'reserved' : 'contribution',
+        recipient: {
+          id: idea.ownerId,
+          displayName: person?.displayName ?? null,
+          avatarUrl: person?.avatarUrl ?? null,
+          birthDay: person?.birthDay ?? null,
+          birthMonth: person?.birthMonth ?? null,
+        },
+      });
+    }
+    const date = (g: MyGift) => g.idea.archivedAt ?? g.idea.createdAt;
+
+    return gifts.sort((a, b) => date(b).localeCompare(date(a)) || b.idea.id.localeCompare(a.idea.id));
   },
 
   comments(ideaId: string): Comment[] {

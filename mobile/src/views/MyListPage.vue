@@ -50,6 +50,9 @@
         </ion-button>
       </div>
 
+      <!-- Only my own reservations and contributions on friends' lists: nothing about this list (spec §4). -->
+      <MyGiftsLink v-if="!acting" class="my-gifts" />
+
       <OccasionChips v-model="occasion" class="chips" @update:model-value="reload" />
 
       <div class="list-bar">
@@ -124,6 +127,7 @@ import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import InteractionPills from '../components/InteractionPills.vue';
+import MyGiftsLink from '../components/MyGiftsLink.vue';
 import SecretBand from '../components/SecretBand.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import StatusPill from '../components/StatusPill.vue';
@@ -296,6 +300,10 @@ function dismissBanner(): void {
   width: 44px;
   height: 44px;
   margin: -10px -10px 0 0;
+}
+
+.my-gifts {
+  margin-top: 14px;
 }
 
 .chips {

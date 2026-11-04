@@ -892,5 +892,27 @@
       "text": "D'ici là, il est suspendu. Vous pouvez encore annuler la suppression ou exporter vos données.",
       "cancel": "Annuler la suppression"
     }
+  },
+  "myGifts": {
+    "title": "Mes cadeaux pour mes amis",
+    "toOffer": "aucun cadeau à offrir | {count} cadeau à offrir | {count} cadeaux à offrir",
+    "secretBand": "Vos réservations et cotisations restent invisibles pour vos amis concernés.",
+    "filterByKind": "Filtrer par type de cadeau",
+    "filterByFriend": "Filtrer par ami",
+    "allFriends": "Tous mes amis",
+    "kinds": {
+      "all": "Tous · {count}",
+      "reserved": "Réservés · {count}",
+      "contribution": "Cotisations · {count}",
+      "given": "Offerts · {count}"
+    },
+    "received": "Reçu",
+    "given": "Offert",
+    "viaContribution": "En cotisation",
+    "myPledge": "ma part : {amount}",
+    "empty": {
+      "none": "Vous n'avez encore rien réservé. Sur la liste d'un ami, touchez « Je l'offre » ou « Cotiser à plusieurs ».",
+      "filtered": "Aucun cadeau ne correspond à ces filtres."
+    }
   }
 }

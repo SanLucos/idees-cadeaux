@@ -145,6 +145,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true, requiresOnboarding: true },
   },
   {
+    path: '/gifts',
+    name: 'MyGifts',
+    component: () => import('../views/MyGiftsPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true },
+  },
+  {
     path: '/contributions/:id',
     name: 'Contribution',
     component: () => import('../views/ContributionPage.vue'),

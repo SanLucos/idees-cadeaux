@@ -36,6 +36,9 @@
         </ion-button>
       </div>
 
+      <!-- My own gifts, not the child's: hidden while acting as one. -->
+      <MyGiftsLink v-if="!activeProfile.active" class="my-gifts" />
+
       <template v-if="store.incoming.length">
         <SectionTitle>{{ t('friends.incomingTitle', { count: store.incoming.length }) }}</SectionTitle>
         <div class="ic-stack">
@@ -111,6 +114,7 @@ import { useActiveProfileStore } from '../stores/activeProfile';
 import { useLocalRefresh } from '../composables/useLocalRefresh';
 import AppAvatar from '../components/AppAvatar.vue';
 import EmptyState from '../components/EmptyState.vue';
+import MyGiftsLink from '../components/MyGiftsLink.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import { daysUntilBirthday, formatBirthday, UPCOMING_BIRTHDAY_DAYS } from '../utils/birthday';
@@ -189,6 +193,10 @@ function friendSubtitle(f: Friendship): string {
 
 .quick-action ion-icon {
   font-size: 1.375rem;
+}
+
+.my-gifts {
+  margin-top: 14px;
 }
 
 .request-card {

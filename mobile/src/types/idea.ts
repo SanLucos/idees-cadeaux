@@ -105,6 +105,21 @@ export interface PrivateIdea extends Idea {
   recipient: { id: string; displayName: string | null };
 }
 
+/**
+ * « Mes cadeaux pour mes amis » (spec §11 décision 62): an idea of a
+ * friend's (or of my child's) that I reserved or contributed to.
+ * `given`: it has since been archived (received, or marked « offert »).
+ */
+export type MyGiftKind = 'reserved' | 'contribution' | 'given';
+
+export interface MyGift {
+  idea: Idea;
+  kind: MyGiftKind;
+  /** How I took part: kept for a given gift, to say how it was offered. */
+  via: 'reservation' | 'contribution';
+  recipient: { id: string; displayName: string | null; avatarUrl: string | null; birthDay: number | null; birthMonth: number | null };
+}
+
 export interface IdeaPage {
   member: Idea[];
   totalItems: number;
