@@ -35,7 +35,7 @@ Le certificat Let's Encrypt est demandé par Traefik à la première requête.
 
 ## Mise à jour
 
-**Automatique, par tag** (`.github/workflows/deploy.yml`) : pousser un tag de version sur un commit de `main`.
+**Automatique, par tag** (`.github/workflows/deploy.yml`) : pousser un tag de version sur un commit de `main`. Le tag doit commencer par `v` (`v0.0.3`) : un tag `0.0.3` ne déclenche rien.
 
 ```
 git tag v1.2.0
@@ -72,7 +72,9 @@ $P start php worker
 
 ## Appli web
 
-Rien à faire en plus : `./deploy-prod.sh` la construit et la publie avec le reste. La connexion y est gardée dans un cookie `httpOnly` (jamais lisible par le JavaScript), l'appli ne garde aucune copie locale et fonctionne en ligne uniquement.
+Rien à faire en plus : `./deploy-prod.sh` la construit et la publie avec le reste. Le bas de l'onglet Profil affiche la version (`mobile/package.json`, à mettre au numéro du tag avant de le poser) et le commit construit : « Version 0.0.3 · abc1234 ».
+
+Après un déploiement, vérifier que l'appli est installable depuis Chrome (icône « Installer » dans la barre d'adresse, ou menu → « Caster, enregistrer et partager » → « Installer la page en tant qu'appli ») : `https://<APP_HOST>/site.webmanifest` doit renvoyer du JSON (et non la page HTML de l'appli), le titre de l'onglet doit être « Idées Cadeaux ». La connexion y est gardée dans un cookie `httpOnly` (jamais lisible par le JavaScript), l'appli ne garde aucune copie locale et fonctionne en ligne uniquement.
 
 ## Appli mobile (Android / iOS)
 
