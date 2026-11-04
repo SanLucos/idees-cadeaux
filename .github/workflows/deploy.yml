@@ -47,7 +47,7 @@ jobs:
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          printf 'Host prod\n  HostName frigologie.fr\n  Port 1138\n  User deploy\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n' > ~/.ssh/config
+          printf 'Host prod\n  HostName frigologie.fr\n  Port 1138\n  User deploy\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n  ServerAliveInterval 15\n  ServerAliveCountMax 8\n' > ~/.ssh/config
 
       - name: Deploy the tag
         run: |
