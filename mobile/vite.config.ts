@@ -2,6 +2,8 @@
 
 import legacy from '@vitejs/plugin-legacy'
 import vue from '@vitejs/plugin-vue'
+import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
 import path from 'path'
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 
@@ -49,6 +51,21 @@ function webManifest(appName: string): Plugin {
   }
 }
 
+/**
+ * Shown in Profil: package.json's version, and the commit it was built
+ * from — APP_BUILD (the production image has no .git: deploy-prod.sh
+ * passes it), else git, else nothing.
+ */
+const appVersion: string = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version
+function appBuild(): string {
+  if (process.env.APP_BUILD) return process.env.APP_BUILD
+  try {
+    return execSync('git rev-parse --short HEAD', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return ''
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -56,6 +73,10 @@ export default defineConfig(({ mode }) => ({
     legacy(),
     webManifest(loadEnv(mode, process.cwd()).VITE_APP_NAME ?? ''),
   ],
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __APP_BUILD__: JSON.stringify(appBuild()),
+  },
   server: {
     proxy: Object.fromEntries(relayed.map((path) => [path, { target: backend }])),
   },
