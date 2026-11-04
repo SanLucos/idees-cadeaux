@@ -197,7 +197,8 @@
     },
     "activeProfile": "Active profile:",
     "orOthers": "or {names}",
-    "chooseActive": "Active profile"
+    "chooseActive": "Active profile",
+    "version": "Version {version}"
   },
   "common": {
     "cancel": "Cancel",

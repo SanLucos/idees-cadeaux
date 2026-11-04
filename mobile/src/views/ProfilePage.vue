@@ -104,12 +104,14 @@
       <ion-button v-else class="ic-button-surface back-to-me" expand="block" @click="activeProfile.switchTo(null)">
         {{ t('children.backToMe', { name: auth.user?.displayName }) }}
       </ion-button>
+      <p class="app-version ic-muted">{{ t('profile.version', { version }) }}</p>
       <div class="bottom-space" />
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
+import { appVersionLabel } from '../utils/appVersion';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -137,6 +139,7 @@ const router = useRouter();
 const auth = useAuthStore();
 const activeProfile = useActiveProfileStore();
 const notifications = useNotificationsStore();
+const version = appVersionLabel();
 const privacyUrl = computed(() => backendUrl(`/privacy?lang=${locale.value}`));
 
 /** Whoever the screen is about: me, or the active child. */
@@ -249,6 +252,12 @@ async function logout(): Promise<void> {
 </script>
 
 <style scoped>
+.app-version {
+  margin: 24px 0 0;
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
 .switcher {
   display: flex;
   align-items: center;
