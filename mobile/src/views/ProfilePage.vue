@@ -90,6 +90,12 @@
             <ion-icon slot="start" :icon="shieldCheckmarkOutline" aria-hidden="true" />
             <ion-label>{{ t('account.privacy') }}</ion-label>
           </ion-item>
+          <!-- Here rather than at the bottom of the page, where the « + » button covers it. -->
+          <ion-item>
+            <ion-icon slot="start" :icon="informationCircleOutline" aria-hidden="true" />
+            <ion-label>{{ t('profile.settings.version') }}</ion-label>
+            <ion-note slot="end" class="app-version">{{ version }}</ion-note>
+          </ion-item>
           <ion-item button @click="logout">
             <ion-icon slot="start" :icon="logOutOutline" aria-hidden="true" />
             <ion-label>{{ t('nav.logout') }}</ion-label>
@@ -104,7 +110,6 @@
       <ion-button v-else class="ic-button-surface back-to-me" expand="block" @click="activeProfile.switchTo(null)">
         {{ t('children.backToMe', { name: auth.user?.displayName }) }}
       </ion-button>
-      <p class="app-version ic-muted">{{ t('profile.version', { version }) }}</p>
       <div class="bottom-space" />
     </ion-content>
   </ion-page>
@@ -115,7 +120,7 @@ import { appVersionLabel } from '../utils/appVersion';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { add, chevronDown, chevronForward, downloadOutline, globeOutline, logOutOutline, notificationsOutline, shareSocialOutline, shieldCheckmarkOutline, trashOutline } from 'ionicons/icons';
+import { add, chevronDown, chevronForward, downloadOutline, globeOutline, informationCircleOutline, logOutOutline, notificationsOutline, shareSocialOutline, shieldCheckmarkOutline, trashOutline } from 'ionicons/icons';
 import { actionSheetController, alertController, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPage, onIonViewWillEnter, toastController, useIonRouter } from '@ionic/vue';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { useAuthStore } from '../stores/auth';
@@ -253,9 +258,7 @@ async function logout(): Promise<void> {
 
 <style scoped>
 .app-version {
-  margin: 24px 0 0;
-  text-align: center;
-  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .switcher {

@@ -193,12 +193,12 @@
     "visibleToFriends": "Visible to your friends",
     "settings": {
       "title": "Settings",
-      "language": "Language"
+      "language": "Language",
+      "version": "Version"
     },
     "activeProfile": "Active profile:",
     "orOthers": "or {names}",
-    "chooseActive": "Active profile",
-    "version": "Version {version}"
+    "chooseActive": "Active profile"
   },
   "common": {
     "cancel": "Cancel",
