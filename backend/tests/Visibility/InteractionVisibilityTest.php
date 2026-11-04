@@ -244,6 +244,56 @@ final class InteractionVisibilityTest extends AuthTestCase
     }
 
     /**
+     * « Mes cadeaux pour mes amis » (spec §11 décision 62) reads the
+     * friend views synced to the giver's device: once the owner marks an
+     * idea received, the giver still finds their reservation or pledge
+     * there (list, item, /sync), while the owner's archive shows none.
+     */
+    public function testAReceivedIdeaKeepsTheGiversTraceForThemOnlyNeverForTheOwner(): void
+    {
+        $reserved = $this->expect(201, $this->owner, 'POST', '/api/ideas', ['title' => 'Reserved', 'priceAmount' => '50']);
+        $pooled = $this->expect(201, $this->owner, 'POST', '/api/ideas', ['title' => 'Pooled', 'priceAmount' => '180']);
+        $this->expect(201, $this->hugo, 'POST', '/api/reservations', ['ideaId' => $reserved['id']]);
+        $contribution = $this->expect(201, $this->lea, 'POST', '/api/contributions', ['ideaId' => $pooled['id']]);
+        $this->expect(200, $this->marc, 'PUT', "/api/contributions/{$contribution['id']}/pledge", ['amount' => '40']);
+
+        foreach ([$reserved, $pooled] as $idea) {
+            $this->expect(200, $this->owner, 'POST', "/api/ideas/{$idea['id']}/archive", ['kind' => 'received']);
+        }
+
+        $ownerArchive = $this->expect(200, $this->owner, 'GET', '/api/users/me/ideas?status=archived')['member'];
+        $ownerSync = $this->expect(200, $this->owner, 'POST', '/api/sync', [])['changes']['idea'];
+        self::assertCount(2, $ownerArchive);
+        foreach ([...$ownerArchive, ...$ownerSync] as $view) {
+            foreach (['reservation', 'contribution', 'reactions', 'commentCount', 'canMarkGifted'] as $hidden) {
+                self::assertArrayNotHasKey($hidden, $view);
+            }
+        }
+        self::assertStringNotContainsString($contribution['id'], (string) json_encode($ownerSync));
+
+        $synced = function (string $token, string $ideaId): array {
+            foreach ($this->expect(200, $token, 'POST', '/api/sync', [])['changes']['idea'] as $doc) {
+                if ($doc['id'] === $ideaId) {
+                    return $doc;
+                }
+            }
+            self::fail("idea {$ideaId} missing from the friend's sync");
+        };
+
+        $hugoView = $synced($this->hugo, $reserved['id']);
+        self::assertSame(['archived', 'received'], [$hugoView['status'], $hugoView['archiveKind']]);
+        self::assertTrue($hugoView['reservation']['isMine']);
+
+        $marcView = $synced($this->marc, $pooled['id']);
+        self::assertSame('closed', $marcView['contribution']['status']);
+        self::assertSame('40.00', $marcView['contribution']['myPledge']);
+        self::assertTrue($synced($this->lea, $pooled['id'])['contribution']['isInitiator']);
+
+        // Léa took no part in Hugo's gift: it isn't hers.
+        self::assertFalse($synced($this->lea, $reserved['id'])['reservation']['isMine']);
+    }
+
+    /**
      * Everything the owner can read about their own list.
      *
      * @param string[] $ideaIds
