@@ -126,12 +126,13 @@ const rendered = (el: Element) => el.getClientRects().length > 0;
  * After an in-app navigation the page's code may still be loading: until
  * Ionic has set up the field (`hydrated`), typed text reaches the native
  * input but not the form's v-model. Wait for it, and for the page
- * transition, before typing.
+ * transition, before typing. On a slow machine (CI) a keystroke can still
+ * be lost right after the focus: check what the form received, and type
+ * again if it isn't exactly the value.
  */
-Cypress.Commands.add('fillField', (label: string, value: string) => {
-  cy.document().should((doc) => {
-    expect(doc.querySelectorAll('.ion-page-invisible').length, 'pages waiting for their transition').to.equal(0);
-  });
+const fieldValue = (field: HTMLElement) => String((field as HTMLElement & { value?: unknown }).value ?? '');
+
+function typeInField(label: string, value: string, attempt = 1): void {
   cy.get('ion-input, ion-textarea')
     .filter((_, el) => rendered(el) && el.classList.contains('hydrated'))
     // Ionic's `label` is a property, not text nor an attribute.
@@ -145,10 +146,24 @@ Cypress.Commands.add('fillField', (label: string, value: string) => {
     .find('input, textarea')
     .clear({ force: true })
     .type(value, { force: true })
+    .wait(100)
     .closest('ion-input, ion-textarea')
-    .should(($field) => {
-      expect(String(($field[0] as HTMLElement & { value?: unknown }).value ?? ''), `« ${label} » received by the form`).to.equal(value);
+    .then(($field) => {
+      if (fieldValue($field[0]) === value) return;
+      if (attempt < 3) {
+        cy.task('log', `« ${label} »: the form received « ${fieldValue($field[0])} », typing again`);
+        typeInField(label, value, attempt + 1);
+        return;
+      }
+      expect(fieldValue($field[0]), `« ${label} » received by the form`).to.equal(value);
     });
+}
+
+Cypress.Commands.add('fillField', (label: string, value: string) => {
+  cy.document().should((doc) => {
+    expect(doc.querySelectorAll('.ion-page-invisible').length, 'pages waiting for their transition').to.equal(0);
+  });
+  typeInField(label, value);
 });
 
 Cypress.Commands.add('tap', (text: string, selector = 'ion-button, ion-item, a, button, ion-chip') => {
