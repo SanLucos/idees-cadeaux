@@ -36,6 +36,14 @@ function webManifest(appName: string): Plugin {
     theme_color: color,
     background_color: color,
     display: 'standalone',
+    // Installed from Chrome on Android, the app is offered in the share
+    // sheet (spec §5.6) and opens /share?url=…&text=…&title=…, the route
+    // the native share intent already uses.
+    share_target: {
+      action: '/share',
+      method: 'GET',
+      params: { title: 'title', text: 'text', url: 'url' },
+    },
   }, null, 2)
   return {
     name: 'web-manifest',
