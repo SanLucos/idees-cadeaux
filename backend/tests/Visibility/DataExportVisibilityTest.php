@@ -44,13 +44,13 @@ final class DataExportVisibilityTest extends AuthTestCase
         $this->expect(201, $hugo, 'POST', '/api/reservations', ['ideaId' => $mine['id']]);
         $this->expect(201, $lea, 'POST', '/api/comments', ['ideaId' => $mine['id'], 'body' => 'SECRET comment']);
         $this->expect(200, $lea, 'PUT', "/api/ideas/{$mine['id']}/reaction");
-        $pool = $this->expect(201, $lea, 'POST', '/api/contributions', ['ideaId' => $suggestion['id'], 'targetAmount' => '777']);
-        $this->expect(200, $lea, 'PUT', "/api/contributions/{$pool['id']}/pledge", ['amount' => '311']);
+        $pool = $this->expect(201, $lea, 'POST', '/api/contributions', ['ideaId' => $suggestion['id'], 'targetAmount' => '777.77']);
+        $this->expect(200, $lea, 'PUT', "/api/contributions/{$pool['id']}/pledge", ['amount' => '311.11']);
 
         // Camille's own activity on Hugo's list, with Léa's amount next to hers.
         $vinyl = $this->expect(201, $hugo, 'POST', '/api/ideas', ['title' => 'Hugo vinyl']);
         $hugoPool = $this->expect(201, $lea, 'POST', '/api/contributions', ['ideaId' => $vinyl['id']]);
-        $this->expect(200, $lea, 'PUT', "/api/contributions/{$hugoPool['id']}/pledge", ['amount' => '299']);
+        $this->expect(200, $lea, 'PUT', "/api/contributions/{$hugoPool['id']}/pledge", ['amount' => '299.99']);
         $this->expect(200, $camille, 'PUT', "/api/contributions/{$hugoPool['id']}/pledge", ['amount' => '42']);
 
         // A request Marc declined: Camille must not learn it.
@@ -62,7 +62,7 @@ final class DataExportVisibilityTest extends AuthTestCase
         $files = $this->runExport()['files'];
         $everything = implode("\n", $files);
 
-        foreach (['SECRET', '777', '311', '299', 'declined'] as $hidden) {
+        foreach (['SECRET', '777.77', '311.11', '299.99', 'declined'] as $hidden) {
             self::assertStringNotContainsString($hidden, $everything, "« {$hidden} » leaked into the export");
         }
         self::assertSame([], json_decode($files['reservations.json'], true));
