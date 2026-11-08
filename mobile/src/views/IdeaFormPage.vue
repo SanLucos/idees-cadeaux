@@ -204,6 +204,7 @@ import { useFriendsStore } from '../stores/friends';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import { useOccasionsStore } from '../stores/occasions';
 import { useErrorMessage } from '../composables/useErrorMessage';
+import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { colorIndex } from '../utils/colorIndex';
 import { CURRENCIES } from '../utils/price';
 import AppAvatar from '../components/AppAvatar.vue';
@@ -254,6 +255,12 @@ const prefillFound = ref<string[]>([]);
 const deferredPrefill = ref<{ url: string; fallbackTitle: string } | null>(null);
 const sync = useSync();
 const sharedContent = useSharedContentStore();
+
+// Friends are read from the device copy (spec §8). Opened from a share
+// (spec §5.6), this page comes first, outside the tabs that start the sync,
+// and the web app starts with an empty copy (spec §11 décision 56): sync
+// here, and re-read as the copy fills.
+useLocalRefresh(() => friendsStore.refresh());
 
 const recipients = computed(() => [
   { id: auth.user?.id ?? '', name: auth.user?.displayName ?? '', avatarUrl: auth.user?.avatarUrl ?? null, isMe: true },
@@ -418,7 +425,9 @@ watch(
 
 onMounted(async () => {
   if (!isEdit && route.query.shared) receiveShare();
-  await Promise.all([occasionsStore.ensureLoaded(), friendsStore.friends.length ? null : friendsStore.fetchFriends()]);
+  friendsStore.refresh();
+  if (!friendsStore.friends.length) sync.schedule(0);
+  await occasionsStore.ensureLoaded();
   if (!isEdit) return;
 
   const idea = await ideasApi.get(editId);
