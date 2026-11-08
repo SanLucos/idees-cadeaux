@@ -175,8 +175,18 @@ Cypress.Commands.add('notSee', (text: string) => {
  * Accessibility audit (spec §9) of what's on screen: axe-core, WCAG 2.1
  * A/AA rules. Hidden Ionic pages are skipped (axe ignores what isn't
  * rendered). Violations are printed in the terminal, then fail the test.
+ * Waits for the page transition first: until it starts the entering page is
+ * `ion-page-invisible` (opacity 0), then its text is half faded, and axe
+ * would report a false contrast failure.
  */
 Cypress.Commands.add('audit', (screen: string) => {
+  cy.document().should((doc) => {
+    expect(doc.querySelectorAll('.ion-page-invisible').length, 'pages waiting for their transition').to.equal(0);
+    const running = doc
+      .getAnimations()
+      .filter((a) => a.playState === 'running' && a.effect?.getComputedTiming().iterations !== Infinity);
+    expect(running.length, 'running animations').to.equal(0);
+  });
   cy.injectAxe();
   cy.checkA11y(
     undefined,
