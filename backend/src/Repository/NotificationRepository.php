@@ -57,4 +57,20 @@ class NotificationRepository extends ServiceEntityRepository
             ->setParameter('user', $user->getId(), 'uuid')
             ->getQuery()->execute();
     }
+
+    /**
+     * Whether `$user` already heard of this event, for themself or (rows
+     * written before spec §11 décision 63) for one of their children.
+     */
+    public function existsForEvent(User $user, string $dedupeKey): bool
+    {
+        return null !== $this->createQueryBuilder('n')
+            ->select('n.id')
+            ->andWhere('n.user = :user AND (n.dedupeKey = :key OR n.dedupeKey LIKE :child)')
+            ->setParameter('user', $user->getId(), 'uuid')
+            ->setParameter('key', $dedupeKey)
+            ->setParameter('child', addcslashes($dedupeKey, '%_\\').':%')
+            ->setMaxResults(1)
+            ->getQuery()->getOneOrNullResult();
+    }
 }

@@ -36,7 +36,11 @@ final class BirthdayReminderTask
         $now ??= new \DateTimeImmutable();
         $sent = 0;
 
-        foreach ($this->users->findAll() as $recipient) {
+        // Adults first: a manager friend of the same person hears of the
+        // birthday for themself, not « Pour » their child (§11 décision 63).
+        $users = $this->users->findAll();
+        usort($users, static fn (User $a, User $b) => $a->isManaged() <=> $b->isManaged());
+        foreach ($users as $recipient) {
             $local = $now->setTimezone(new \DateTimeZone($recipient->getTimezone()));
             if (self::SEND_HOUR !== (int) $local->format('G') || [] === $recipient->getBirthdayReminderDays() || $recipient->isSuspended()) {
                 continue;

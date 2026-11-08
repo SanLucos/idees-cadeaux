@@ -24,7 +24,11 @@ use Symfony\Component\Messenger\MessageBusInterface;
  * - nothing to or about a suspended account (spec §5.13);
  * - a child's notification goes to its manager, marked « Pour X »
  *   (spec §5.15);
- * - one notification per event per person (`$dedupeKey`).
+ * - one notification per event per person: a manager who is also a
+ *   recipient themself gets it once, unmarked, and a manager of several
+ *   recipient children once, for the first of them — family sharing
+ *   makes a manager's friends their children's friends too (spec §11
+ *   décision 63). `$dedupeKey` extends this across calls.
  *
  * In-app rows are created now; email and push follow asynchronously
  * (DeliverNotification), each only if enabled and consented.
@@ -57,15 +61,18 @@ final class Notifier
         }
 
         $created = [];
-        $seen = [];
-        // A child's notifications go to each of its managers (spec §5.11, §11 décision 60).
+        // A child's notifications go to each of its managers (spec §5.11, §11 décision 60),
+        // but each person hears of an event once, preferably for themself (décision 63).
         $deliveries = [];
         foreach ($recipients as $recipient) {
             if (isset($excluded[$recipient->getId()->toRfc4122()]) || $recipient->isSuspended()) {
                 continue;
             }
             foreach ($recipient->isManaged() ? $recipient->getManagers() : [$recipient] as $target) {
-                $deliveries[] = [$target, $recipient->isManaged() ? $recipient : null];
+                $key = $target->getId()->toRfc4122();
+                if (!isset($deliveries[$key]) || ($recipient === $target && null !== $deliveries[$key][1])) {
+                    $deliveries[$key] = [$target, $recipient->isManaged() ? $recipient : null];
+                }
             }
         }
 
@@ -73,12 +80,9 @@ final class Notifier
             if (isset($excluded[$target->getId()->toRfc4122()]) || $target->isSuspended()) {
                 continue;
             }
-
-            $key = $target->getId()->toRfc4122().'|'.$subject?->getId()->toRfc4122();
-            if (isset($seen[$key]) || (null !== $dedupeKey && null !== $this->notifications->findOneBy(['user' => $target, 'dedupeKey' => $dedupeKey.($subject ? ':'.$subject->getId()->toRfc4122() : '')]))) {
+            if (null !== $dedupeKey && $this->notifications->existsForEvent($target, $dedupeKey)) {
                 continue;
             }
-            $seen[$key] = true;
 
             $enabled = array_filter(
                 NotificationChannel::cases(),
@@ -93,7 +97,7 @@ final class Notifier
                 $type,
                 $payload + (null !== $subject ? ['subject' => ['id' => $subject->getId()->toRfc4122(), 'displayName' => $subject->getDisplayName()]] : []),
                 $subject,
-                null !== $dedupeKey ? $dedupeKey.($subject ? ':'.$subject->getId()->toRfc4122() : '') : null,
+                $dedupeKey,
                 \in_array(NotificationChannel::InApp, $enabled, true),
             );
             $this->em->persist($notification);

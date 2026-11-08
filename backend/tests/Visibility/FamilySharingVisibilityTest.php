@@ -6,6 +6,8 @@ namespace App\Tests\Visibility;
 
 use App\Tests\Functional\ApiRequestTrait;
 use App\Tests\Functional\AuthTestCase;
+use App\Tests\Functional\NotificationTestTrait;
+use App\Scheduler\BirthdayReminderTask;
 
 /**
  * Lot 12 cases of the visibility suite (spec §5.15, §11 décision 59):
@@ -20,6 +22,7 @@ use App\Tests\Functional\AuthTestCase;
 final class FamilySharingVisibilityTest extends AuthTestCase
 {
     use ApiRequestTrait;
+    use NotificationTestTrait;
 
     private string $manager;
     private string $marc;
@@ -130,6 +133,27 @@ final class FamilySharingVisibilityTest extends AuthTestCase
         $id = $this->friendOf($this->marc, $this->jules)['id'];
 
         self::assertSame('friendship.family_managed', $this->expect(422, $this->manager, 'DELETE', "/api/friendships/{$id}", null, $this->jules)['code']);
+    }
+
+    public function testTheManagerHearsOfAFamilyFriendsNewsOnceForThemself(): void
+    {
+        // Spec §11 décision 63: Marc is the manager's friend and, through
+        // sharing, Jules's and Léa's too — one notification, not three.
+        $lea = $this->expect(201, $this->manager, 'POST', '/api/managed-profiles', ['displayName' => 'Léa', 'parentalConsent' => true])['id'];
+        $this->expect(200, $this->manager, 'PATCH', "/api/managed-profiles/{$lea}", ['shareWithManagerFriends' => true]);
+        $this->share(true);
+        $this->expect(200, $this->marc, 'PATCH', '/api/users/me', ['birthDay' => 7, 'birthMonth' => 10]);
+
+        $this->expect(201, $this->marc, 'POST', '/api/ideas', ['title' => 'Vélo']);
+        $published = array_values(array_filter($this->notificationsOf($this->manager), static fn ($n) => 'idea_published' === $n['type']));
+        self::assertCount(1, $published);
+        self::assertArrayNotHasKey('subject', $published[0]['payload'], 'for the manager themself, not « Pour Jules »');
+
+        $task = self::getContainer()->get(BirthdayReminderTask::class);
+        $task(new \DateTimeImmutable('2026-09-23 09:00', new \DateTimeZone('Europe/Paris')));
+        $reminders = array_values(array_filter($this->notificationsOf($this->manager), static fn ($n) => 'birthday_reminder' === $n['type']));
+        self::assertCount(1, $reminders);
+        self::assertArrayNotHasKey('subject', $reminders[0]['payload']);
     }
 
     private function share(bool $on): void
