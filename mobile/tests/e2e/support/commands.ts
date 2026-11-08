@@ -122,9 +122,18 @@ Cypress.Commands.add('loginUi', (user: TestUser) => {
  */
 const rendered = (el: Element) => el.getClientRects().length > 0;
 
+/**
+ * After an in-app navigation the page's code may still be loading: until
+ * Ionic has set up the field (`hydrated`), typed text reaches the native
+ * input but not the form's v-model. Wait for it, and for the page
+ * transition, before typing.
+ */
 Cypress.Commands.add('fillField', (label: string, value: string) => {
+  cy.document().should((doc) => {
+    expect(doc.querySelectorAll('.ion-page-invisible').length, 'pages waiting for their transition').to.equal(0);
+  });
   cy.get('ion-input, ion-textarea')
-    .filter((_, el) => rendered(el))
+    .filter((_, el) => rendered(el) && el.classList.contains('hydrated'))
     // Ionic's `label` is a property, not text nor an attribute.
     .filter((_, el) => {
       const field = el as HTMLElement & { label?: string; placeholder?: string };
@@ -135,7 +144,11 @@ Cypress.Commands.add('fillField', (label: string, value: string) => {
     .scrollIntoView()
     .find('input, textarea')
     .clear({ force: true })
-    .type(value, { force: true });
+    .type(value, { force: true })
+    .closest('ion-input, ion-textarea')
+    .should(($field) => {
+      expect(String(($field[0] as HTMLElement & { value?: unknown }).value ?? ''), `« ${label} » received by the form`).to.equal(value);
+    });
 });
 
 Cypress.Commands.add('tap', (text: string, selector = 'ion-button, ion-item, a, button, ion-chip') => {
