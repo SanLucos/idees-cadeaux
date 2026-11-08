@@ -56,6 +56,7 @@ export async function startSyncLoop(): Promise<void> {
 export async function stopSyncLoop(): Promise<void> {
   if (interval) clearInterval(interval);
   interval = null;
+  useSync().cancel();
   unsubscribeAfterSync?.();
   unsubscribeAfterSync = null;
   await Promise.all(handles.map((h) => h.remove()));

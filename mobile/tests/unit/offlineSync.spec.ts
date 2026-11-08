@@ -129,4 +129,36 @@ describe('offline engine', () => {
 
     expect((await localHashes()).occasion).toBe(expected)
   })
+
+  test('a scheduled sync after the session ended does nothing, and no rejection is left unhandled', async () => {
+    const sync = useSync()
+    const unhandled = vi.fn()
+    process.on('unhandledRejection', unhandled)
+    handler = () => ({ status: 401 }) // /sync and /auth/refresh: signed out
+
+    try {
+      sync.schedule(0)
+      await vi.waitFor(() => expect(calls.map((c) => c.path)).toContain('/auth/refresh'))
+      await vi.waitFor(() => expect(sync.running).toBe(false))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+
+      expect(unhandled).not.toHaveBeenCalled()
+    } finally {
+      process.off('unhandledRejection', unhandled)
+    }
+  })
+
+  test('stopping the sync loop drops a scheduled sync', async () => {
+    vi.useFakeTimers()
+    try {
+      const sync = useSync()
+      sync.schedule()
+      sync.cancel()
+      await vi.runAllTimersAsync()
+
+      expect(calls).toHaveLength(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

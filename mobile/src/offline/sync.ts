@@ -96,10 +96,25 @@ export const useSync = defineStore('sync', {
       await this.run(true);
     },
 
-    /** Debounced: a burst of taps becomes one round trip. */
+    /**
+     * Debounced: a burst of taps becomes one round trip. Nobody awaits it:
+     * a session that ended meanwhile (signed out, refresh token revoked)
+     * leaves it nothing to do, instead of an unhandled rejection.
+     */
     schedule(delay = 400): void {
       if (this.timer) clearTimeout(this.timer);
-      this.timer = setTimeout(() => void this.run(), delay);
+      this.timer = setTimeout(() => {
+        this.timer = null;
+        this.run().catch((e) => {
+          if (!(e instanceof SessionExpiredError)) throw e;
+        });
+      }, delay);
+    },
+
+    /** Drops a scheduled sync (the sync loop stops: signed out). */
+    cancel(): void {
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = null;
     },
 
     /** `force`: asked by the user (sync now, pull-to-refresh) — skip the backoff wait. */
