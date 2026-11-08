@@ -71,7 +71,7 @@ npm run build          # vue-tsc + build web (API sur la même origine, /api)
 npm run build -- --mode native   # build pour Android/iOS (API en adresse complète, .env.native)
 npx cypress run        # tests e2e (nécessite `npm run dev` ou le build servi en parallèle)
 ```
-Tests e2e : stack Docker démarrée (worker compris, les codes sont lus dans Mailpit). Ouvrir l'appli une fois avant de lancer Cypress : au premier démarrage, Vite réoptimise ses dépendances et peut faire échouer le premier test (« Failed to fetch dynamically imported module »).
+Tests e2e : stack Docker démarrée (worker compris, les codes sont lus dans Mailpit). Ouvrir l'appli une fois avant de lancer Cypress : au premier démarrage, Vite réoptimise ses dépendances et peut faire échouer le premier test (« Failed to fetch dynamically imported module »). Ou, comme la CI : `npm run build && npx vite preview --port 5173` (relaie aussi `/api`).
 
 **Natif (`/mobile/android`, `/mobile/ios`, lot 7)**
 ```
@@ -96,7 +96,7 @@ RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en
 
 **Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, builds web et natifs).
 
-**CI** : `.github/workflows/ci.yml`, deux jobs (`backend`, `mobile`), lint + tests, déclenchés sur push/PR vers `main`.
+**CI** : `.github/workflows/ci.yml`, trois jobs (`backend`, `mobile` : lint + tests ; `e2e` : Cypress sur la stack Docker et le build web servi par `vite preview`), déclenchés sur push/PR vers `main` et avant chaque déploiement.
 
 ## Sécurité
 

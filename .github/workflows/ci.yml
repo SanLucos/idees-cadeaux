@@ -90,3 +90,74 @@ jobs:
       - run: npm run test:unit -- --run
 
       - run: npm run build
+
+  e2e:
+    name: End-to-end (Cypress)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The local Docker stack (CLAUDE.md > Commandes): verification codes
+      # are read from Mailpit, so the worker must send the emails.
+      - name: Start the Docker stack
+        run: |
+          cp .env.example .env
+          sed -i "s/^HOST_UID=.*/HOST_UID=$(id -u)/; s/^HOST_GID=.*/HOST_GID=$(id -g)/" .env
+          docker compose up -d --build
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+
+      - name: Prepare the backend
+        run: |
+          docker compose exec -T php composer install --no-interaction --no-progress --prefer-dist
+          docker compose exec -T php bin/console lexik:jwt:generate-keypair --skip-if-exists
+          docker compose exec -T php bin/console doctrine:database:create --if-not-exists
+          docker compose exec -T php bin/console doctrine:migrations:migrate --no-interaction
+          # Started before vendor/ and the schema existed.
+          docker compose restart worker
+          curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-all-errors http://localhost:8000/api/health
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Cache the Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ hashFiles('mobile/package-lock.json') }}
+
+      - name: Build the web app
+        working-directory: mobile
+        run: |
+          npm ci
+          cp .env.example .env
+          npm run build
+
+      # The production build behind `vite preview`, which relays /api like
+      # the dev server (one origin, for the web session cookie) without the
+      # dev server's first-run dependency optimisation.
+      - name: Run Cypress
+        working-directory: mobile
+        run: |
+          npx vite preview --port 5173 --strictPort &
+          curl --fail --silent --retry 30 --retry-delay 1 --retry-all-errors --output /dev/null http://localhost:5173
+          npx cypress run
+
+      - name: Screenshots of the failed tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: mobile/tests/e2e/screenshots
+          if-no-files-found: ignore
+
+      - name: Backend logs
+        if: failure()
+        run: docker compose logs php nginx worker
