@@ -11,6 +11,7 @@ import { setOnDeletionScheduled } from './services/api';
 import { useAuthStore } from './stores/auth';
 import { useLocalDb } from './offline/db';
 import { isWeb } from './utils/platform';
+import { registerServiceWorker } from './services/serviceWorker';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -77,6 +78,9 @@ if (isWeb()) {
   window.addEventListener('beforeunload', (event) => {
     if (useLocalDb().outbox.some((op) => 'pending' === op.status)) event.preventDefault();
   });
+  // A new build replaces the old one in an installed web app (sw.js is
+  // only emitted by the production build).
+  if (import.meta.env.PROD) registerServiceWorker();
 }
 // The route's name, not its path: paths may hold share tokens.
 router.afterEach((to) => setErrorRoute(String(to.name ?? '')));
