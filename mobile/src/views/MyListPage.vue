@@ -6,9 +6,7 @@
       </ion-refresher>
 
       <ScreenHeader>
-        <template #kicker>
-          {{ acting ? t('acting.listOf', { name: acting.displayName }) : t('myList.hello', { name: auth.user?.displayName ?? '' }) }}
-        </template>
+        <template #kicker><ProfileGreeting /></template>
         {{ acting ? acting.displayName : t('myList.title') }}
         <template #end>
           <SyncBadge />
@@ -124,7 +122,6 @@ import {
   type InfiniteScrollCustomEvent,
 } from '@ionic/vue';
 import { useLocalRefresh } from '../composables/useLocalRefresh';
-import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import InteractionPills from '../components/InteractionPills.vue';
 import MyGiftsLink from '../components/MyGiftsLink.vue';
@@ -136,6 +133,7 @@ import { useIdeaActions } from '../composables/useIdeaActions';
 import EmptyState from '../components/EmptyState.vue';
 import IdeaCard from '../components/IdeaCard.vue';
 import OccasionChips from '../components/OccasionChips.vue';
+import ProfileGreeting from '../components/ProfileGreeting.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import SyncBadge from '../components/SyncBadge.vue';
 import type { Idea, IdeaListQuery, IdeaSort } from '../types/idea';
@@ -143,7 +141,6 @@ import type { Idea, IdeaListQuery, IdeaSort } from '../types/idea';
 const BANNER_KEY = 'ic.surpriseBannerDismissed';
 
 const { t } = useI18n();
-const auth = useAuthStore();
 const activeProfile = useActiveProfileStore();
 /** The child whose list this is, when managing one (X-Acting-As). */
 const acting = computed(() => activeProfile.active);

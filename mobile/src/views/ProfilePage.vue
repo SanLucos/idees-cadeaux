@@ -1,10 +1,13 @@
 <template>
   <ion-page>
     <ion-content>
-      <ScreenHeader>{{ t('profile.title') }}</ScreenHeader>
+      <ScreenHeader>
+        <template #kicker><ProfileGreeting /></template>
+        {{ t('profile.title') }}
+      </ScreenHeader>
 
       <!-- Profil actif (Profil.png): me or one of my children (spec §5.15). -->
-      <button v-if="activeProfile.children.length" type="button" class="ic-card switcher" @click="chooseProfile">
+      <button v-if="canSwitch" type="button" class="ic-card switcher" @click="chooseProfile">
         <AppAvatar :id="current.id" :name="current.name" :url="current.avatarUrl" :size="32" :primary="!activeProfile.isActing" />
         <span class="switcher__label">
           {{ t('profile.activeProfile') }} <strong>{{ current.name }}</strong>
@@ -125,6 +128,7 @@ import { actionSheetController, alertController, IonButton, IonContent, IonIcon,
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { useAuthStore } from '../stores/auth';
 import { useActiveProfileStore } from '../stores/activeProfile';
+import { useProfileSwitcher } from '../composables/useProfileSwitcher';
 import { useNotificationsStore } from '../stores/notifications';
 import { push } from '../services/push';
 import { shareLinksApi } from '../services/shareLinks';
@@ -134,6 +138,7 @@ import { formatBirthday } from '../utils/birthday';
 import AppAvatar from '../components/AppAvatar.vue';
 import ProfilePreferencesSection from '../components/ProfilePreferencesSection.vue';
 import ProfileSizesSection from '../components/ProfileSizesSection.vue';
+import ProfileGreeting from '../components/ProfileGreeting.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import type { ManagedProfile, ManagerInvitation } from '../types/user';
@@ -143,6 +148,7 @@ const { t, locale } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
 const activeProfile = useActiveProfileStore();
+const { canSwitch, choose: chooseProfile } = useProfileSwitcher();
 const notifications = useNotificationsStore();
 const version = appVersionLabel();
 const privacyUrl = computed(() => backendUrl(`/privacy?lang=${locale.value}`));
@@ -219,20 +225,6 @@ function childSubtitle(child: ManagedProfile): string {
   }
 
   return [t('children.managedByYou'), t('friends.ideaCount', { count: child.ideaCount }, child.ideaCount)].join(' · ');
-}
-
-async function chooseProfile(): Promise<void> {
-  const sheet = await actionSheetController.create({
-    header: t('profile.chooseActive'),
-    buttons: [
-      { text: auth.user?.displayName ?? '', handler: () => activeProfile.switchTo(null) },
-      ...activeProfile.children
-        .filter((c) => !c.deletionScheduledAt)
-        .map((c) => ({ text: c.displayName ?? '', handler: () => activeProfile.switchTo(c.id) })),
-      { text: t('common.cancel'), role: 'cancel' },
-    ],
-  });
-  await sheet.present();
 }
 
 async function chooseLanguage(): Promise<void> {

@@ -12,6 +12,13 @@
   /* Fonds et texte */
   --ion-background-color: #F6F0E6;
   --ion-background-color-rgb: 246, 240, 230;
+  /* Fonds par profil actif (décision 64) : mon compte, puis mes enfants. */
+  --ic-profile-tint-me: #F6F0E6;
+  --ic-profile-tint-0: #E9F0E3;
+  --ic-profile-tint-1: #E7EEF5;
+  --ic-profile-tint-2: #F7EDD6;
+  --ic-profile-tint-3: #F8E9E3;
+  --ic-profile-tint-4: #E3F1EC;
   --ion-text-color: #2B211C;
   --ion-text-color-rgb: 43, 33, 28;
   --ion-item-background: #FFFCF7;
@@ -320,4 +327,46 @@ ion-chip.ic-chip.ic-chip-selected {
     border-inline: 1px solid var(--ic-border);
     background: var(--ion-background-color);
   }
+}
+
+/* ------------------------------------------------------------------
+ * Fond teinté selon le profil actif (spec § 11 décision 64) : crème pour
+ * mon compte, une teinte par enfant (src/utils/profileTint.ts). Teintes
+ * claires, sans prune (réservée au secret), qui gardent le texte et le
+ * contour des champs lisibles (WCAG 1.4.3 et 1.4.11).
+ * ------------------------------------------------------------------ */
+:root[data-profile-tint="0"] {
+  --ion-background-color: var(--ic-profile-tint-0);
+  --ion-background-color-rgb: 233, 240, 227;
+  --ion-toolbar-background: var(--ic-profile-tint-0);
+}
+
+:root[data-profile-tint="1"] {
+  --ion-background-color: var(--ic-profile-tint-1);
+  --ion-background-color-rgb: 231, 238, 245;
+  --ion-toolbar-background: var(--ic-profile-tint-1);
+}
+
+:root[data-profile-tint="2"] {
+  --ion-background-color: var(--ic-profile-tint-2);
+  --ion-background-color-rgb: 247, 237, 214;
+  --ion-toolbar-background: var(--ic-profile-tint-2);
+}
+
+:root[data-profile-tint="3"] {
+  --ion-background-color: var(--ic-profile-tint-3);
+  --ion-background-color-rgb: 248, 233, 227;
+  --ion-toolbar-background: var(--ic-profile-tint-3);
+}
+
+:root[data-profile-tint="4"] {
+  --ion-background-color: var(--ic-profile-tint-4);
+  --ion-background-color-rgb: 227, 241, 236;
+  --ion-toolbar-background: var(--ic-profile-tint-4);
+}
+
+/* Le menu « Profil actif » (ProfileMenu.vue), sous ce qui l'a ouvert. */
+ion-popover.ic-profile-menu {
+  --width: 260px;
+  --border-radius: var(--ic-radius-card);
 }

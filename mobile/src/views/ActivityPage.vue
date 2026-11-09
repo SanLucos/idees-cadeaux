@@ -6,6 +6,7 @@
       </ion-refresher>
 
       <ScreenHeader>
+        <template #kicker><ProfileGreeting /></template>
         {{ t('activity.title') }}
         <template #end>
           <ion-button v-if="store.unreadCount" fill="clear" class="read-all" @click="markAllRead">{{ t('activity.markAllRead') }}</ion-button>
@@ -81,6 +82,7 @@ import { notificationTarget } from '../utils/notificationTarget';
 import { relativeTime } from '../utils/relativeTime';
 import AppAvatar from '../components/AppAvatar.vue';
 import EmptyState from '../components/EmptyState.vue';
+import ProfileGreeting from '../components/ProfileGreeting.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import StatusPill from '../components/StatusPill.vue';
