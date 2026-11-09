@@ -589,9 +589,10 @@
     },
     "formerMember": "a former member"
   },
+  "profileGreeting": {
+    "switch": "Active profile: {name}. Switch profile"
+  },
   "acting": {
-    "listOf": "{name}'s list",
-    "friendsOf": "{name}'s friends",
     "managerBand": "Manager view: you also see what {name}'s friends are secretly planning."
   },
   "children": {

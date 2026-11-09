@@ -321,3 +321,44 @@ ion-chip.ic-chip.ic-chip-selected {
     background: var(--ion-background-color);
   }
 }
+
+/* ------------------------------------------------------------------
+ * Fond teinté selon le profil actif (spec § 11 décision 64) : crème pour
+ * mon compte, une teinte par enfant (src/utils/profileTint.ts). Teintes
+ * claires, sans prune (réservée au secret), qui gardent le texte et le
+ * contour des champs lisibles (WCAG 1.4.3 et 1.4.11).
+ * ------------------------------------------------------------------ */
+:root[data-profile-tint="0"] {
+  --ion-background-color: #E9F0E3;
+  --ion-background-color-rgb: 233, 240, 227;
+  --ion-toolbar-background: #E9F0E3;
+}
+
+:root[data-profile-tint="1"] {
+  --ion-background-color: #E7EEF5;
+  --ion-background-color-rgb: 231, 238, 245;
+  --ion-toolbar-background: #E7EEF5;
+}
+
+:root[data-profile-tint="2"] {
+  --ion-background-color: #F7EDD6;
+  --ion-background-color-rgb: 247, 237, 214;
+  --ion-toolbar-background: #F7EDD6;
+}
+
+:root[data-profile-tint="3"] {
+  --ion-background-color: #F8E9E3;
+  --ion-background-color-rgb: 248, 233, 227;
+  --ion-toolbar-background: #F8E9E3;
+}
+
+:root[data-profile-tint="4"] {
+  --ion-background-color: #E3F1EC;
+  --ion-background-color-rgb: 227, 241, 236;
+  --ion-toolbar-background: #E3F1EC;
+}
+
+/* Le profil actif dans le choix « Profil actif » (useProfileSwitcher). */
+ion-action-sheet .ic-action-current {
+  font-weight: 700;
+}
