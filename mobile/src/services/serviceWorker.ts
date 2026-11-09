@@ -20,12 +20,15 @@ export function registerServiceWorker(options: UpdateOptions = {}): void {
   if (!container) return;
   const reload = options.reload ?? (() => window.location.reload());
 
-  // No controller yet: this is the first install, its claim() must not
-  // reload the page — only a replacement does.
-  const hadController = null !== container.controller;
+  // Only a worker replacing another reloads the page: the first install's
+  // claim() (no controller before) must not, even if the page stays open
+  // until the next version.
+  let controlled = null !== container.controller;
   let reloading = false;
   container.addEventListener('controllerchange', () => {
-    if (!hadController || reloading) return;
+    const replaced = controlled;
+    controlled = true;
+    if (!replaced || reloading) return;
     reloading = true;
     reload();
   });
@@ -37,7 +40,7 @@ export function registerServiceWorker(options: UpdateOptions = {}): void {
         const worker = registration.installing;
         worker?.addEventListener('statechange', () => {
           // « installed » with a controller: an update, not a first install.
-          if ('installed' === worker.state && hadController) options.onUpdateFound?.();
+          if ('installed' === worker.state && controlled) options.onUpdateFound?.();
         });
       });
       // The app is resumed rather than reopened: ask the server for a new

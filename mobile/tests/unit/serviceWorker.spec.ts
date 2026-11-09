@@ -33,6 +33,13 @@ describe('web app updates (service worker)', () => {
     expect(reload).not.toHaveBeenCalled()
   })
 
+  test('after a first install, the next version reloads the page', () => {
+    const { container, reload } = setup(false)
+    container.dispatchEvent(new Event('controllerchange'))
+    container.dispatchEvent(new Event('controllerchange'))
+    expect(reload).toHaveBeenCalledTimes(1)
+  })
+
   test('an installed new worker is reported as an update', async () => {
     const { registration, onUpdateFound } = setup(true)
     await Promise.resolve()
