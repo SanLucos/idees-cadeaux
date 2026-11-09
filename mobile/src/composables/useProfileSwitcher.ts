@@ -55,12 +55,13 @@ export function useProfileSwitcher() {
     ];
   });
 
-  /** Opens the menu under the tapped element (`event`). */
+  /** Opens the menu under the tapped element (`event`), from its left edge. */
   async function choose(event?: Event): Promise<void> {
     const popover = await popoverController.create({
       component: ProfileMenu,
       componentProps: { profiles: choices.value },
-      event,
+      // Ionic anchors on event.target: the button itself, not the word that was tapped.
+      event: event?.currentTarget ? ({ target: event.currentTarget } as unknown as Event) : event,
       side: 'bottom',
       alignment: 'start',
       cssClass: 'ic-profile-menu',

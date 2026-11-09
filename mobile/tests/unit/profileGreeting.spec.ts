@@ -73,9 +73,9 @@ describe('ProfileGreeting', () => {
     await wrapper.find('button').trigger('click')
     await flushPromises()
 
-    const options = create.mock.calls[0][0] as { event?: Event; side: string; componentProps: { profiles: { id: string | null; name: string; current: boolean; tintColor: string }[] } }
+    const options = create.mock.calls[0][0] as { event?: { target: Element }; side: string; componentProps: { profiles: { id: string | null; name: string; current: boolean; tintColor: string }[] } }
     // Anchored under the greeting.
-    expect(options.event).toBeInstanceOf(Event)
+    expect(options.event?.target).toBe(wrapper.find('button').element)
     expect(options.side).toBe('bottom')
     // Me, then the children I can act for (not one about to be deleted), each with its background.
     expect(options.componentProps.profiles.map((p) => [p.name, p.current, p.tintColor])).toEqual([
