@@ -20,7 +20,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *   second DNS answer can't swap it for an internal one;
  * - redirects are followed here, by hand, at most 3, and every hop goes
  *   through the same checks;
- * - ~5 s for the whole exchange, body capped (2 MB for a page).
+ * - ~5 s for the whole exchange, body capped (2 MB for a page). With
+ *   `$truncate`, a longer body is cut at the cap instead of refused: a
+ *   product page says what we need near its top, and some (Amazon:
+ *   2–3 MB) never fit whole.
  */
 final class SafeHttpFetcher
 {
@@ -28,6 +31,9 @@ final class SafeHttpFetcher
     public const float TIMEOUT_SECONDS = 5.0;
 
     private readonly HttpClientInterface $client;
+
+    /** The last address reached, for LinkPreviewException::$lastUrl. */
+    private ?string $lastUrl = null;
 
     public function __construct(
         #[Autowire(service: 'link_preview.transport')]
@@ -40,12 +46,26 @@ final class SafeHttpFetcher
 
     /**
      * @param list<string> $acceptedTypes content-type prefixes, e.g. ['text/html']
+     * @param bool         $truncate      keep the first $maxBytes of a longer body instead of failing
      *
      * @throws LinkPreviewException
      */
-    public function fetch(string $url, array $acceptedTypes, int $maxBytes, string $acceptLanguage = 'fr'): FetchedResource
+    public function fetch(string $url, array $acceptedTypes, int $maxBytes, string $acceptLanguage = 'fr', bool $truncate = false): FetchedResource
+    {
+        try {
+            return $this->doFetch($url, $acceptedTypes, $maxBytes, $acceptLanguage, $truncate);
+        } catch (LinkPreviewException $e) {
+            throw null === $e->lastUrl ? new LinkPreviewException($e->getMessage(), $e, $this->lastUrl) : $e;
+        }
+    }
+
+    /**
+     * @param list<string> $acceptedTypes
+     */
+    private function doFetch(string $url, array $acceptedTypes, int $maxBytes, string $acceptLanguage, bool $truncate): FetchedResource
     {
         $deadline = microtime(true) + self::TIMEOUT_SECONDS;
+        $this->lastUrl = $url;
 
         try {
             for ($hop = 0; $hop <= self::MAX_REDIRECTS; ++$hop) {
@@ -70,6 +90,7 @@ final class SafeHttpFetcher
                         throw new LinkPreviewException('Redirect without a location.');
                     }
                     $url = UrlResolver::resolve($location, $url) ?? throw new LinkPreviewException('Unusable redirect.');
+                    $this->lastUrl = $url;
 
                     continue;
                 }
@@ -84,7 +105,7 @@ final class SafeHttpFetcher
                     $response->cancel();
                     throw new LinkPreviewException('Unexpected content type.');
                 }
-                if ((int) ($headers['content-length'][0] ?? 0) > $maxBytes) {
+                if (!$truncate && (int) ($headers['content-length'][0] ?? 0) > $maxBytes) {
                     $response->cancel();
                     throw new LinkPreviewException('Response too large.');
                 }
@@ -98,6 +119,9 @@ final class SafeHttpFetcher
                     $body .= $chunk->getContent();
                     if (\strlen($body) > $maxBytes) {
                         $response->cancel();
+                        if ($truncate) {
+                            return new FetchedResource($url, $headers['content-type'][0] ?? $contentType, substr($body, 0, $maxBytes));
+                        }
                         throw new LinkPreviewException('Response too large.');
                     }
                 }
@@ -105,7 +129,7 @@ final class SafeHttpFetcher
                 return new FetchedResource($url, $headers['content-type'][0] ?? $contentType, $body);
             }
         } catch (ExceptionInterface $e) {
-            throw new LinkPreviewException('Fetch failed.', 0, $e);
+            throw new LinkPreviewException('Fetch failed.', $e);
         }
 
         throw new LinkPreviewException('Too many redirects.');

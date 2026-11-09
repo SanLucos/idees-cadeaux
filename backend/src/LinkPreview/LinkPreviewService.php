@@ -34,7 +34,18 @@ final class LinkPreviewService
      */
     public function preview(string $url, string $locale): array
     {
-        $page = $this->fetcher->fetch($url, ['text/html', 'application/xhtml+xml'], self::PAGE_MAX_BYTES, $locale);
+        try {
+            // Cut, not refused, past the cap: product pages say what we
+            // need near the top, and Amazon's weigh 2–3 MB.
+            $page = $this->fetcher->fetch($url, ['text/html', 'application/xhtml+xml'], self::PAGE_MAX_BYTES, $locale, truncate: true);
+        } catch (LinkPreviewException $e) {
+            // An Amazon page that won't come (anti-robot page, timeout)
+            // still names the product in its link, or in the one a short
+            // link (amzn.eu/d/…) redirected to.
+            $title = AmazonPage::titleFromUrl($e->lastUrl ?? $url) ?? AmazonPage::titleFromUrl($url) ?? throw $e;
+
+            return ['title' => mb_substr($title, 0, PageMetadataExtractor::TITLE_MAX_LENGTH), 'priceAmount' => null, 'priceCurrency' => null, 'imageDataUrl' => null];
+        }
         $metadata = $this->extractor->extract($page->body, $page->contentType, $page->url);
 
         return [

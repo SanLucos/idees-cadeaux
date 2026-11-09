@@ -112,6 +112,32 @@ final class SafeHttpFetcherTest extends TestCase
         $fetcher->fetch('http://'.self::PUBLIC_IP.'/', ['text/html'], 1024);
     }
 
+    public function testCanCutALongPageInsteadOfRefusingIt(): void
+    {
+        $fetcher = $this->fetcher([new MockResponse(['<html>', str_repeat('x', 2000)], ['response_headers' => ['content-type' => 'text/html', 'content-length' => '2006']])]);
+
+        $page = $fetcher->fetch('http://'.self::PUBLIC_IP.'/', ['text/html'], 1024, truncate: true);
+
+        self::assertSame(1024, \strlen($page->body));
+        self::assertStringStartsWith('<html>', $page->body);
+    }
+
+    public function testAFailureSaysWhereTheRedirectsLed(): void
+    {
+        $base = 'http://'.self::PUBLIC_IP;
+        $fetcher = $this->fetcher([
+            new MockResponse('', ['http_code' => 301, 'response_headers' => ['location' => '/Nom-du-produit/dp/B0CWH1M12W']]),
+            new MockResponse('robots', ['http_code' => 503, 'response_headers' => ['content-type' => 'text/html']]),
+        ]);
+
+        try {
+            $fetcher->fetch($base.'/d/abc', ['text/html'], 1024);
+            self::fail('Expected a LinkPreviewException.');
+        } catch (LinkPreviewException $e) {
+            self::assertSame($base.'/Nom-du-produit/dp/B0CWH1M12W', $e->lastUrl);
+        }
+    }
+
     public function testRejectsAnAnnouncedOversizedBody(): void
     {
         $fetcher = $this->fetcher([new MockResponse('small', ['response_headers' => ['content-type' => 'text/html', 'content-length' => '999999']])]);

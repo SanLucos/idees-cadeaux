@@ -10,7 +10,8 @@ use App\Util\Money;
  * Title, image and price from a product page (spec §5.5): JSON-LD
  * `Product` first (the most structured), then OpenGraph (and its
  * `product:price:*` extension), then Twitter Cards, then `<title>`.
- * Pure: no network, the caller fetches.
+ * Amazon, which has none of these, is read from its own markup
+ * (AmazonPage). Pure: no network, the caller fetches.
  */
 final class PageMetadataExtractor
 {
@@ -50,6 +51,16 @@ final class PageMetadataExtractor
             $meta['twitter:image'] ?? null,
             $meta['twitter:image:src'] ?? null,
         );
+
+        if (null !== AmazonPage::store($pageUrl)) {
+            $amazon = AmazonPage::extract($xpath, $pageUrl);
+            // Its <title> is already in $amazon, cleaned: never the padded one.
+            $title = $amazon->title ?? AmazonPage::titleFromUrl($pageUrl);
+            $image = $amazon->imageUrl ?? $image;
+            if (null !== $amazon->priceAmount) {
+                return new PageMetadata(null === $title ? null : self::truncate($title), null === $image ? null : UrlResolver::resolve($image, $base), $amazon->priceAmount, $amazon->priceCurrency);
+            }
+        }
 
         $amount = self::parsePrice($offer['price'] ?? $offer['lowPrice'] ?? $meta['product:price:amount'] ?? $meta['og:price:amount'] ?? $meta['price'] ?? null);
         $currency = self::parseCurrency($offer['priceCurrency'] ?? $meta['product:price:currency'] ?? $meta['og:price:currency'] ?? $meta['pricecurrency'] ?? null);

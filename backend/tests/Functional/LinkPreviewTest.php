@@ -100,6 +100,23 @@ final class LinkPreviewTest extends AuthTestCase
         self::assertSame('link_preview.unavailable', $dead->toArray(false)['code']);
     }
 
+    public function testAnAmazonPageThatWontComeStillNamesTheProduct(): void
+    {
+        $token = $this->registerVerifyAndLogin('lp-amazon@example.com');
+        $client = static::createClient();
+        // A short link to an Amazon product whose page then refuses us
+        // (or can't be reached at all: either way, no page).
+        $this->transport()->setResponseFactory([
+            new MockResponse('', ['http_code' => 301, 'response_headers' => ['location' => 'https://www.amazon.fr/LEGO-Architecture-Notre-Dame-Paris/dp/B0CWH1M12W?ref=share']]),
+            new MockResponse('', ['http_code' => 503, 'response_headers' => ['content-type' => 'text/html']]),
+        ]);
+
+        $response = $client->request('POST', '/api/link-previews', ['auth_bearer' => $token, 'json' => ['url' => self::SHOP.'/d/abc']]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(['url' => self::SHOP.'/d/abc', 'title' => 'LEGO Architecture Notre Dame Paris', 'priceAmount' => null, 'priceCurrency' => null, 'imageDataUrl' => null], $response->toArray());
+    }
+
     public function testRejectsNonHttpUrls(): void
     {
         $token = $this->registerVerifyAndLogin('lp-bad@example.com');
