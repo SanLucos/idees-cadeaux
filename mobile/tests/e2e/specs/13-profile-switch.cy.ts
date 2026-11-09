@@ -9,12 +9,15 @@ describe('Profile switch', () => {
       cy.tap('Créer le profil', 'ion-button');
       cy.location('pathname').should('match', /^\/profile\/children\/[0-9a-f-]{36}$/);
 
-      // From the Amis tab: « Bonjour Luc » opens the profile choice.
+      // From the Amis tab: « Bonjour Luc » opens the profile menu right under it.
       cy.visit('/tabs/friends');
       cy.get('.profile-greeting--switch').should('contain.text', 'Bonjour Luc');
       cy.get('html').should('not.have.attr', 'data-profile-tint');
       cy.get('.profile-greeting--switch:visible').click();
-      cy.get('ion-action-sheet').should('be.visible').contains('button', 'Jules').click();
+      cy.get('ion-popover.ic-profile-menu').should('be.visible').contains('ion-item', 'Luc');
+      cy.audit('profile menu');
+      cy.get('ion-popover.ic-profile-menu').contains('ion-item', 'Jules').click();
+      cy.get('ion-popover.ic-profile-menu').should('not.exist');
 
       cy.get('.profile-greeting--switch:visible').should('contain.text', 'Bonjour Jules');
       cy.get('html').should('have.attr', 'data-profile-tint', '0');
@@ -28,7 +31,7 @@ describe('Profile switch', () => {
 
       // Back to me from Ma liste.
       cy.get('.profile-greeting--switch:visible').click();
-      cy.get('ion-action-sheet').should('be.visible').contains('button', 'Luc').click();
+      cy.get('ion-popover.ic-profile-menu').should('be.visible').contains('ion-item', 'Luc').click();
       cy.get('.profile-greeting--switch:visible').should('contain.text', 'Bonjour Luc');
       cy.get('html').should('not.have.attr', 'data-profile-tint');
     });

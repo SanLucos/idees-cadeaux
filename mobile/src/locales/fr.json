@@ -590,7 +590,8 @@
     "formerMember": "un ancien membre"
   },
   "profileGreeting": {
-    "switch": "Profil actif : {name}. Changer de profil"
+    "switch": "Profil actif : {name}. Changer de profil",
+    "current": "Profil actif"
   },
   "acting": {
     "managerBand": "Vue gestionnaire : vous voyez aussi ce que les amis de {name} préparent en secret."

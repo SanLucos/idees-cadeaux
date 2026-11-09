@@ -590,7 +590,8 @@
     "formerMember": "a former member"
   },
   "profileGreeting": {
-    "switch": "Active profile: {name}. Switch profile"
+    "switch": "Active profile: {name}. Switch profile",
+    "current": "Active profile"
   },
   "acting": {
     "managerBand": "Manager view: you also see what {name}'s friends are secretly planning."

@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import ProfileGreeting from '@/components/ProfileGreeting.vue'
@@ -8,10 +8,10 @@ import { useAuthStore } from '@/stores/auth'
 import { applyProfileTint, profileTint } from '@/utils/profileTint'
 import type { ManagedProfile } from '@/types/user'
 
-const { create } = vi.hoisted(() => ({ create: vi.fn() }))
+const { create, dismissWith } = vi.hoisted(() => ({ create: vi.fn(), dismissWith: { value: null as unknown } }))
 vi.mock('@ionic/vue', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@ionic/vue')>()),
-  actionSheetController: { create },
+  popoverController: { create },
 }))
 
 const ME = '0190a1b2-0000-7000-8000-0000000000aa'
@@ -47,7 +47,8 @@ describe('profileTint', () => {
 describe('ProfileGreeting', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    create.mockReset().mockResolvedValue({ present: vi.fn() })
+    create.mockReset().mockImplementation(async () => ({ present: vi.fn(), onDidDismiss: async () => dismissWith.value }))
+    dismissWith.value = { role: 'backdrop' }
     i18n.global.locale.value = 'fr'
     useAuthStore().user = { id: ME, displayName: 'Luc' } as never
   })
@@ -61,27 +62,41 @@ describe('ProfileGreeting', () => {
     expect(wrapper.find('button').exists()).toBe(false)
   })
 
-  test('greets the active child and switches profile on click', async () => {
+  test('greets the active child and switches profile from the menu under the greeting', async () => {
     const active = useActiveProfileStore()
     active.children = [child(LEA, 'Léa'), child(TOM, 'Tom'), child('0190a1b2-0000-7000-8000-0000000c0003', 'Zoé', '2026-11-20T00:00:00+00:00')]
     active.activeId = LEA
     const wrapper = mountGreeting()
 
     expect(wrapper.text()).toBe('Bonjour Léa')
+    dismissWith.value = { role: 'select', data: { id: TOM } }
     await wrapper.find('button').trigger('click')
+    await flushPromises()
 
-    const { buttons } = create.mock.calls[0][0] as { buttons: { text: string; cssClass?: string; role?: string; handler?: () => void }[] }
-    // Me, then children I can act for (not one about to be deleted), then cancel.
-    expect(buttons.map((b) => b.text)).toEqual(['Luc', 'Léa', 'Tom', 'Annuler'])
-    expect(buttons[1].cssClass).toBe('ic-action-current')
-    expect(buttons[0].cssClass).toBeUndefined()
+    const options = create.mock.calls[0][0] as { event?: Event; side: string; componentProps: { profiles: { id: string | null; name: string; current: boolean; tintColor: string }[] } }
+    // Anchored under the greeting.
+    expect(options.event).toBeInstanceOf(Event)
+    expect(options.side).toBe('bottom')
+    // Me, then the children I can act for (not one about to be deleted), each with its background.
+    expect(options.componentProps.profiles.map((p) => [p.name, p.current, p.tintColor])).toEqual([
+      ['Luc', false, 'var(--ic-profile-tint-me)'],
+      ['Léa', true, 'var(--ic-profile-tint-0)'],
+      ['Tom', false, 'var(--ic-profile-tint-1)'],
+    ])
 
-    buttons[2].handler!()
     expect(active.activeId).toBe(TOM)
-    await wrapper.vm.$nextTick()
     expect(wrapper.text()).toBe('Bonjour Tom')
+  })
 
-    buttons[0].handler!()
-    expect(active.activeId).toBeNull()
+  test('closing the menu keeps the active profile', async () => {
+    const active = useActiveProfileStore()
+    active.children = [child(LEA, 'Léa')]
+    active.activeId = LEA
+    const wrapper = mountGreeting()
+
+    await wrapper.find('button').trigger('click')
+    await flushPromises()
+
+    expect(active.activeId).toBe(LEA)
   })
 })

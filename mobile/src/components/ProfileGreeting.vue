@@ -5,6 +5,7 @@
     type="button"
     class="profile-greeting profile-greeting--switch"
     :aria-label="t('profileGreeting.switch', { name: currentName })"
+    aria-haspopup="menu"
     @click="choose"
   >
     <span>{{ t('myList.hello', { name: currentName }) }}</span>
