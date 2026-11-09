@@ -60,18 +60,25 @@ function webManifest(appName: string): Plugin {
 }
 
 /**
- * Shown in Profil: package.json's version, and the commit it was built
- * from — APP_BUILD (the production image has no .git: deploy-prod.sh
- * passes it), else git, else nothing.
+ * Shown in Profil: the release (the v* tag the build is on or after,
+ * without its « v »), and the commit it was built from. The production
+ * image has no .git, so deploy-prod.sh passes APP_VERSION and APP_BUILD;
+ * elsewhere git answers, and package.json's version is the last resort.
  */
-const appVersion: string = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version
-function appBuild(): string {
-  if (process.env.APP_BUILD) return process.env.APP_BUILD
+function git(command: string): string {
   try {
-    return execSync('git rev-parse --short HEAD', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    return execSync(`git ${command}`, { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
   } catch {
     return ''
   }
+}
+function appVersion(): string {
+  const tag = process.env.APP_VERSION || git("describe --tags --abbrev=0 --match 'v[0-9]*'")
+  if (tag) return tag.replace(/^v/, '')
+  return JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version
+}
+function appBuild(): string {
+  return process.env.APP_BUILD || git('rev-parse --short HEAD')
 }
 
 // https://vitejs.dev/config/
@@ -82,7 +89,7 @@ export default defineConfig(({ mode }) => ({
     webManifest(loadEnv(mode, process.cwd()).VITE_APP_NAME ?? ''),
   ],
   define: {
-    __APP_VERSION__: JSON.stringify(appVersion),
+    __APP_VERSION__: JSON.stringify(appVersion()),
     __APP_BUILD__: JSON.stringify(appBuild()),
   },
   server: {

@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import { appVersionLabel } from '@/utils/appVersion'
-import { version } from '../../package.json'
 
 describe('app version (Profil)', () => {
   test('the version, then the commit it was built from when known', () => {
@@ -8,8 +7,7 @@ describe('app version (Profil)', () => {
     expect(appVersionLabel('1.0.0', '')).toBe('1.0.0')
   })
 
-  test('injected at build time from package.json', () => {
-    const escaped = version.replace(/\./g, '\\.')
-    expect(appVersionLabel()).toMatch(new RegExp(`^${escaped}( · [0-9a-f]+)?$`))
+  test('injected at build time: the release tag without its « v », else package.json', () => {
+    expect(appVersionLabel()).toMatch(/^\d+\.\d+\.\d+\S*( · [0-9a-f]+)?$/)
   })
 })

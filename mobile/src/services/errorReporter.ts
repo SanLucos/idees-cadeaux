@@ -31,7 +31,7 @@ export function reportError(error: unknown, kind = 'error'): void {
     stack: error instanceof Error ? (error.stack ?? '').slice(0, 4000) : undefined,
     route: currentRoute,
     platform: Capacitor.getPlatform(),
-    appVersion: import.meta.env.VITE_APP_VERSION ?? 'dev',
+    appVersion: __APP_VERSION__,
     requestId: lastApiRequestId() ?? undefined,
   };
 

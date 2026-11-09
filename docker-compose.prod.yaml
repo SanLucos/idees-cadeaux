@@ -20,6 +20,7 @@ x-php: &php
     dockerfile: docker/php/Dockerfile.prod
     target: php
     args: &build-args
+      APP_VERSION: ${APP_VERSION:-}
       APP_BUILD: ${APP_BUILD:-}
   image: ideescadeaux-php:latest
   restart: unless-stopped
