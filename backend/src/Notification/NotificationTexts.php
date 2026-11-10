@@ -28,6 +28,7 @@ final class NotificationTexts
             '%owner%' => $payload['owner']['displayName'] ?? '',
             '%friend%' => $payload['friend']['displayName'] ?? '',
             '%child%' => $payload['child']['displayName'] ?? '',
+            '%suggestedBy%' => $payload['suggestedBy']['displayName'] ?? '',
             '%days%' => (string) ($payload['days'] ?? ''),
             '%count%' => (int) ($payload['days'] ?? 0),
         ];
@@ -35,6 +36,8 @@ final class NotificationTexts
         $key = $notification->getType()->value;
         if (isset($payload['actor']['managedBy'])) {
             $key .= '_managed';
+        } elseif (isset($payload['suggestedBy'])) {
+            $key .= '_suggested';
         }
 
         $text = $this->translator->trans($key, $params, 'notifications', $notification->getUser()->getLocale());

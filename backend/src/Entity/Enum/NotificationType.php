@@ -28,6 +28,9 @@ enum NotificationType: string
     // Spec §11 décision 60: invited to manage a child, and the invitation accepted.
     case ManagerInvitationReceived = 'manager_invitation_received';
     case ManagerInvitationAccepted = 'manager_invitation_accepted';
+    // Spec §11 décision 65: a friend suggests someone to me, and one of my suggestions succeeded.
+    case FriendSuggestionReceived = 'friend_suggestion_received';
+    case FriendSuggestionAccepted = 'friend_suggestion_accepted';
 
     /**
      * @return NotificationChannel[]
@@ -36,7 +39,7 @@ enum NotificationType: string
     {
         return match ($this) {
             self::FriendRequestReceived, self::ManagerInvitationReceived => [NotificationChannel::InApp, NotificationChannel::Push, NotificationChannel::Email],
-            self::IdeaPublished, self::SuggestionPublished, self::SuggestionGifted, self::IdeaUnpublished => [NotificationChannel::InApp],
+            self::IdeaPublished, self::SuggestionPublished, self::SuggestionGifted, self::IdeaUnpublished, self::FriendSuggestionAccepted => [NotificationChannel::InApp],
             default => [NotificationChannel::InApp, NotificationChannel::Push],
         };
     }

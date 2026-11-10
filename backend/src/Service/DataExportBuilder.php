@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Friendship;
+use App\Entity\FriendSuggestion;
 use App\Entity\User;
 use App\Repository\FriendshipRepository;
 use App\Serializer\FriendshipNormalizer;
@@ -27,6 +28,7 @@ final class DataExportBuilder
         private readonly Connection $db,
         private readonly FriendshipRepository $friendships,
         private readonly FriendshipNormalizer $friendshipNormalizer,
+        private readonly FriendSuggestions $suggestions,
     ) {
     }
 
@@ -179,6 +181,18 @@ final class DataExportBuilder
                 'displayName' => $person($f),
                 'receivedAt' => $f->getCreatedAt()->format(\DATE_ATOM),
             ], $this->friendships->findPendingIncoming($subject)),
+            // Spec §11 décision 65: still pending, as each side sees them.
+            'suggestionsMade' => array_map(fn (FriendSuggestion $s) => [
+                'to' => $s->getRecipient()->getDisplayName(),
+                'suggested' => $s->getSuggested()->getDisplayName(),
+                'status' => 'pending',
+                'createdAt' => $s->getCreatedAt()->format(\DATE_ATOM),
+            ], $this->suggestions->openBy($subject)),
+            'suggestionsReceived' => array_map(fn (FriendSuggestion $s) => [
+                'from' => $s->getSuggestedBy()->getDisplayName(),
+                'suggested' => $s->getSuggested()->getDisplayName(),
+                'createdAt' => $s->getCreatedAt()->format(\DATE_ATOM),
+            ], $this->suggestions->visibleTo($subject)),
         ];
     }
 

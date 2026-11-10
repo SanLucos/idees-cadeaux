@@ -1,6 +1,7 @@
 for_subject: "Pour %subject% : %text%"
 friend_request_received: "%actor% vous a envoyé une demande d'ami."
 friend_request_received_managed: "%actor% (profil géré par %manager%) vous a envoyé une demande d'ami."
+friend_request_received_suggested: "%actor% vous a envoyé une demande d'ami, suggérée par %suggestedBy%."
 friend_request_accepted: "%actor% a accepté votre demande d'ami."
 friend_joined_via_link: "%actor% est devenu votre ami via votre lien de partage."
 share_link_suspended: "Votre lien de partage est suspendu : trop d'amis ajoutés en 24 h."
@@ -16,6 +17,8 @@ idea_unpublished: "%actor% a repassé « %idea% » en privé : ce que vous y avi
 birthday_reminder: "{0} C'est l'anniversaire de %friend% aujourd'hui !|{1} Anniversaire de %friend% demain.|]1,Inf[ Anniversaire de %friend% dans %days% jours."
 manager_invitation_received: "%actor% vous invite à gérer aussi le profil de %child%."
 manager_invitation_accepted: "%actor% gère désormais avec vous le profil de %child%."
+friend_suggestion_received: "%actor% vous suggère de devenir ami avec %friend%."
+friend_suggestion_accepted: "%actor% et %friend% sont maintenant amis grâce à vous."
 title:
   friend_request_received: "Demande d'ami"
   friend_request_accepted: "Nouvel ami"
@@ -33,6 +36,8 @@ title:
   birthday_reminder: "Anniversaire"
   manager_invitation_received: "Gérer un profil enfant"
   manager_invitation_accepted: "Deuxième gestionnaire"
+  friend_suggestion_received: "Suggestion d'ami"
+  friend_suggestion_accepted: "Mise en relation réussie"
 email:
   open_app: "Ouvrez l'application pour voir le détail."
   why: "Vous recevez cet email car vous avez accepté les notifications par email."

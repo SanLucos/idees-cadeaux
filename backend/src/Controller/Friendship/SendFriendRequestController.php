@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace App\Controller\Friendship;
 
-use App\Entity\Enum\FriendshipStatus;
 use App\Entity\Enum\UserType;
-use App\Entity\Friendship;
 use App\Entity\User;
 use App\Exception\ApiProblemException;
-use App\Repository\FriendshipRepository;
 use App\Repository\UserRepository;
 use App\Security\ActingContext;
-use App\Entity\Enum\NotificationType;
-use App\Notification\FriendshipEvents;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\FriendRequests;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
@@ -39,12 +34,10 @@ final class SendFriendRequestController
 {
     public function __construct(
         private readonly UserRepository $users,
-        private readonly FriendshipRepository $friendships,
-        private readonly EntityManagerInterface $em,
         #[Autowire(service: 'limiter.friend_request')]
         private readonly RateLimiterFactory $rateLimiter,
         private readonly ActingContext $acting,
-        private readonly FriendshipEvents $events,
+        private readonly FriendRequests $requests,
     ) {
     }
 
@@ -65,7 +58,7 @@ final class SendFriendRequestController
             if (!Uuid::isValid($userId)) {
                 throw new ApiProblemException('validation.user_id_invalid', 'userId must be a valid identifier.', 422);
             }
-            $this->tryCreateRequestToUser($me, $this->users->find($userId));
+            $this->requests->send($me, $this->users->find($userId));
         } else {
             $email = \is_array($body) ? mb_strtolower(trim((string) ($body['email'] ?? ''))) : '';
             if ('' === $email || !filter_var($email, \FILTER_VALIDATE_EMAIL)) {
@@ -73,51 +66,9 @@ final class SendFriendRequestController
             }
 
             // Managed profiles (spec §5.15) are excluded from email search.
-            $this->tryCreateRequestToUser($me, $this->users->findOneBy(['email' => $email, 'type' => UserType::Regular]));
+            $this->requests->send($me, $this->users->findOneBy(['email' => $email, 'type' => UserType::Regular]));
         }
 
         return new JsonResponse(['status' => 'sent_if_applicable']);
-    }
-
-    private function tryCreateRequestToUser(User $me, ?User $target): void
-    {
-        // Spec §5.15: nobody can ask a managed profile to be their friend,
-        // and a managed profile only befriends adults. Same silent answer.
-        // Nor anyone whose account is being deleted (spec §5.13).
-        if (null === $target || $target === $me || $target->isManaged() || $target->isSuspended()) {
-            return;
-        }
-
-        $active = $this->friendships->findActiveBetween($me, $target);
-        if (null !== $active) {
-            if (FriendshipStatus::Pending === $active->getStatus() && $active->getRequester() === $target) {
-                // They'd already asked us: this mutual interest becomes an
-                // immediate friendship instead of a second, redundant request.
-                $active->accept();
-                $this->em->flush();
-                $this->events->notify(NotificationType::FriendRequestAccepted, $active, $me);
-            }
-            // Otherwise: already friends, or we already asked them — no-op.
-
-            return;
-        }
-
-        $latest = $this->friendships->findLatestForDirection($me, $target);
-        if (null !== $latest) {
-            $exemptFromCooldown = FriendshipStatus::Accepted === $latest->getStatus() && $latest->isDeleted();
-            $cooldownEndsAt = $latest->getCreatedAt()->modify('+30 days');
-            if (!$exemptFromCooldown && $cooldownEndsAt > new \DateTimeImmutable()) {
-                return;
-            }
-        }
-
-        $request = new Friendship($me, $target);
-        if ($me->isManaged()) {
-            // "au nom de [enfant]" (spec §5.15).
-            $request->setOnBehalfOfManager($this->acting->human());
-        }
-        $this->em->persist($request);
-        $this->em->flush();
-        $this->events->notify(NotificationType::FriendRequestReceived, $request, $me);
     }
 }

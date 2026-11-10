@@ -29,9 +29,15 @@ final class FriendshipEvents
             $person['managedBy'] = $actor->getManagersDisplayName();
         }
 
-        $this->notifier->notify($type, [$recipient], [
+        $payload = [
             'actor' => $person,
             'friendship' => ['id' => $friendship->getId()->toRfc4122()],
-        ], $actor);
+        ];
+        // « suggéré par [X] » (spec §11 décision 65), for the one asked only.
+        if (NotificationType::FriendRequestReceived === $type && null !== $suggestedBy = $friendship->getSuggestedBy()) {
+            $payload['suggestedBy'] = Notifier::person($suggestedBy);
+        }
+
+        $this->notifier->notify($type, [$recipient], $payload, $actor);
     }
 }

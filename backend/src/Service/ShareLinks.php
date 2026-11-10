@@ -11,6 +11,7 @@ use App\Entity\ShareLink;
 use App\Entity\User;
 use App\Exception\ApiProblemException;
 use App\Notification\FriendshipEvents;
+use App\Notification\FriendSuggestionOutcomes;
 use App\Notification\Notifier;
 use App\Repository\FriendshipRepository;
 use App\Repository\ShareLinkRepository;
@@ -37,6 +38,7 @@ final class ShareLinks
         private readonly EntityManagerInterface $em,
         private readonly FriendshipEvents $friendshipEvents,
         private readonly Notifier $notifier,
+        private readonly FriendSuggestionOutcomes $suggestionOutcomes,
     ) {
     }
 
@@ -139,6 +141,8 @@ final class ShareLinks
         $this->em->flush();
 
         $this->friendshipEvents->notify(NotificationType::FriendJoinedViaLink, $friendship, $visitor);
+        // A pending request between them, sent from a suggestion, has just succeeded.
+        $this->suggestionOutcomes->friendshipAccepted($friendship);
 
         return ['relation' => self::RELATION_FRIEND, 'friendship' => $friendship];
     }

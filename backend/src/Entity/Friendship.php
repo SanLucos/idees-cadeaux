@@ -62,6 +62,14 @@ class Friendship implements TimestampableInterface, SoftDeletableInterface
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $onBehalfOfManager = null;
 
+    /**
+     * Spec §11 décision 65: the friend whose suggestion led to this
+     * request — « suggéré par [X] », shown to the addressee.
+     */
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?User $suggestedBy = null;
+
     public function __construct(User $requester, User $addressee, FriendshipOrigin $origin = FriendshipOrigin::Request)
     {
         $this->initializeId();
@@ -81,6 +89,16 @@ class Friendship implements TimestampableInterface, SoftDeletableInterface
     public function setOnBehalfOfManager(?User $manager): void
     {
         $this->onBehalfOfManager = $manager;
+    }
+
+    public function getSuggestedBy(): ?User
+    {
+        return $this->suggestedBy;
+    }
+
+    public function setSuggestedBy(?User $suggestedBy): void
+    {
+        $this->suggestedBy = $suggestedBy;
     }
 
     /** Spec §5.15: rattachement → friendship with the former manager, created accepted. */

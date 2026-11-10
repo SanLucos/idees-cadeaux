@@ -30,6 +30,8 @@ final class FriendshipNormalizer
         $isMasked = $displayStatus !== $friendship->getStatus();
         $other = $friendship->otherParty($viewer);
 
+        $suggestedBy = $friendship->getAddressee() === $viewer ? $friendship->getSuggestedBy() : null;
+
         return [
             'id' => $friendship->getId()->toRfc4122(),
             'status' => $displayStatus->value,
@@ -38,6 +40,8 @@ final class FriendshipNormalizer
             'createdAt' => $friendship->getCreatedAt()->format(\DATE_ATOM),
             'respondedAt' => $isMasked ? null : $friendship->getRespondedAt()?->format(\DATE_ATOM),
             'user' => $this->summarize($other, FriendshipStatus::Accepted === $friendship->getStatus()),
+            // « suggéré par [X] » (spec §11 décision 65), for the one asked only.
+            'suggestedBy' => null !== $suggestedBy ? ['id' => $suggestedBy->getId()->toRfc4122(), 'displayName' => $suggestedBy->getDisplayName()] : null,
         ];
     }
 

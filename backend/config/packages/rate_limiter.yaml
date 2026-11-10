@@ -5,6 +5,12 @@ framework:
             policy: sliding_window
             limit: 20
             interval: '1 hour'
+        # Spec §11 décision 65: friends introduced to each other, per adult
+        # (one token per recipient).
+        friend_suggestion:
+            policy: sliding_window
+            limit: 30
+            interval: '1 day'
         # Spec §5.15 invitation codes: on top of the 5 attempts per invitation.
         invitation_accept:
             policy: sliding_window
