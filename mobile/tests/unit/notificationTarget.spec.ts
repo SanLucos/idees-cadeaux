@@ -31,4 +31,9 @@ describe('notificationTarget', () => {
     expect(notificationTarget(n('manager_invitation_received', { actor: { id: 'u6', displayName: 'Luc' }, child: { id: 'child-1', displayName: 'Jules' } }))).toEqual({ path: '/tabs/profile', actAs: null })
     expect(notificationTarget(n('manager_invitation_accepted', { actor: { id: 'u7', displayName: 'Claire' }, child: { id: 'child-1', displayName: 'Jules' } })).path).toBe('/profile/children/child-1')
   })
+
+  test('friend suggestions (spec §11 décision 65): answered from the Amis tab; a success opens the friend introduced', () => {
+    expect(notificationTarget(n('friend_suggestion_received', { actor: { id: 'u1', displayName: 'Luc' }, friend: { id: 'u2', displayName: 'Bruno' } }))).toEqual({ path: '/tabs/friends', actAs: null })
+    expect(notificationTarget(n('friend_suggestion_accepted', { actor: { id: 'u3', displayName: 'Anna' }, friend: { id: 'u2', displayName: 'Bruno' } })).path).toBe('/tabs/friends/u2')
+  })
 })

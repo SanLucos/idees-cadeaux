@@ -20,6 +20,8 @@ export interface Friendship {
   createdAt: string;
   respondedAt: string | null;
   user: FriendSummary;
+  /** « suggéré par X » (spec §11 décision 65): on a request I received only. */
+  suggestedBy?: { id: string; displayName: string | null } | null;
   /** Accepted friendships only: ideas of theirs I can see (lot 3). */
   ideaCount?: number;
 }

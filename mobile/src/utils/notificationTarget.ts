@@ -16,8 +16,12 @@ export function notificationTarget(n: AppNotification): NotificationTarget {
 
   const path = (() => {
     switch (n.type) {
+      // Both answered from the Amis tab (spec §11 décision 65).
       case 'friend_request_received':
+      case 'friend_suggestion_received':
         return '/tabs/friends';
+      case 'friend_suggestion_accepted':
+        return p.friend ? `/tabs/friends/${p.friend.id}` : '/tabs/friends';
       case 'friend_request_accepted':
       case 'friend_joined_via_link':
         return p.actor ? `/tabs/friends/${p.actor.id}` : '/tabs/friends';

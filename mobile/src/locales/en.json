@@ -59,7 +59,24 @@
     "ideaCount": "no ideas | {count} idea | {count} ideas",
     "birthdayOn": "birthday on {date}",
     "viaFriends": "via your friends",
-    "childOf": "child of {name}"
+    "childOf": "child of {name}",
+    "suggestedBy": "suggested by {names}",
+    "suggestions": {
+      "title": "Friend suggestion · {count} | Friend suggestions · {count}",
+      "from": "{names} suggests this person | {names} suggest this person",
+      "sendRequest": "Send a request",
+      "dismiss": "Ignore",
+      "sent": "Request sent.",
+      "introduce": "Introduce to friends…",
+      "pickTitle": "Introduce {name} to…",
+      "pickHint": "Each friend you pick may send {name} a request. {name} only hears of it if they do.",
+      "noFriendToPick": "No other friend to introduce {name} to.",
+      "confirm": "Suggest",
+      "done": "Suggestion sent. | Suggestions sent.",
+      "introducedTitle": "Introduced to",
+      "pending": "Pending",
+      "cancel": "Cancel"
+    }
   },
   "auth": {
     "email": "Email",
@@ -337,6 +354,10 @@
     },
     "friendship": {
       "family_managed": "Turn « Share with my friends » off to remove your friends."
+    },
+    "friend_suggestion": {
+      "not_a_friend": "You can only introduce your adult friends.",
+      "recipients_invalid": "Pick between 1 and 30 friends."
     }
   },
   "locales": {
@@ -373,7 +394,10 @@
       "idea_unpublished": "{actor} made “{idea}” private again: what you had done on it was deleted.",
       "birthday_reminder": "It's {friend}'s birthday today! | {friend}'s birthday is tomorrow. Have a look at their list. | {friend}'s birthday is in {days} days. Have a look at their list.",
       "manager_invitation_received": "{actor} invites you to manage {child}'s profile too.",
-      "manager_invitation_accepted": "{actor} now manages {child}'s profile with you."
+      "manager_invitation_accepted": "{actor} now manages {child}'s profile with you.",
+      "friend_request_received_suggested": "{actor} sent you a friend request, suggested by {suggestedBy}.",
+      "friend_suggestion_received": "{actor} suggests you become friends with {friend}.",
+      "friend_suggestion_accepted": "{actor} and {friend} are now friends, thanks to you."
     }
   },
   "occasions": {
@@ -713,7 +737,9 @@
       "idea_unpublished": "Idea made private",
       "birthday_reminder": "Birthday reminder",
       "manager_invitation_received": "Invitation to manage a child",
-      "manager_invitation_accepted": "Second manager added"
+      "manager_invitation_accepted": "Second manager added",
+      "friend_suggestion_received": "Friend suggestion",
+      "friend_suggestion_accepted": "Introduction made"
     }
   },
   "sync": {

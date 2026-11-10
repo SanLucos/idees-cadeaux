@@ -59,7 +59,24 @@
     "ideaCount": "aucune idée | {count} idée | {count} idées",
     "birthdayOn": "anniversaire le {date}",
     "viaFriends": "via vos amis",
-    "childOf": "enfant de {name}"
+    "childOf": "enfant de {name}",
+    "suggestedBy": "suggéré par {names}",
+    "suggestions": {
+      "title": "Suggestion d'ami · {count} | Suggestions d'amis · {count}",
+      "from": "{names} vous suggère cette personne | {names} vous suggèrent cette personne",
+      "sendRequest": "Envoyer une demande",
+      "dismiss": "Ignorer",
+      "sent": "Demande envoyée.",
+      "introduce": "Présenter à des amis…",
+      "pickTitle": "Présenter {name} à…",
+      "pickHint": "Chaque ami choisi pourra envoyer une demande à {name}. {name} n'est prévenu que si c'est le cas.",
+      "noFriendToPick": "Aucun autre ami à qui présenter {name}.",
+      "confirm": "Suggérer",
+      "done": "Suggestion envoyée. | Suggestions envoyées.",
+      "introducedTitle": "Présenté à",
+      "pending": "En attente",
+      "cancel": "Annuler"
+    }
   },
   "auth": {
     "email": "Email",
@@ -337,6 +354,10 @@
     },
     "friendship": {
       "family_managed": "Désactivez « Partager avec mes amis » pour retirer les amis de vos amis."
+    },
+    "friend_suggestion": {
+      "not_a_friend": "Vous ne pouvez présenter que vos amis adultes.",
+      "recipients_invalid": "Choisissez entre 1 et 30 amis."
     }
   },
   "locales": {
@@ -373,7 +394,10 @@
       "idea_unpublished": "{actor} a repassé « {idea} » en privé : ce que vous y aviez fait a été supprimé.",
       "birthday_reminder": "C'est l'anniversaire de {friend} aujourd'hui ! | Anniversaire de {friend} demain. Jetez un œil à sa liste. | Anniversaire de {friend} dans {days} jours. Jetez un œil à sa liste.",
       "manager_invitation_received": "{actor} vous invite à gérer aussi le profil de {child}.",
-      "manager_invitation_accepted": "{actor} gère désormais avec vous le profil de {child}."
+      "manager_invitation_accepted": "{actor} gère désormais avec vous le profil de {child}.",
+      "friend_request_received_suggested": "{actor} vous a envoyé une demande d'ami, suggérée par {suggestedBy}.",
+      "friend_suggestion_received": "{actor} vous suggère de devenir ami avec {friend}.",
+      "friend_suggestion_accepted": "{actor} et {friend} sont maintenant amis grâce à vous."
     }
   },
   "occasions": {
@@ -713,7 +737,9 @@
       "idea_unpublished": "Idée repassée en privé",
       "birthday_reminder": "Rappel d'anniversaire",
       "manager_invitation_received": "Invitation à gérer un enfant",
-      "manager_invitation_accepted": "Deuxième gestionnaire ajouté"
+      "manager_invitation_accepted": "Deuxième gestionnaire ajouté",
+      "friend_suggestion_received": "Suggestion d'ami",
+      "friend_suggestion_accepted": "Mise en relation réussie"
     }
   },
   "sync": {

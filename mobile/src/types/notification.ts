@@ -14,7 +14,9 @@ export type NotificationType =
   | 'idea_unpublished'
   | 'birthday_reminder'
   | 'manager_invitation_received'
-  | 'manager_invitation_accepted';
+  | 'manager_invitation_accepted'
+  | 'friend_suggestion_received'
+  | 'friend_suggestion_accepted';
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   'friend_request_received',
@@ -32,6 +34,8 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   'birthday_reminder',
   'manager_invitation_received',
   'manager_invitation_accepted',
+  'friend_suggestion_received',
+  'friend_suggestion_accepted',
   'share_link_suspended',
 ];
 
@@ -57,6 +61,8 @@ export interface AppNotification {
     idea?: { id: string; title: string };
     contribution?: { id: string };
     friendship?: { id: string };
+    /** A friend request sent from a suggestion (spec §11 décision 65). */
+    suggestedBy?: Person;
     days?: number;
     date?: string;
   };

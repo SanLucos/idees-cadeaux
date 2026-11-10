@@ -49,11 +49,36 @@
                 <div class="name">{{ f.user.displayName }}</div>
                 <div class="ic-muted">{{ t('friends.wantsToBeFriend') }}</div>
                 <div v-if="f.user.managedBy" class="ic-muted managed">{{ t('children.managedBy', { name: f.user.managedBy.displayName }) }}</div>
+                <div v-if="f.suggestedBy" class="ic-muted">{{ t('friends.suggestedBy', { names: f.suggestedBy.displayName }) }}</div>
               </div>
             </div>
             <div class="request-card__actions">
               <ion-button class="ic-button-surface" expand="block" @click="store.decline(f.id)">{{ t('friends.decline') }}</ion-button>
               <ion-button color="dark" expand="block" @click="store.accept(f.id)">{{ t('friends.accept') }}</ion-button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Spec §11 décision 65: my own suggestions, not the child's. -->
+      <template v-if="!activeProfile.active && suggestions.received.length">
+        <SectionTitle>{{ t('friends.suggestions.title', { count: suggestions.received.length }) }}</SectionTitle>
+        <div class="ic-stack">
+          <div v-for="s in suggestions.received" :key="s.id" class="ic-card request-card" data-cy="friend-suggestion">
+            <div class="request-card__who">
+              <AppAvatar :id="s.suggested.id" :name="s.suggested.displayName" :url="s.suggested.avatarUrl" :size="56" />
+              <div>
+                <div class="name">{{ s.suggested.displayName }}</div>
+                <div class="ic-muted">{{ t('friends.suggestions.from', { names: suggesters(s) }, s.suggestedBy.length) }}</div>
+              </div>
+            </div>
+            <div class="request-card__actions">
+              <ion-button class="ic-button-surface" expand="block" :disabled="busy" @click="answer(() => suggestions.dismiss(s.id))">
+                {{ t('friends.suggestions.dismiss') }}
+              </ion-button>
+              <ion-button color="dark" expand="block" :disabled="busy" @click="answer(() => suggestions.sendRequest(s.id), t('friends.suggestions.sent'))">
+                {{ t('friends.suggestions.sendRequest') }}
+              </ion-button>
             </div>
           </div>
         </div>
@@ -94,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { bookOutline, calendarOutline, linkOutline, mailOutline, peopleOutline, personAddOutline } from 'ionicons/icons';
 import {
@@ -107,7 +132,13 @@ import {
   IonPage,
   IonRefresher,
   IonRefresherContent,
+  toastController,
+  type RefresherCustomEvent,
 } from '@ionic/vue';
+import { useFriendSuggestionsStore } from '../stores/friendSuggestions';
+import { useErrorMessage } from '../composables/useErrorMessage';
+import { joinNames } from '../utils/names';
+import type { ReceivedFriendSuggestion } from '../types/friendSuggestion';
 import { useFriendsStore } from '../stores/friends';
 import { isWeb } from '../utils/platform';
 import { useActiveProfileStore } from '../stores/activeProfile';
@@ -126,14 +157,50 @@ const store = useFriendsStore();
 const web = isWeb();
 const activeProfile = useActiveProfileStore();
 
+const suggestions = useFriendSuggestionsStore();
+const { describe } = useErrorMessage();
+const busy = ref(false);
+
+/** Online only (spec §11 décision 35): offline, the section simply isn't there. */
+function fetchSuggestions(): void {
+  if (activeProfile.active) return;
+  suggestions.fetchReceived().catch(() => undefined);
+}
+
 // Switching profile shows the other profile's friends.
-watch(() => activeProfile.activeId, () => store.fetchAll());
+watch(() => activeProfile.activeId, () => {
+  store.fetchAll();
+  fetchSuggestions();
+});
 
 onMounted(() => {
   store.fetchAll();
+  fetchSuggestions();
 });
 
-const { pullToRefresh: refresh } = useLocalRefresh(() => store.refresh());
+const { pullToRefresh: localRefresh } = useLocalRefresh(() => store.refresh());
+
+function refresh(event: RefresherCustomEvent): Promise<void> {
+  fetchSuggestions();
+
+  return localRefresh(event);
+}
+
+function suggesters(s: ReceivedFriendSuggestion): string {
+  return joinNames(s.suggestedBy.map((p) => p.displayName), locale.value);
+}
+
+async function answer(action: () => Promise<void>, done?: string): Promise<void> {
+  busy.value = true;
+  try {
+    await action();
+    if (done) await (await toastController.create({ message: done, duration: 2500, color: 'success' })).present();
+  } catch (e) {
+    await (await toastController.create({ message: describe(e), duration: 3000, color: 'danger' })).present();
+  } finally {
+    busy.value = false;
+  }
+}
 
 function upcoming(f: Friendship): number | null {
   const { birthDay, birthMonth } = f.user;

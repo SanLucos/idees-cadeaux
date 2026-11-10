@@ -42,6 +42,7 @@
                 <template #manager>{{ item.payload.actor?.managedBy }}</template>
                 <template #days>{{ item.payload.days }}</template>
                 <template #child><strong>{{ item.payload.child?.displayName }}</strong></template>
+                <template #suggestedBy>{{ item.payload.suggestedBy?.displayName }}</template>
               </i18n-t>
               <span class="item__time">{{ when(item.createdAt) }}</span>
             </div>
@@ -160,8 +161,10 @@ function person(item: AppNotification) {
 function textKey(item: AppNotification): string {
   // « Jules (profil géré par Luc) vous a envoyé une demande d'ami ».
   const managed = 'friend_request_received' === item.type && item.payload.actor?.managedBy;
+  // « …, suggérée par Luc » (spec §11 décision 65).
+  const suggested = 'friend_request_received' === item.type && item.payload.suggestedBy;
 
-  return `activity.items.${item.type}${managed ? '_managed' : ''}`;
+  return `activity.items.${item.type}${managed ? '_managed' : suggested ? '_suggested' : ''}`;
 }
 
 function when(iso: string): string {
