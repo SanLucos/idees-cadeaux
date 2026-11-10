@@ -147,7 +147,7 @@ Monorepo : `/backend` (Symfony/API Platform) et `/mobile` (Ionic Vue). CI qui ex
 ### 5.5 Pré-remplissage depuis un lien
 - Endpoint serveur qui récupère titre, image et prix (balises OpenGraph, Twitter Cards, JSON-LD `Product`).
 - **Protection SSRF obligatoire** : http/https seulement, ports 80/443, résolution DNS puis blocage des IP privées, locales et link-local, 3 redirections max, timeout ~5 s, taille de réponse plafonnée (~2 Mo).
-- Une page plus lourde que le plafond est lue jusqu'au plafond (le reste est ignoré), pas refusée. Amazon, sans balises standard, est lu dans son propre balisage (titre, image principale, prix du panier) ; si sa page est inaccessible, le titre est tiré du lien (`/Nom-du-produit/dp/…`).
+- Une page plus lourde que le plafond est lue jusqu'au plafond (le reste est ignoré), pas refusée. Amazon, sans balises standard, est lu dans son propre balisage (titre, image principale, prix du panier) ; si sa page est inaccessible, le titre est tiré du lien (`/Nom-du-produit/dp/…`). Amazon refuse en pratique ses pages aux serveurs (HTTP 503) et son appli ne partage qu'un lien court menant à `/dp/<code>`, sans nom : le formulaire le dit (« Amazon ne laisse pas lire ses pages »), place le curseur sur le titre, propose une capture d'écran de la fiche comme image, et remplace le lien court par l'adresse propre du produit (`https://www.amazon.<pays>/dp/<code>`, sans suivi). Ni API Amazon (affiliation hors périmètre), ni usurpation d'identité de robot.
 - Les valeurs trouvées sont **proposées**, jamais imposées. L'image est copiée et redimensionnée sur notre stockage.
 - Si rien n'est trouvé, saisie manuelle.
 

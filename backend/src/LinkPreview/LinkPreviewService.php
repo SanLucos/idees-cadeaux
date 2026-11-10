@@ -36,9 +36,12 @@ final class LinkPreviewService
     }
 
     /**
-     * @return array{title: ?string, priceAmount: ?string, priceCurrency: ?string, imageDataUrl: ?string}
+     * `productUrl` is the plain address of an Amazon product (AmazonPage::productUrl),
+     * also when its page refuses us: the client can swap a short link for it.
      *
-     * @throws LinkPreviewException when the page itself can't be fetched
+     * @return array{title: ?string, priceAmount: ?string, priceCurrency: ?string, imageDataUrl: ?string, productUrl: ?string}
+     *
+     * @throws LinkPreviewException when the page itself can't be fetched (and isn't an Amazon product)
      */
     public function preview(string $url, string $locale): array
     {
@@ -51,6 +54,7 @@ final class LinkPreviewService
             // still names the product in its link, or in the one a short
             // link (amzn.eu/d/…) redirected to.
             $title = AmazonPage::titleFromUrl($e->lastUrl ?? $url) ?? AmazonPage::titleFromUrl($url);
+            $productUrl = AmazonPage::productUrl($e->lastUrl ?? $url) ?? AmazonPage::productUrl($url);
             $this->logger->warning('Link preview: page not fetched.', [
                 'url' => self::forLog($url),
                 'lastUrl' => self::forLog($e->lastUrl ?? $url),
@@ -58,11 +62,14 @@ final class LinkPreviewService
                 'cause' => self::rootCause($e),
                 'titleFromUrl' => null !== $title,
             ]);
-            if (null === $title) {
+            // Amazon refuses servers (HTTP 503): an Amazon product that can't
+            // be read is "nothing found", not an error, so the client can
+            // say why and keep the plain product link (spec §5.5).
+            if (null === $title && null === $productUrl) {
                 throw $e;
             }
 
-            return ['title' => mb_substr($title, 0, PageMetadataExtractor::TITLE_MAX_LENGTH), 'priceAmount' => null, 'priceCurrency' => null, 'imageDataUrl' => null];
+            return ['title' => null === $title ? null : mb_substr($title, 0, PageMetadataExtractor::TITLE_MAX_LENGTH), 'priceAmount' => null, 'priceCurrency' => null, 'imageDataUrl' => null, 'productUrl' => $productUrl];
         }
         $metadata = $this->extractor->extract($page->body, $page->contentType, $page->url);
         if (null === $metadata->title || (AmazonPage::isAmazon($page->url) && null === $metadata->imageUrl)) {
@@ -82,6 +89,7 @@ final class LinkPreviewService
             'priceAmount' => $metadata->priceAmount,
             'priceCurrency' => $metadata->priceCurrency,
             'imageDataUrl' => null === $metadata->imageUrl ? null : $this->image($metadata->imageUrl, $locale),
+            'productUrl' => AmazonPage::productUrl($page->url),
         ];
     }
 

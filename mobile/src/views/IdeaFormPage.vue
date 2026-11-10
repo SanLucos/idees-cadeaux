@@ -53,6 +53,7 @@
         </div>
 
         <ion-input
+          ref="titleInput"
           v-model="title"
           class="ic-field"
           fill="outline"
@@ -88,7 +89,8 @@
               <div v-if="imageFromLink" class="image-source">{{ t('ideaForm.prefill.imageFromLink') }}</div>
               <div class="image-buttons">
                 <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden @change="onImagePicked" />
-                <ion-button class="ic-button-surface" @click="fileInput?.click()">
+                <!-- Amazon can't be read: a screenshot of the product is the quickest picture. -->
+                <ion-button :class="{ 'ic-button-surface': 'amazon' !== prefillState || imagePreview }" @click="fileInput?.click()">
                   <ion-icon aria-hidden="true" slot="start" :icon="imageOutline" />
                   {{ imagePreview ? t('ideaForm.changeImage') : t('ideaForm.addImage') }}
                 </ion-button>
@@ -199,6 +201,7 @@ import { addPendingPrefill } from '../offline/pendingPrefill';
 import { useSync } from '../offline/sync';
 import { useSharedContentStore } from '../stores/sharedContent';
 import { fallbackTitle } from '../utils/sharedContent';
+import { isAmazonUrl } from '../utils/amazon';
 import { useAuthStore } from '../stores/auth';
 import { useFriendsStore } from '../stores/friends';
 import { useActiveProfileStore } from '../stores/activeProfile';
@@ -242,13 +245,14 @@ const saving = ref(false);
 const error = ref('');
 
 const fileInput = ref<HTMLInputElement>();
+const titleInput = ref<InstanceType<typeof IonInput>>();
 const pickedImage = ref<File | null>(null);
 const imagePreview = ref<string | null>(null);
 const removeExistingImage = ref(false);
 const imageFromLink = ref(false);
 
 /** Pre-fill from the link (spec §5.5) — or, offline, once the network is back (spec §5.6). */
-type PrefillState = 'idle' | 'loading' | 'found' | 'empty' | 'unavailable' | 'deferred';
+type PrefillState = 'idle' | 'loading' | 'found' | 'empty' | 'unavailable' | 'amazon' | 'deferred';
 const prefillState = ref<PrefillState>('idle');
 const prefillFound = ref<string[]>([]);
 /** Set while offline: the idea is saved now and completed later (offline/pendingPrefill.ts). */
@@ -325,6 +329,8 @@ const prefillMessage = computed(() => {
       return { title: t('ideaForm.prefill.empty'), detail: t('ideaForm.prefill.manual') };
     case 'unavailable':
       return { title: t('ideaForm.prefill.unavailable'), detail: t('ideaForm.prefill.manual') };
+    case 'amazon':
+      return { title: t('ideaForm.prefill.amazon'), detail: t('ideaForm.prefill.amazonDetail') };
     case 'deferred':
       return { title: t('ideaForm.prefill.deferred'), detail: t('ideaForm.prefill.deferredDetail') };
     default:
@@ -366,7 +372,7 @@ async function prefill(): Promise<void> {
     if (isNetworkError(e)) {
       deferPrefill(link);
     } else if (e instanceof ApiError && e.code.startsWith('link_preview.')) {
-      prefillState.value = 'unavailable';
+      nothingFound(link, 'unavailable');
     } else {
       prefillState.value = 'idle';
       error.value = describe(e);
@@ -374,9 +380,20 @@ async function prefill(): Promise<void> {
   }
 }
 
+/** Nothing to propose: say why (Amazon refuses us), and hand over to the user, title first. */
+function nothingFound(link: string, state: 'empty' | 'unavailable'): void {
+  prefillState.value = isAmazonUrl(link) ? 'amazon' : state;
+  if (!title.value.trim()) void titleInput.value?.$el.setFocus();
+}
+
 /** Proposed, never imposed (spec §5.5): only fills what's still empty. */
 async function applyPreview(preview: LinkPreview): Promise<void> {
   const found: string[] = [];
+  // A short Amazon link becomes the product's plain address, if the user hasn't changed it meanwhile.
+  if (preview.productUrl && url.value.trim() === prefillUrl.value) {
+    prefillUrl.value = preview.productUrl;
+    url.value = preview.productUrl;
+  }
   const titleIsStandIn = deferredPrefill.value && title.value === deferredPrefill.value.fallbackTitle;
   if (preview.title && (!title.value.trim() || titleIsStandIn)) {
     title.value = preview.title;
@@ -396,7 +413,11 @@ async function applyPreview(preview: LinkPreview): Promise<void> {
   }
   deferredPrefill.value = null;
   prefillFound.value = found;
-  prefillState.value = found.length ? 'found' : 'empty';
+  if (found.length) {
+    prefillState.value = 'found';
+  } else {
+    nothingFound(prefillUrl.value, 'empty');
+  }
 }
 
 /** Spec §5.6: a share from another app opens this form pre-filled. */

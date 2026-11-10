@@ -92,25 +92,26 @@ final class AmazonPageTest extends TestCase
         self::assertSame('USD', $metadata->priceCurrency);
     }
 
-    /** @return iterable<string, array{string, bool, ?string}> */
+    /** @return iterable<string, array{string, bool, ?string, ?string}> */
     public static function urls(): iterable
     {
-        yield 'product link' => ['https://www.amazon.fr/LEGO-Architecture-Notre-Dame-Paris-Architectural/dp/B0CWH1M12W?ref=x', true, 'LEGO Architecture Notre Dame Paris Architectural'];
-        yield 'encoded slug' => ['https://www.amazon.fr/LEGO-Ing%C3%A9nieur-Lego/dp/2374931080', true, 'LEGO Ingénieur Lego'];
-        yield 'language prefix' => ['https://www.amazon.fr/-/en/LEGO-40313-Bicycles/dp/B07DM3NN6B', true, 'LEGO 40313 Bicycles'];
-        yield 'gp/product' => ['https://amazon.co.uk/Kettle-Steel/gp/product/B000000001/', true, 'Kettle Steel'];
-        yield 'no slug' => ['https://www.amazon.fr/dp/B0CWH1M12W', true, null];
-        yield 'short link' => ['https://amzn.eu/d/abc123', true, null];
-        yield 'a.co' => ['https://a.co/d/abc123', true, null];
-        yield 'not a product' => ['https://www.amazon.fr/gp/cart/view.html', true, null];
-        yield 'look-alike' => ['https://amazon.fr.evil.example/Nom/dp/B0CWH1M12W', false, null];
-        yield 'other site' => ['https://shop.example/Nom/dp/B0CWH1M12W', false, null];
+        yield 'product link' => ['https://www.amazon.fr/LEGO-Architecture-Notre-Dame-Paris-Architectural/dp/B0CWH1M12W?ref=x', true, 'LEGO Architecture Notre Dame Paris Architectural', 'https://www.amazon.fr/dp/B0CWH1M12W'];
+        yield 'encoded slug' => ['https://www.amazon.fr/LEGO-Ing%C3%A9nieur-Lego/dp/2374931080', true, 'LEGO Ingénieur Lego', 'https://www.amazon.fr/dp/2374931080'];
+        yield 'language prefix' => ['https://www.amazon.fr/-/en/LEGO-40313-Bicycles/dp/B07DM3NN6B', true, 'LEGO 40313 Bicycles', 'https://www.amazon.fr/dp/B07DM3NN6B'];
+        yield 'gp/product' => ['https://amazon.co.uk/Kettle-Steel/gp/product/B000000001/', true, 'Kettle Steel', 'https://www.amazon.co.uk/dp/B000000001'];
+        yield 'no slug' => ['https://www.amazon.fr/dp/B0CWH1M12W', true, null, 'https://www.amazon.fr/dp/B0CWH1M12W'];
+        yield 'short link' => ['https://amzn.eu/d/abc123', true, null, null];
+        yield 'a.co' => ['https://a.co/d/abc123', true, null, null];
+        yield 'not a product' => ['https://www.amazon.fr/gp/cart/view.html', true, null, null];
+        yield 'look-alike' => ['https://amazon.fr.evil.example/Nom/dp/B0CWH1M12W', false, null, null];
+        yield 'other site' => ['https://shop.example/Nom/dp/B0CWH1M12W', false, null, null];
     }
 
     #[DataProvider('urls')]
-    public function testUrls(string $url, bool $isAmazon, ?string $title): void
+    public function testUrls(string $url, bool $isAmazon, ?string $title, ?string $productUrl): void
     {
         self::assertSame($isAmazon, AmazonPage::isAmazon($url));
         self::assertSame($title, AmazonPage::titleFromUrl($url));
+        self::assertSame($productUrl, AmazonPage::productUrl($url));
     }
 }

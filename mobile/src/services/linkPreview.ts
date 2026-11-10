@@ -8,6 +8,8 @@ export interface LinkPreview {
   priceCurrency: string | null;
   /** Already resized and re-encoded by the server; uploaded only if the user keeps it. */
   imageDataUrl: string | null;
+  /** An Amazon product's plain address (no name, no tracking), even when its page couldn't be read. */
+  productUrl?: string | null;
 }
 
 export const linkPreviewApi = {

@@ -540,6 +540,8 @@
       "empty": "Nothing found on the page",
       "unavailable": "Couldn't read the page",
       "manual": "Enter the details yourself.",
+      "amazon": "Amazon doesn't let us read its pages",
+      "amazonDetail": "Enter the product's name, and add a screenshot of its page as the picture.",
       "deferred": "Pre-fill when back online",
       "deferredDetail": "The idea is saved now; its title, image and price will be filled in as soon as possible.",
       "imageFromLink": "Taken from the link",

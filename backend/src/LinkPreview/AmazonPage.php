@@ -59,6 +59,21 @@ final class AmazonPage
         return '' === $title || 1 !== preg_match('/\p{L}/u', $title) ? null : $title;
     }
 
+    /**
+     * The product's plain address, without the name, referral and tracking
+     * bits: "…amazon.fr/LEGO-…/dp/B0CWH1M12W/ref=…?tag=…" → "https://www.amazon.fr/dp/B0CWH1M12W".
+     * Null when the URL isn't an Amazon product page.
+     */
+    public static function productUrl(string $url): ?string
+    {
+        $store = self::store($url);
+        if (null === $store || 1 !== preg_match('#/(?:dp|gp/product)/([A-Z0-9]{10})(?:[/?]|$)#i', (string) parse_url($url, \PHP_URL_PATH), $m)) {
+            return null;
+        }
+
+        return \sprintf('https://www.amazon.%s/dp/%s', $store, strtoupper($m[1]));
+    }
+
     /** What the product page itself says; any field may be null. */
     public static function extract(\DOMXPath $xpath, string $pageUrl): PageMetadata
     {

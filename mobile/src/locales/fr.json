@@ -540,6 +540,8 @@
       "empty": "Rien trouvé sur la page",
       "unavailable": "Page impossible à lire",
       "manual": "Saisissez les informations vous-même.",
+      "amazon": "Amazon ne laisse pas lire ses pages",
+      "amazonDetail": "Saisissez le nom du produit, et ajoutez une capture d'écran de sa fiche comme image.",
       "deferred": "Pré-remplissage au retour du réseau",
       "deferredDetail": "L'idée est enregistrée maintenant ; son titre, son image et son prix se compléteront dès que possible.",
       "imageFromLink": "Récupérée depuis le lien",

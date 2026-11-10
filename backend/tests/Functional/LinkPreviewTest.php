@@ -65,7 +65,7 @@ final class LinkPreviewTest extends AuthTestCase
         $response = $client->request('POST', '/api/link-previews', ['auth_bearer' => $token, 'json' => ['url' => self::SHOP.'/']]);
 
         self::assertResponseIsSuccessful();
-        self::assertSame(['url' => self::SHOP.'/', 'title' => null, 'priceAmount' => null, 'priceCurrency' => null, 'imageDataUrl' => null], $response->toArray());
+        self::assertSame(['url' => self::SHOP.'/', 'title' => null, 'priceAmount' => null, 'priceCurrency' => null, 'imageDataUrl' => null, 'productUrl' => null], $response->toArray());
     }
 
     public function testAnImageThatCantBeFetchedStillPrefillsTheRest(): void
@@ -114,7 +114,24 @@ final class LinkPreviewTest extends AuthTestCase
         $response = $client->request('POST', '/api/link-previews', ['auth_bearer' => $token, 'json' => ['url' => self::SHOP.'/d/abc']]);
 
         self::assertResponseIsSuccessful();
-        self::assertSame(['url' => self::SHOP.'/d/abc', 'title' => 'LEGO Architecture Notre Dame Paris', 'priceAmount' => null, 'priceCurrency' => null, 'imageDataUrl' => null], $response->toArray());
+        self::assertSame(['url' => self::SHOP.'/d/abc', 'title' => 'LEGO Architecture Notre Dame Paris', 'priceAmount' => null, 'priceCurrency' => null, 'imageDataUrl' => null, 'productUrl' => 'https://www.amazon.fr/dp/B0CWH1M12W'], $response->toArray());
+    }
+
+    public function testAnAmazonProductThatWontComeIsNothingFoundNotAnError(): void
+    {
+        $token = $this->registerVerifyAndLogin('lp-amazon-noname@example.com');
+        $client = static::createClient();
+        // What the Amazon app shares: a short link to a product address
+        // without its name, then a refusal (seen in production).
+        $this->transport()->setResponseFactory([
+            new MockResponse('', ['http_code' => 301, 'response_headers' => ['location' => 'https://www.amazon.fr/dp/B0CFW29DZX?ref=share']]),
+            new MockResponse('', ['http_code' => 503, 'response_headers' => ['content-type' => 'text/html']]),
+        ]);
+
+        $response = $client->request('POST', '/api/link-previews', ['auth_bearer' => $token, 'json' => ['url' => self::SHOP.'/d/xyz']]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(['url' => self::SHOP.'/d/xyz', 'title' => null, 'priceAmount' => null, 'priceCurrency' => null, 'imageDataUrl' => null, 'productUrl' => 'https://www.amazon.fr/dp/B0CFW29DZX'], $response->toArray());
     }
 
     public function testRejectsNonHttpUrls(): void

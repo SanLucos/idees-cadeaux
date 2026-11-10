@@ -29,11 +29,7 @@ final class LinkPreviewServiceLogTest extends TestCase
             new MockResponse('', ['http_code' => 503, 'response_headers' => ['content-type' => 'text/html']]),
         ]);
 
-        try {
-            $service->preview(self::SHOP.'/d/abc?x=1', 'fr');
-            self::fail('No page, no name in the link: nothing to propose.');
-        } catch (LinkPreviewException) {
-        }
+        self::assertSame('https://www.amazon.fr/dp/B0CWH1M12W', $service->preview(self::SHOP.'/d/abc?x=1', 'fr')['productUrl']);
 
         self::assertSame([['Link preview: page not fetched.', [
             'url' => self::SHOP.'/d/abc',
@@ -42,6 +38,14 @@ final class LinkPreviewServiceLogTest extends TestCase
             'cause' => null,
             'titleFromUrl' => false,
         ]]], $this->logs);
+    }
+
+    public function testAPageThatWontComeIsStillAnError(): void
+    {
+        $service = $this->service([new MockResponse('', ['http_code' => 503, 'response_headers' => ['content-type' => 'text/html']])]);
+
+        $this->expectException(LinkPreviewException::class);
+        $service->preview(self::SHOP.'/livre', 'fr');
     }
 
     public function testLogsAnAmazonPageWithoutTheProduct(): void
