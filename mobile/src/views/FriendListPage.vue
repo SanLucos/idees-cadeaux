@@ -35,6 +35,7 @@
             {{ t('friendList.suggest') }}
           </ion-button>
         </div>
+        <IntroduceFriend :user-id="userId" :name="profile.displayName" :child="!!profile.managedBy" />
 
         <SecretBand class="band">{{ t('friendList.secretBand', { name: profile.displayName }) }}</SecretBand>
 
@@ -130,6 +131,7 @@ import AppAvatar from '../components/AppAvatar.vue';
 import EmptyState from '../components/EmptyState.vue';
 import IdeaCard from '../components/IdeaCard.vue';
 import InteractionPills from '../components/InteractionPills.vue';
+import IntroduceFriend from '../components/IntroduceFriend.vue';
 import OccasionChips from '../components/OccasionChips.vue';
 import SecretBand from '../components/SecretBand.vue';
 import SectionTitle from '../components/SectionTitle.vue';
@@ -143,6 +145,8 @@ interface FriendProfile {
   avatarUrl: string | null;
   birthDay: number | null;
   birthMonth: number | null;
+  /** A child profile: its managers (spec §5.15). */
+  managedBy?: { id: string } | null;
 }
 
 interface Section {

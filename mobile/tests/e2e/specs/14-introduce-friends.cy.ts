@@ -14,14 +14,14 @@ describe('Introduce friends', () => {
 
           // From Bruno's page, Luc picks Anna among his friends.
           cy.loginUi(luc);
-          cy.visit(`/tabs/friends/${bruno.id}/profile`);
+          cy.visit(`/tabs/friends/${bruno.id}`);
           cy.tap('Présenter à des amis…', 'ion-button');
           cy.get('ion-alert').should('be.visible').contains('button', 'Anna').click();
           cy.get('ion-alert').contains('button', 'Suggérer').click();
           toast('Suggestion envoyée.');
           cy.see('Présenté à');
           cy.see('En attente');
-          cy.audit('friend profile, introduced');
+          cy.audit('friend list, introduced');
 
           // Anna sees Bruno's pseudo, and who suggested him.
           cy.clearCookies(); // Luc's web session (spec §11 décision 56)
