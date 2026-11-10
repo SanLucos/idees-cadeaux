@@ -29,7 +29,7 @@ Application web (point d'entrée principal, spec §11 décision 56) et mobile (i
 
 ## Méthode de travail
 
-- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8, 9 (appli web, spec §11 décision 56), puis 10 (icônes et vérification native), 11 (unités des tailles, tailles des enfants), 12 (« Partager avec mes amis », deuxième gestionnaire) — décisions 57 à 61, puis 13 (« Mes cadeaux pour mes amis », décision 62).
+- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8, 9 (appli web, spec §11 décision 56), puis 10 (icônes et vérification native), 11 (unités des tailles, tailles des enfants), 12 (« Partager avec mes amis », deuxième gestionnaire) — décisions 57 à 61, puis 13 (« Mes cadeaux pour mes amis », décision 62), puis 14 (mise en relation entre amis, décision 65).
 - Ne passe pas au lot suivant si la CI ou la suite de visibilité est rouge.
 - Avant chaque lot : relis les sections concernées, propose un plan court, puis implémente.
 - Écris les tests avec le code (PHPUnit et client de test API Platform côté back, Vitest côté front).
@@ -93,6 +93,8 @@ RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en
 **Tailles et famille** (lots 11 et 12, spec §11 décisions 57 à 60) : unité optionnelle des tailles (`App\Entity\Enum\ProfileSizeUnit`, `src/utils/sizeUnits.ts`), tailles et préférences d'un enfant sur sa fiche. « Partager avec mes amis » : amitiés d'origine `family` tenues à jour par `App\Service\FamilyFriendships` (déclenché par `App\Doctrine\FamilyFriendshipsListener`), jamais écrites à la main. Deuxième gestionnaire : `User.coManagedBy`, invitations `ManagerInvitation` ; utiliser `isManagedBy()` / `getManagers()` / `UserRepository::findChildrenOf()`, jamais `managedBy` seul.
 
 **Mes cadeaux pour mes amis** (lot 13, spec §11 décision 62) : écran `/gifts` (`MyGiftsPage.vue`, entrée `MyGiftsLink.vue` dans Amis et Ma liste), calculé sur l'appareil par `repo.myGifts()` à partir des vues ami synchronisées, sans endpoint dédié. Regroupement et filtres : `src/utils/myGifts.ts`.
+
+**Mise en relation** (lot 14, spec §11 décision 65) : `FriendSuggestion` (auteur, A, B) ; A envoie une demande classique vers B depuis la suggestion. L'auteur ne voit que « en attente » ou l'aboutissement, jamais refus/ignorance/cas sans objet. Adultes uniquement, en ligne uniquement.
 
 **Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, builds web et natifs).
 
