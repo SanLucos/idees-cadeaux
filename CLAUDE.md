@@ -96,6 +96,8 @@ RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en
 
 **Mise en relation** (lot 14, spec §11 décision 65) : `FriendSuggestion` (auteur, A, B) ; A envoie une demande classique vers B depuis la suggestion. L'auteur ne voit que « en attente » ou l'aboutissement, jamais refus/ignorance/cas sans objet. Adultes uniquement, en ligne uniquement.
 
+**Connexion sans mot de passe** (issue #8, spec §11 décision 68) : `POST /api/auth/email-sign-in` puis `/verify` (`App\Security\EmailSignIn`, entité `EmailSignInCode`), écran `/login/email` (`EmailSignInPage.vue`). Le lien de l'email pointe vers `WEB_APP_URL`. Session longue : `RefreshToken.longSession`, prolongée à chaque rotation par `LongSessionRotationListener`.
+
 **Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, builds web et natifs).
 
 **CI** : `.github/workflows/ci.yml`, trois jobs (`backend`, `mobile` : lint + tests ; `e2e` : Cypress sur la stack Docker et le build web servi par `vite preview`), déclenchés sur push/PR vers `main` et avant chaque déploiement.
