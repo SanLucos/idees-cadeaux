@@ -49,6 +49,16 @@ function context(profileId?: string) {
   return { me, actor, actingAs: active.activeId };
 }
 
+/**
+ * X-Acting-As for a write to an existing idea: the active profile's,
+ * except on a suggestion. A suggestion is never written in a child's
+ * name (spec §11 décision 25): one on a child's list is the manager's
+ * own, changed in their own name even while managing that list.
+ */
+function actingAsFor(id: string): string | null {
+  return useLocalDb().get<Idea>('idea', id)?.isSuggestion ? null : context().actingAs;
+}
+
 async function queue(op: NewOp): Promise<void> {
   await useSync().enqueue(op);
 }
@@ -122,7 +132,7 @@ export const ideaMutations = onlineOnlyOnWeb({
   },
 
   async update(id: string, patch: Partial<IdeaInput>): Promise<Idea> {
-    const { actingAs } = context();
+    const actingAs = actingAsFor(id);
     const local: Partial<Idea> = { ...patch } as Partial<Idea>;
     if ('priceAmount' in patch) local.priceAmount = patch.priceAmount ? Number(patch.priceAmount.replace(',', '.')).toFixed(2) : null;
     const idea = await patchIdea(id, local);
@@ -132,7 +142,7 @@ export const ideaMutations = onlineOnlyOnWeb({
   },
 
   async remove(id: string): Promise<void> {
-    const { actingAs } = context();
+    const actingAs = actingAsFor(id);
     const db = useLocalDb();
     const title = db.get<Idea>('idea', id)?.title;
     await db.remove('idea', [id]);
@@ -141,7 +151,7 @@ export const ideaMutations = onlineOnlyOnWeb({
   },
 
   async publish(id: string): Promise<Idea> {
-    const { actingAs } = context();
+    const actingAs = actingAsFor(id);
     const idea = await patchIdea(id, { visibility: 'published', publishedAt: now() });
     await queue({ method: 'POST', path: `/ideas/${id}/publish`, actingAs, entities: [{ type: 'idea', id }], label: { kind: 'idea.publish', title: idea.title } });
 
@@ -150,7 +160,7 @@ export const ideaMutations = onlineOnlyOnWeb({
 
   /** Spec §5.4: going private deletes the idea's interactions — locally too. */
   async unpublish(id: string): Promise<Idea> {
-    const { actingAs } = context();
+    const actingAs = actingAsFor(id);
     const db = useLocalDb();
     const cleared: Partial<Idea> = { visibility: 'private', publishedAt: null };
     const current = db.get<Idea>('idea', id);
@@ -165,7 +175,7 @@ export const ideaMutations = onlineOnlyOnWeb({
   },
 
   async archive(id: string, kind: IdeaArchiveKind): Promise<Idea> {
-    const { actingAs } = context();
+    const actingAs = actingAsFor(id);
     const current = useLocalDb().get<Idea>('idea', id);
     const contribution = current?.contribution && 'open' === current.contribution.status
       ? { ...current.contribution, status: 'closed' as const, closedAt: now() }
@@ -178,7 +188,7 @@ export const ideaMutations = onlineOnlyOnWeb({
   },
 
   async unarchive(id: string): Promise<Idea> {
-    const { actingAs } = context();
+    const actingAs = actingAsFor(id);
     const current = useLocalDb().get<Idea>('idea', id);
     const idea = await patchIdea(id, { status: 'active', archiveKind: null, archivedAt: null, canUnarchive: false });
     await queue({
@@ -194,7 +204,7 @@ export const ideaMutations = onlineOnlyOnWeb({
 
   /** A picture chosen offline travels later (spec §11 décision 34). */
   async setImage(id: string, image: { dataUrl: string; filename: string }): Promise<Idea> {
-    const { actingAs } = context();
+    const actingAs = actingAsFor(id);
     const idea = await patchIdea(id, { imageUrl: image.dataUrl, thumbnailUrl: image.dataUrl });
     await queue({ method: 'POST', path: `/ideas/${id}/image`, upload: { field: 'image', ...image }, actingAs, entities: [{ type: 'idea', id }], label: { kind: 'idea.image', title: idea.title } });
 
@@ -202,7 +212,7 @@ export const ideaMutations = onlineOnlyOnWeb({
   },
 
   async removeImage(id: string): Promise<Idea> {
-    const { actingAs } = context();
+    const actingAs = actingAsFor(id);
     const idea = await patchIdea(id, { imageUrl: null, thumbnailUrl: null });
     await queue({ method: 'DELETE', path: `/ideas/${id}/image`, actingAs, entities: [{ type: 'idea', id }], label: { kind: 'idea.image', title: idea.title } });
 

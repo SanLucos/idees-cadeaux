@@ -77,9 +77,11 @@
       <template v-if="acting && 'published' === tab && suggestions.length">
         <SectionTitle :icon="eyeOffOutline" variant="secret">{{ t('friendList.suggestions', { count: suggestions.length }) }}</SectionTitle>
         <div class="ic-stack">
-          <IdeaCard v-for="idea in suggestions" :key="idea.id" :idea="idea">
+          <IdeaCard v-for="idea in suggestions" :key="idea.id" :idea="idea" :actions="idea.canEdit" @actions="actions.openSheet">
             <template #pills>
-              <StatusPill variant="suggestion">{{ t('ideas.suggestedBy', { name: idea.author?.displayName }) }}</StatusPill>
+              <StatusPill variant="suggestion">
+                {{ idea.isMine ? t('ideas.suggestedByMe') : t('ideas.suggestedBy', { name: idea.author?.displayName }) }}
+              </StatusPill>
               <InteractionPills :idea="idea" />
             </template>
           </IdeaCard>

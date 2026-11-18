@@ -57,15 +57,16 @@ export const repo = {
   },
 
   /**
-   * « Privées »: every draft I wrote, with its recipient. While managing
+   * « Privées »: every draft I wrote, with its recipient — my
+   * suggestions for my children included (manager view). While managing
    * a child (`childId`), that child's own drafts.
    */
   privateIdeas(myId: string, childId: string | null = null): PrivateIdea[] {
     const db = useLocalDb();
     const drafts = db.all<Idea>('idea').filter((i) => 'private' === i.visibility && 'active' === i.status);
     const mine = null !== childId
-      ? drafts.filter((i) => i.ownerId === childId && i.isMine)
-      : drafts.filter((i) => ('owner' === i.view && i.ownerId === myId) || ('friend' === i.view && i.isMine));
+      ? drafts.filter((i) => i.ownerId === childId && i.isMine && !i.isSuggestion)
+      : drafts.filter((i) => ('owner' === i.view && i.ownerId === myId) || (('friend' === i.view || ('manager' === i.view && i.isSuggestion)) && i.isMine));
 
     return mine
       .sort(comparator('recent'))

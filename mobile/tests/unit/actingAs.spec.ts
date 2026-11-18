@@ -60,6 +60,24 @@ describe('X-Acting-As', () => {
     expect(reserve.actingAs).toBeNull()
   })
 
+  // GitHub #6: the manager's own suggestion, edited while managing the child's list.
+  test('a suggestion on the child\'s list is changed in the adult\'s own name', async () => {
+    useAuthStore().user = { id: 'adult', displayName: 'Luc', avatarUrl: null } as never
+    const db = useLocalDb()
+    await db.put('idea', [
+      { id: 'my-suggestion', ownerId: CHILD, title: 'Trottinette', view: 'manager', isSuggestion: true, isMine: true, visibility: 'published', status: 'active' } as never,
+      { id: 'childs-idea', ownerId: CHILD, title: 'Lego', view: 'manager', isSuggestion: false, isMine: true, visibility: 'published', status: 'active' } as never,
+    ])
+    useActiveProfileStore().switchTo(CHILD)
+
+    await ideaMutations.update('my-suggestion', { title: 'Trottinette rouge' })
+    await ideaMutations.unpublish('my-suggestion')
+    await ideaMutations.remove('my-suggestion')
+    await ideaMutations.update('childs-idea', { title: 'Lego Duplo' })
+
+    expect(db.outbox.map((op) => op.actingAs)).toEqual([null, null, null, CHILD])
+  })
+
   test('is dropped on reset (logout)', async () => {
     const store = useActiveProfileStore()
     store.switchTo(CHILD)
