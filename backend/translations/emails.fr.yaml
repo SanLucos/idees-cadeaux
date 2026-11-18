@@ -51,3 +51,13 @@ account:
     body_profile: "L'archive des données du profil de %profile% est prête à être téléchargée."
     action: "Télécharger l'archive"
     expiry: "Ce lien est valable 48 heures. Gardez l'archive en lieu sûr : elle contient des données personnelles."
+
+sign_in:
+  subject: "Votre lien de connexion"
+  heading: "Connexion"
+  heading_new: "Bienvenue !"
+  intro_link: "Cliquez sur ce bouton pour vous connecter :"
+  button: "Me connecter"
+  intro_code: "Ou saisissez ce code dans l'application :"
+  expiry: "Ce lien et ce code expirent dans 15 minutes et ne servent qu'une fois."
+  ignore: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : personne ne pourra se connecter sans ce lien ou ce code."

@@ -51,3 +51,13 @@ account:
     body_profile: "The archive of %profile%'s profile data is ready to download."
     action: "Download the archive"
     expiry: "This link is valid for 48 hours. Keep the archive somewhere safe: it contains personal data."
+
+sign_in:
+  subject: "Your sign-in link"
+  heading: "Sign in"
+  heading_new: "Welcome!"
+  intro_link: "Click this button to sign in:"
+  button: "Sign me in"
+  intro_code: "Or enter this code in the app:"
+  expiry: "This link and code expire in 15 minutes and work only once."
+  ignore: "If you didn't request this, ignore this email: nobody can sign in without this link or code."
