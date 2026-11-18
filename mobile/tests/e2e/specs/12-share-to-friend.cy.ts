@@ -18,14 +18,17 @@ describe('Share to the app', () => {
         cy.get('input[type="url"]').should('have.value', 'https://example.invalid/vinyle');
         cy.tap('Publier la suggestion', 'ion-button');
 
-        cy.location('pathname').should('match', /^\/ideas\/[0-9a-f-]{36}$/).then((path) => {
-          cy.apiAs(luc, 'GET', path).its('body').should((idea) => {
-            expect(idea.title).to.equal('Platine vinyle');
-            expect(idea.ownerId).to.equal(hugo.id);
-            expect(idea.isSuggestion).to.equal(true);
-          });
+        // Issue #7: back on Hugo's list, where the suggestion now is.
+        cy.location('pathname').should('eq', `/tabs/friends/${hugo.id}`);
+        cy.see('Platine vinyle');
+        cy.apiAs(luc, 'GET', `/users/${hugo.id}/ideas?kind=suggestion`).its('body.member').should((ideas: { id: string; title: string; ownerId: string; isSuggestion: boolean }[]) => {
+          expect(ideas).to.have.length(1);
+          expect(ideas[0].title).to.equal('Platine vinyle');
+          expect(ideas[0].ownerId).to.equal(hugo.id);
+          expect(ideas[0].isSuggestion).to.equal(true);
+        }).then((ideas) => {
           // The golden rule: Hugo never sees it.
-          cy.apiAs(hugo, 'GET', path).its('status').should('equal', 404);
+          cy.apiAs(hugo, 'GET', `/ideas/${ideas[0].id}`).its('status').should('equal', 404);
         });
       });
     });

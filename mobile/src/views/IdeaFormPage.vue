@@ -505,6 +505,13 @@ async function confirmUnpublish(idea: Idea): Promise<boolean> {
   return 'confirm' === (await alert.onDidDismiss()).role;
 }
 
+/** The list showing a new idea: mine (drafts tab for a draft), or the friend's (my drafts for them included). */
+function listOf(idea: Idea): string {
+  if (isSuggestion.value) return `/tabs/friends/${idea.ownerId}`;
+
+  return `/tabs/list?tab=${'private' === idea.visibility ? 'drafts' : 'published'}`;
+}
+
 async function submit(): Promise<void> {
   saving.value = true;
   error.value = '';
@@ -536,7 +543,9 @@ async function submit(): Promise<void> {
       await addPendingPrefill({ ideaId: idea.id, ...deferredPrefill.value, actingAs: activeProfile.activeId });
     }
 
-    ionRouter.navigate(`/ideas/${idea.id}`, isEdit ? 'back' : 'forward', 'replace');
+    // Issue #7: a new idea opens the list it now belongs to, not its detail
+    // (whose « Marquer comme reçu » looked like a step still to take).
+    ionRouter.navigate(isEdit ? `/ideas/${idea.id}` : listOf(idea), 'back', 'replace');
   } catch (e) {
     error.value = describe(e);
   } finally {

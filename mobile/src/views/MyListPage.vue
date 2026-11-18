@@ -106,6 +106,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { chevronForward, closeOutline, eyeOffOutline, giftOutline, lockClosedOutline, searchOutline, swapVerticalOutline } from 'ionicons/icons';
 import {
@@ -145,6 +146,8 @@ import type { Idea, IdeaListQuery, IdeaSort } from '../types/idea';
 const BANNER_KEY = 'ic.surpriseBannerDismissed';
 
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
 const activeProfile = useActiveProfileStore();
 /** The child whose list this is, when managing one (X-Acting-As). */
 const auth = useAuthStore();
@@ -214,8 +217,21 @@ async function loadMore(event: InfiniteScrollCustomEvent): Promise<void> {
 
 
 onIonViewWillEnter(() => {
+  showRequestedTab();
   reload();
 });
+
+/** Issue #7: a new idea lands here, on its tab and unfiltered, so it shows. */
+function showRequestedTab(): void {
+  const requested = route.query.tab;
+  if ('published' !== requested && 'drafts' !== requested) return;
+  tab.value = requested;
+  occasion.value = null;
+  search.value = '';
+  searchOpen.value = false;
+  // One-shot: the tab bar must not bring it back later.
+  void router.replace({ path: route.path, query: {} });
+}
 const { pullToRefresh } = useLocalRefresh(reload);
 
 function toggleSearch(): void {

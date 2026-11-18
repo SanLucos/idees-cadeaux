@@ -1,4 +1,7 @@
-/** Spec §5.4: publish an idea, keep a private draft, find both in « Ma liste ». */
+/**
+ * Spec §5.4: publish an idea, keep a private draft, find both in « Ma liste ».
+ * Issue #7: saving a new idea lands on the list holding it, not its detail.
+ */
 describe('Ideas', () => {
   it('publishes an idea and saves a private draft', () => {
     cy.createUser('Camille').then((camille) => {
@@ -11,7 +14,7 @@ describe('Ideas', () => {
       cy.tap('Anniversaire', 'ion-chip');
       cy.tap("Publier l'idée", 'ion-button');
 
-      cy.location('pathname').should('match', /^\/ideas\/[0-9a-f-]{36}$/);
+      cy.location('pathname').should('eq', '/tabs/list');
       cy.see('Platine vinyle');
       cy.see('149');
 
@@ -19,13 +22,15 @@ describe('Ideas', () => {
       cy.fillField('Titre', 'Idée secrète');
       cy.tap('Brouillon privé', 'ion-radio');
       cy.tap('Enregistrer le brouillon', 'ion-button');
-      cy.location('pathname').should('match', /^\/ideas\/[0-9a-f-]{36}$/);
+      // On the drafts tab, the tab bar not bringing it back later.
+      cy.location('pathname').should('eq', '/tabs/list');
+      cy.location('search').should('eq', '');
+      cy.see('Idée secrète');
+      cy.notSee('Platine vinyle');
 
       cy.visit('/tabs/list');
       cy.see('Platine vinyle');
       cy.notSee('Idée secrète');
-      cy.tap('Brouillons', 'ion-segment-button');
-      cy.see('Idée secrète');
     });
   });
 });
