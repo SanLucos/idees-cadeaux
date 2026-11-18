@@ -78,6 +78,22 @@ describe('X-Acting-As', () => {
     expect(db.outbox.map((op) => op.actingAs)).toEqual([null, null, null, CHILD])
   })
 
+  // GitHub #6, spec §11 décision 66: the child's list read as myself, no profile switch.
+  test('from the child\'s list read as the adult: my suggestion as me, the child\'s idea as the child', async () => {
+    useAuthStore().user = { id: 'adult', displayName: 'Luc', avatarUrl: null } as never
+    useActiveProfileStore().children = [{ id: CHILD, displayName: 'Jules' }] as never
+    const db = useLocalDb()
+    await db.put('idea', [
+      { id: 'my-suggestion', ownerId: CHILD, title: 'Trottinette', view: 'manager', isSuggestion: true, isMine: true, visibility: 'published', status: 'active' } as never,
+      { id: 'childs-idea', ownerId: CHILD, title: 'Lego', view: 'manager', isSuggestion: false, isMine: true, visibility: 'published', status: 'active' } as never,
+    ])
+
+    await ideaMutations.update('my-suggestion', { title: 'Trottinette rouge' })
+    await ideaMutations.update('childs-idea', { title: 'Lego Duplo' })
+
+    expect(db.outbox.map((op) => op.actingAs)).toEqual([null, CHILD])
+  })
+
   test('is dropped on reset (logout)', async () => {
     const store = useActiveProfileStore()
     store.switchTo(CHILD)

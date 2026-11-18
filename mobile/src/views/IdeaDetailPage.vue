@@ -139,7 +139,7 @@ const backHref = computed(() => {
   const i = idea.value;
   if (!i || 'owner' === i.view || (activeProfile.activeId === i.ownerId)) return '/tabs/list';
 
-  return 'manager' === i.view ? `/profile/children/${i.ownerId}` : `/tabs/friends/${i.ownerId}`;
+  return `/tabs/friends/${i.ownerId}`;
 });
 const hasActions = computed(() => !!idea.value && (idea.value.canEdit || idea.value.canUnarchive || !!idea.value.canMarkGifted));
 const price = computed(() => (idea.value ? formatPrice(idea.value.priceAmount, idea.value.priceCurrency, locale.value) : null));

@@ -50,13 +50,18 @@ function context(profileId?: string) {
 }
 
 /**
- * X-Acting-As for a write to an existing idea: the active profile's,
- * except on a suggestion. A suggestion is never written in a child's
- * name (spec §11 décision 25): one on a child's list is the manager's
- * own, changed in their own name even while managing that list.
+ * X-Acting-As for a write to an existing idea. A suggestion is never
+ * written in a child's name (spec §11 décision 25): one on a child's
+ * list is the manager's own, changed in their own name. A child's own
+ * idea is the child's, whichever profile is active (décision 66); any
+ * other follows the active profile.
  */
 function actingAsFor(id: string): string | null {
-  return useLocalDb().get<Idea>('idea', id)?.isSuggestion ? null : context().actingAs;
+  const idea = useLocalDb().get<Idea>('idea', id);
+  if (idea?.isSuggestion) return null;
+  if (idea && useActiveProfileStore().children.some((c) => c.id === idea.ownerId)) return idea.ownerId;
+
+  return context().actingAs;
 }
 
 async function queue(op: NewOp): Promise<void> {

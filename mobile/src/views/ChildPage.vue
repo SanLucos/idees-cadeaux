@@ -174,9 +174,14 @@ async function run(action: () => Promise<unknown>): Promise<boolean> {
   }
 }
 
+/**
+ * GitHub #6: the child's list, read as myself (manager view) — no
+ * switch of profile. What I write there stays mine, in my own name
+ * (spec §11 décision 66); acting as the child is the profile switcher's.
+ */
 function manage(): void {
-  activeProfile.switchTo(id);
-  ionRouter.navigate('/tabs/list', 'root', 'replace');
+  activeProfile.switchTo(null);
+  ionRouter.navigate(`/tabs/friends/${id}`, 'forward', 'push');
 }
 
 function save(): Promise<boolean> {

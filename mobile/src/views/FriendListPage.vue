@@ -5,9 +5,9 @@
         <ion-refresher-content />
       </ion-refresher>
 
-      <TopBar default-href="/tabs/friends">
+      <TopBar :default-href="isMyChild ? `/profile/children/${userId}` : '/tabs/friends'">
         <template #end>
-          <ion-button class="ic-round-button" :aria-label="t('common.moreActions')" @click="openMenu">
+          <ion-button v-if="!isMyChild" class="ic-round-button" :aria-label="t('common.moreActions')" @click="openMenu">
             <ion-icon aria-hidden="true" slot="icon-only" :icon="ellipsisHorizontal" />
           </ion-button>
         </template>
@@ -125,6 +125,7 @@ import { api } from '../services/api';
 import { repo } from '../offline/repo';
 import { ideasApi } from '../services/ideas';
 import { useFriendsStore } from '../stores/friends';
+import { useActiveProfileStore } from '../stores/activeProfile';
 import { useIdeaActions } from '../composables/useIdeaActions';
 import { daysUntilBirthday, formatBirthday } from '../utils/birthday';
 import AppAvatar from '../components/AppAvatar.vue';
@@ -160,8 +161,11 @@ const { t, locale } = useI18n();
 const route = useRoute();
 const ionRouter = useIonRouter();
 const friendsStore = useFriendsStore();
+const activeProfile = useActiveProfileStore();
 
 const userId = String(route.params.id);
+/** One of my children, opened from its page (manager view, spec §11 décision 66): not a friend to remove. */
+const isMyChild = computed(() => activeProfile.children.some((c) => c.id === userId));
 const profile = ref<FriendProfile | null>(null);
 const occasion = ref<string | null>(null);
 const loaded = ref(false);
@@ -172,7 +176,8 @@ const section = (query: IdeaListQuery): Section => reactive({ query, items: [], 
 // the client only asks for the slices it lays out.
 const personal = section({ kind: 'personal', visibility: 'published' });
 const suggestions = section({ kind: 'suggestion', visibility: 'published' });
-const drafts = section({ visibility: 'private' });
+// My own drafts for them: never a managed child's drafts (GitHub #6).
+const drafts = section({ kind: 'suggestion', visibility: 'private' });
 
 const actions = useIdeaActions(() => loadAll());
 
