@@ -11,6 +11,12 @@ const queryString = (value: unknown) => (typeof value === 'string' ? value : nul
 const routes: Array<RouteRecordRaw> = [
   { path: '/', redirect: '/tabs/list' },
   { path: '/login', name: 'Login', component: () => import('../views/auth/LoginPage.vue'), meta: { guest: true } },
+  {
+    path: '/login/email',
+    name: 'EmailSignIn',
+    component: () => import('../views/auth/EmailSignInPage.vue'),
+    meta: { guest: true },
+  },
   { path: '/register', name: 'Register', component: () => import('../views/auth/RegisterPage.vue'), meta: { guest: true } },
   {
     path: '/verify-email',

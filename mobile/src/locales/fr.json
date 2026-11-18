@@ -88,7 +88,21 @@
       "forgotPassword": "Mot de passe oublié ?",
       "noAccount": "Pas encore de compte ?",
       "createAccount": "Créer un compte",
-      "orSocial": "ou"
+      "orSocial": "ou",
+      "emailLink": "Recevoir un lien de connexion par email"
+    },
+    "emailSignIn": {
+      "title": "Connexion par email",
+      "instructions": "Pas de mot de passe à retenir : recevez un lien et un code de connexion par email. Sans compte, il est créé à la première connexion.",
+      "send": "Recevoir le lien",
+      "sent": "Un email a été envoyé à {email}. Cliquez sur le lien qu'il contient, ou saisissez son code à 6 chiffres.",
+      "code": "Code reçu par email",
+      "submit": "Se connecter",
+      "resend": "Renvoyer l'email",
+      "resent": "Email renvoyé.",
+      "changeEmail": "Changer d'adresse",
+      "signingIn": "Connexion en cours…",
+      "withPassword": "Se connecter avec un mot de passe"
     },
     "register": {
       "title": "Créer un compte",
@@ -96,7 +110,8 @@
       "submit": "S'inscrire",
       "haveAccount": "Déjà un compte ?",
       "signIn": "Se connecter",
-      "success": "Compte créé. Vérifiez votre email pour continuer."
+      "success": "Compte créé. Vérifiez votre email pour continuer.",
+      "withoutPassword": "Créer un compte sans mot de passe"
     },
     "verifyEmail": {
       "title": "Vérification de l'email",

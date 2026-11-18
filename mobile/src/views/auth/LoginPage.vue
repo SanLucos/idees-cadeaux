@@ -43,6 +43,12 @@
         </div>
       </form>
 
+      <!-- Spec §11 décision 68: no password needed, a link or a code by email. -->
+      <ion-text class="ion-text-center" style="display: block; margin-top: 1.5rem;">{{ t('auth.login.orSocial') }}</ion-text>
+      <ion-button expand="block" fill="outline" class="ion-margin-top" data-testid="login-email-link" @click="emailSignIn">
+        {{ t('auth.login.emailLink') }}
+      </ion-button>
+
       <ion-text class="ion-text-center" style="display: block; margin-top: 2rem;">
         {{ t('auth.login.noAccount') }}
         <router-link to="/register">{{ t('auth.login.createAccount') }}</router-link>
@@ -92,6 +98,10 @@ const email = ref('');
 const password = ref('');
 const loading = ref(false);
 const error = ref('');
+
+function emailSignIn(): void {
+  router.push({ name: 'EmailSignIn', query: email.value.trim() ? { email: email.value.trim() } : {} });
+}
 
 async function submit(): Promise<void> {
   loading.value = true;

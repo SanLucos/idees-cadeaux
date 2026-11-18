@@ -88,7 +88,21 @@
       "forgotPassword": "Forgot your password?",
       "noAccount": "No account yet?",
       "createAccount": "Create an account",
-      "orSocial": "or"
+      "orSocial": "or",
+      "emailLink": "Get a sign-in link by email"
+    },
+    "emailSignIn": {
+      "title": "Sign in by email",
+      "instructions": "No password to remember: get a sign-in link and code by email. No account yet? It is created when you first sign in.",
+      "send": "Send the link",
+      "sent": "An email was sent to {email}. Click the link inside, or enter its 6-digit code.",
+      "code": "Code from the email",
+      "submit": "Sign in",
+      "resend": "Resend the email",
+      "resent": "Email sent again.",
+      "changeEmail": "Use another address",
+      "signingIn": "Signing in…",
+      "withPassword": "Sign in with a password"
     },
     "register": {
       "title": "Create an account",
@@ -96,7 +110,8 @@
       "submit": "Sign up",
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
-      "success": "Account created. Check your email to continue."
+      "success": "Account created. Check your email to continue.",
+      "withoutPassword": "Create an account without a password"
     },
     "verifyEmail": {
       "title": "Verify your email",

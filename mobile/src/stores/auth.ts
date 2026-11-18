@@ -7,6 +7,7 @@ import { useLocalDb } from '../offline/db';
 import { useSync } from '../offline/sync';
 import { assertCanWrite } from '../offline/onlineOnly';
 import { isWeb } from '../utils/platform';
+import { uuidv7 } from '../utils/uuidv7';
 import type { User } from '../types/user';
 
 interface LoginResponse {
@@ -68,6 +69,21 @@ export const useAuthStore = defineStore('auth', {
 
     async login(email: string, password: string): Promise<void> {
       const response = await api.post<LoginResponse>('/auth/login', { auth: false, json: { email, password } });
+      await tokenStorage.setTokens(response.token, response.refresh_token);
+      await this.fetchMe();
+    },
+
+    /** Spec §11 décision 68: an email with a code and a link carrying it, for every account. */
+    async sendSignInEmail(email: string, locale: string): Promise<void> {
+      await api.post('/auth/email-sign-in', { auth: false, json: { email, locale } });
+    },
+
+    /** Exchanges the emailed code for a long session; the first one creates the account. */
+    async emailSignIn(email: string, code: string, locale: string): Promise<void> {
+      const response = await api.post<LoginResponse>('/auth/email-sign-in/verify', {
+        auth: false,
+        json: { email, code, locale, id: uuidv7() },
+      });
       await tokenStorage.setTokens(response.token, response.refresh_token);
       await this.fetchMe();
     },

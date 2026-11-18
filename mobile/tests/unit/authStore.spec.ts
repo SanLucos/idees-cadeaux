@@ -65,6 +65,51 @@ describe('auth store', () => {
     expect(auth.user?.email).toBe('a@example.com')
   })
 
+  test('signing in with an emailed code sends a client id and opens the session (spec §11 décision 68)', async () => {
+    const bodies: Record<string, unknown> = {}
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.endsWith('/auth/email-sign-in') || url.endsWith('/auth/email-sign-in/verify')) {
+          bodies[url.endsWith('/verify') ? 'verify' : 'send'] = JSON.parse(String(init?.body))
+          return url.endsWith('/verify')
+            ? jsonResponse({
+                token: 'access-token',
+                refresh_token: 'refresh-token',
+                user: { id: '1', email: 'new@example.com', displayName: null, isOnboarded: false, locale: 'en' },
+              })
+            : jsonResponse({ status: 'sent' })
+        }
+        if (url.endsWith('/users/me')) {
+          return jsonResponse({
+            id: '1',
+            email: 'new@example.com',
+            displayName: null,
+            avatarUrl: null,
+            birthDay: null,
+            birthMonth: null,
+            birthYear: null,
+            locale: 'en',
+            isOnboarded: false,
+            emailVerified: true,
+          })
+        }
+        throw new Error(`unexpected request: ${url}`)
+      }),
+    )
+
+    const auth = useAuthStore()
+    await auth.sendSignInEmail('new@example.com', 'en')
+    expect(bodies.send).toEqual({ email: 'new@example.com', locale: 'en' })
+    expect(auth.isAuthenticated).toBe(false)
+
+    await auth.emailSignIn('new@example.com', '123456', 'en')
+    expect(bodies.verify).toMatchObject({ email: 'new@example.com', code: '123456', locale: 'en' })
+    expect((bodies.verify as { id: string }).id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(auth.isAuthenticated).toBe(true)
+    expect(auth.user?.isOnboarded).toBe(false)
+  })
+
   test('a failed login leaves the store unauthenticated', async () => {
     vi.stubGlobal(
       'fetch',

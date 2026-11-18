@@ -43,6 +43,11 @@
         </p>
       </form>
 
+      <!-- Spec §11 décision 68: an account without a password, by email link. -->
+      <ion-button expand="block" fill="outline" class="ion-margin-top" data-testid="register-without-password" @click="withoutPassword">
+        {{ t('auth.register.withoutPassword') }}
+      </ion-button>
+
       <ion-text class="ion-text-center" style="display: block; margin-top: 2rem;">
         {{ t('auth.register.haveAccount') }}
         <router-link to="/login">{{ t('auth.register.signIn') }}</router-link>
@@ -69,6 +74,10 @@ const email = ref('');
 const password = ref('');
 const loading = ref(false);
 const error = ref('');
+
+function withoutPassword(): void {
+  router.push({ name: 'EmailSignIn', query: email.value.trim() ? { email: email.value.trim() } : {} });
+}
 
 async function submit(): Promise<void> {
   loading.value = true;
