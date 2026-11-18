@@ -96,6 +96,43 @@ final class ManagedProfileVisibilityTest extends AuthTestCase
         $this->expect(404, $this->hugo, 'GET', "/api/ideas/{$draft['id']}");
     }
 
+    /**
+     * GitHub #6: a manager who wrote a suggestion for their child still
+     * owns it while managing the child's list (acting as the child), in
+     * the API and in /sync; they change it in their own name.
+     */
+    public function testTheManagersOwnSuggestionStaysTheirsWhileActingAsTheChild(): void
+    {
+        $mine = $this->expect(201, $this->manager, 'POST', '/api/ideas', ['title' => 'Trottinette', 'ownerId' => $this->jules]);
+        $myDraft = $this->expect(201, $this->manager, 'POST', '/api/ideas', ['title' => 'Brouillon', 'ownerId' => $this->jules, 'visibility' => 'private']);
+        $hugos = $this->expect(201, $this->hugo, 'POST', '/api/ideas', ['title' => 'Vélo', 'ownerId' => $this->jules]);
+        $childs = $this->expect(201, $this->manager, 'POST', '/api/ideas', ['title' => 'Lego'], $this->jules);
+
+        foreach ([null, $this->jules] as $actingAs) {
+            $read = $this->expect(200, $this->manager, 'GET', "/api/ideas/{$mine['id']}", null, $actingAs);
+            self::assertTrue($read['isMine']);
+            self::assertTrue($read['canEdit']);
+            self::assertTrue($read['canMarkGifted']);
+            self::assertTrue($this->expect(200, $this->manager, 'GET', "/api/ideas/{$myDraft['id']}", null, $actingAs)['canEdit']);
+            $other = $this->expect(200, $this->manager, 'GET', "/api/ideas/{$hugos['id']}", null, $actingAs);
+            self::assertFalse($other['isMine'], 'another friend\'s suggestion is never the manager\'s');
+            self::assertFalse($other['canEdit']);
+        }
+        self::assertTrue($this->expect(200, $this->manager, 'GET', "/api/ideas/{$childs['id']}", null, $this->jules)['canEdit']);
+
+        // /sync computes the child's list from the child's side, but the manager's suggestions stay theirs.
+        $docs = array_column($this->expect(200, $this->manager, 'POST', '/api/sync', [])['changes']['idea'], null, 'title');
+        self::assertTrue($docs['Trottinette']['canEdit']);
+        self::assertTrue($docs['Trottinette']['isMine']);
+        self::assertTrue($docs['Brouillon']['isMine']);
+        self::assertFalse($docs['Vélo']['canEdit']);
+        self::assertTrue($docs['Lego']['canEdit']);
+
+        // Changed in the manager's own name; never in the child's (spec §11 décision 25).
+        $this->expect(200, $this->manager, 'PATCH', "/api/ideas/{$mine['id']}", ['title' => 'Trottinette rouge']);
+        $this->expect(403, $this->manager, 'PATCH', "/api/ideas/{$mine['id']}", ['title' => 'x'], $this->jules);
+    }
+
     public function testTheManagerViewIsGrantedToTheManagerAlone(): void
     {
         $this->expect(201, $this->manager, 'POST', '/api/ideas', ['title' => 'Draft', 'visibility' => 'private'], $this->jules);

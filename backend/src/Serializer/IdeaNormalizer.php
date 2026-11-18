@@ -122,18 +122,23 @@ final class IdeaNormalizer
     }
 
     /**
+     * `$viewer` is the manager or the child they act as; `$human`, the
+     * adult behind it (by default from the acting context). A suggestion
+     * the adult wrote is theirs either way: they change it in their own
+     * name (spec §11 décision 25), never the child's.
+     *
      * @param Idea[] $ideas all on one managed profile's list
      *
      * @return list<array<string, mixed>>
      */
-    public function normalizeManyForManager(array $ideas, User $viewer): array
+    public function normalizeManyForManager(array $ideas, User $viewer, ?User $human = null): array
     {
-        $human = IdeaAccess::humanBehind($viewer);
+        $human ??= IdeaAccess::humanBehind($viewer);
         $interactions = $this->interactions->summarize($ideas, $human);
 
-        return array_values(array_map(function (Idea $idea) use ($viewer, $interactions): array {
+        return array_values(array_map(function (Idea $idea) use ($viewer, $human, $interactions): array {
             $author = $idea->getAuthor();
-            $isMine = $author === $viewer;
+            $isMine = $author === $viewer || ($idea->isSuggestion() && $author === $human);
 
             return array_merge(
                 $this->publicFields($idea) + [
@@ -146,7 +151,7 @@ final class IdeaNormalizer
                         'avatarUrl' => $this->url($author->getAvatarPath()),
                     ],
                     'canEdit' => $isMine,
-                    'canUnarchive' => $idea->isArchived() && $idea->getArchivedBy() === $viewer,
+                    'canUnarchive' => $idea->isArchived() && \in_array($idea->getArchivedBy(), [$viewer, $human], true),
                 ],
                 ['canMarkGifted' => $isMine && $idea->isSuggestion() && !$idea->isArchived()],
                 $interactions[$idea->getId()->toRfc4122()] ?? [],

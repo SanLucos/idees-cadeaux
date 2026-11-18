@@ -236,13 +236,14 @@ final class SyncService
         ];
         // A child's list is only edited while acting as the child (X-Acting-As):
         // compute canEdit / isMine from the child's side, exactly as the API
-        // answers when acting. Interactions stay the manager's (humanBehind).
+        // answers when acting. Interactions, and the suggestions the manager
+        // wrote, stay the manager's own.
         $byChild = [];
         foreach ($managed as $idea) {
             $byChild[$idea->getOwner()->getId()->toRfc4122()][] = $idea;
         }
         foreach ($byChild as $ideasOfChild) {
-            array_push($docs, ...$this->ideaNormalizer->normalizeManyForManager($ideasOfChild, $ideasOfChild[0]->getOwner()));
+            array_push($docs, ...$this->ideaNormalizer->normalizeManyForManager($ideasOfChild, $ideasOfChild[0]->getOwner(), $me));
         }
 
         return array_map(static fn (array $d) => $d + ['_version' => $entries[$d['id']]['version']], $docs);
