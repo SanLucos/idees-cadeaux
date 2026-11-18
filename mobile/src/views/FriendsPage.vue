@@ -6,7 +6,7 @@
       </ion-refresher>
 
       <ScreenHeader>
-        <template #kicker><ProfileGreeting /></template>
+        <template v-if="activeProfile.active" #kicker>{{ t('acting.friendsOf', { name: activeProfile.active.displayName }) }}</template>
         {{ t('friends.title') }}
         <template #end>
           <ion-button class="ic-round-button" :aria-label="t('friends.add_screen.title')" router-link="/tabs/friends/add">
@@ -157,7 +157,6 @@ import { useLocalRefresh } from '../composables/useLocalRefresh';
 import AppAvatar from '../components/AppAvatar.vue';
 import EmptyState from '../components/EmptyState.vue';
 import MyGiftsLink from '../components/MyGiftsLink.vue';
-import ProfileGreeting from '../components/ProfileGreeting.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import { daysUntilBirthday, formatBirthday, UPCOMING_BIRTHDAY_DAYS } from '../utils/birthday';

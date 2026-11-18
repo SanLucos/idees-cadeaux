@@ -1,12 +1,9 @@
 <template>
   <ion-page>
     <ion-content>
-      <ScreenHeader>
-        <template #kicker><ProfileGreeting /></template>
-        {{ t('profile.title') }}
-      </ScreenHeader>
+      <ScreenHeader>{{ t('profile.title') }}</ScreenHeader>
 
-      <!-- Profil actif (Profil.png): me or one of my children (spec §5.15). -->
+      <!-- Profil actif (Profil.png): me or one of my children (spec §5.15), here only (spec §11 décision 64). -->
       <button v-if="canSwitch" type="button" class="ic-card switcher" @click="chooseProfile">
         <AppAvatar :id="current.id" :name="current.name" :url="current.avatarUrl" :size="32" :primary="!activeProfile.isActing" />
         <span class="switcher__label">
@@ -138,7 +135,6 @@ import { formatBirthday } from '../utils/birthday';
 import AppAvatar from '../components/AppAvatar.vue';
 import ProfilePreferencesSection from '../components/ProfilePreferencesSection.vue';
 import ProfileSizesSection from '../components/ProfileSizesSection.vue';
-import ProfileGreeting from '../components/ProfileGreeting.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import type { ManagedProfile, ManagerInvitation } from '../types/user';

@@ -19,8 +19,8 @@ export interface ProfileChoice {
 
 /**
  * The « Profil actif » choice (spec §5.15, §11 décision 64): me or one
- * of my children, from the greeting of any tab or from the Profil screen,
- * in a menu that opens right under what was tapped.
+ * of my children, from the Profil screen only, in a menu that opens
+ * right under what was tapped.
  */
 export function useProfileSwitcher() {
   const { t } = useI18n();

@@ -1,7 +1,8 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import ProfileGreeting from '@/components/ProfileGreeting.vue'
+import { defineComponent, h } from 'vue'
+import { useProfileSwitcher } from '@/composables/useProfileSwitcher'
 import { i18n } from '@/i18n'
 import { useActiveProfileStore } from '@/stores/activeProfile'
 import { useAuthStore } from '@/stores/auth'
@@ -44,7 +45,8 @@ describe('profileTint', () => {
   })
 })
 
-describe('ProfileGreeting', () => {
+// The « Profil actif » choice, now on the Profil tab only (spec §11 décision 64).
+describe('useProfileSwitcher', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     create.mockReset().mockImplementation(async () => ({ present: vi.fn(), onDidDismiss: async () => dismissWith.value }))
@@ -53,28 +55,34 @@ describe('ProfileGreeting', () => {
     useAuthStore().user = { id: ME, displayName: 'Luc' } as never
   })
 
-  const mountGreeting = () => mount(ProfileGreeting, { global: { plugins: [i18n] } })
+  // A stand-in for the Profil tab's switcher button.
+  const Switcher = defineComponent(() => {
+    const { canSwitch, currentName, choose } = useProfileSwitcher()
 
-  test('greets me, as plain text when I manage no child', () => {
+    return () => (canSwitch.value ? h('button', { type: 'button', onClick: choose }, currentName.value) : h('span', currentName.value))
+  })
+  const mountGreeting = () => mount(Switcher, { global: { plugins: [i18n] } })
+
+  test('offers no choice when I manage no child', () => {
     const wrapper = mountGreeting()
 
-    expect(wrapper.text()).toBe('Bonjour Luc')
+    expect(wrapper.text()).toBe('Luc')
     expect(wrapper.find('button').exists()).toBe(false)
   })
 
-  test('greets the active child and switches profile from the menu under the greeting', async () => {
+  test('switches profile from the menu under the switcher', async () => {
     const active = useActiveProfileStore()
     active.children = [child(LEA, 'Léa'), child(TOM, 'Tom'), child('0190a1b2-0000-7000-8000-0000000c0003', 'Zoé', '2026-11-20T00:00:00+00:00')]
     active.activeId = LEA
     const wrapper = mountGreeting()
 
-    expect(wrapper.text()).toBe('Bonjour Léa')
+    expect(wrapper.text()).toBe('Léa')
     dismissWith.value = { role: 'select', data: { id: TOM } }
     await wrapper.find('button').trigger('click')
     await flushPromises()
 
     const options = create.mock.calls[0][0] as { event?: { target: Element }; side: string; componentProps: { profiles: { id: string | null; name: string; current: boolean; tintColor: string }[] } }
-    // Anchored under the greeting.
+    // Anchored under the switcher.
     expect(options.event?.target).toBe(wrapper.find('button').element)
     expect(options.side).toBe('bottom')
     // Me, then the children I can act for (not one about to be deleted), each with its background.
@@ -85,7 +93,7 @@ describe('ProfileGreeting', () => {
     ])
 
     expect(active.activeId).toBe(TOM)
-    expect(wrapper.text()).toBe('Bonjour Tom')
+    expect(wrapper.text()).toBe('Tom')
   })
 
   test('closing the menu keeps the active profile', async () => {

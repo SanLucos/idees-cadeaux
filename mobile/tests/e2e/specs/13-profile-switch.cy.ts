@@ -1,6 +1,6 @@
-/** Spec §11 décision 64: whose app this is, on every tab, and switching from there. */
+/** Spec §11 décision 64 (révisée) : the active profile is switched from the Profil tab only. */
 describe('Profile switch', () => {
-  it('greets the active profile on every tab, tints the background and switches from the greeting', () => {
+  it('switches from the Profil tab only, tints the background and says whose list it is', () => {
     cy.createUser('Luc').then((luc) => {
       cy.loginUi(luc);
       cy.visit('/profile/children/new');
@@ -9,30 +9,35 @@ describe('Profile switch', () => {
       cy.tap('Créer le profil', 'ion-button');
       cy.location('pathname').should('match', /^\/profile\/children\/[0-9a-f-]{36}$/);
 
-      // From the Amis tab: « Bonjour Luc » opens the profile menu right under it.
+      // No switcher on the other tabs.
       cy.visit('/tabs/friends');
-      cy.get('.profile-greeting--switch').should('contain.text', 'Bonjour Luc');
-      cy.get('html').should('not.have.attr', 'data-profile-tint');
-      cy.get('.profile-greeting--switch:visible').click();
+      cy.see('Mes amis');
+      cy.get('.switcher:visible, .profile-greeting:visible').should('not.exist');
+      cy.visit('/tabs/list');
+      cy.see('Bonjour Luc');
+      cy.get('.switcher:visible, .profile-greeting:visible').should('not.exist');
+
+      // From the Profil tab: the menu opens right under the switcher.
+      cy.visit('/tabs/profile');
+      cy.get('.switcher:visible').should('contain.text', 'Luc').click();
       cy.get('ion-popover.ic-profile-menu').should('be.visible').contains('ion-item', 'Luc');
       cy.audit('profile menu');
       cy.get('ion-popover.ic-profile-menu').contains('ion-item', 'Jules').click();
       cy.get('ion-popover.ic-profile-menu').should('not.exist');
-
-      cy.get('.profile-greeting--switch:visible').should('contain.text', 'Bonjour Jules');
+      cy.get('.switcher:visible').should('contain.text', 'Jules');
       cy.get('html').should('have.attr', 'data-profile-tint', '0');
 
-      // Still Jules on the other tabs.
-      cy.visit('/tabs/activity');
-      cy.get('.profile-greeting--switch:visible').should('contain.text', 'Bonjour Jules');
-      cy.audit('activity, acting as a child');
+      // Still Jules on the other tabs, said in plain text.
       cy.visit('/tabs/list');
-      cy.get('.profile-greeting--switch:visible').should('contain.text', 'Bonjour Jules');
+      cy.see('Liste de Jules');
+      cy.audit('my list, acting as a child');
+      cy.visit('/tabs/friends');
+      cy.see('Amis de Jules');
 
-      // Back to me from Ma liste.
-      cy.get('.profile-greeting--switch:visible').click();
-      cy.get('ion-popover.ic-profile-menu').should('be.visible').contains('ion-item', 'Luc').click();
-      cy.get('.profile-greeting--switch:visible').should('contain.text', 'Bonjour Luc');
+      // Back to me, from the Profil tab.
+      cy.visit('/tabs/profile');
+      cy.tap('Revenir à mon profil', 'ion-button');
+      cy.get('.switcher:visible').should('contain.text', 'Luc');
       cy.get('html').should('not.have.attr', 'data-profile-tint');
     });
   });
