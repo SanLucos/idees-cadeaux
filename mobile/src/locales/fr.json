@@ -59,6 +59,7 @@
     "ideaCount": "aucune idée | {count} idée | {count} idées",
     "birthdayOn": "anniversaire le {date}",
     "viaFriends": "via vos amis",
+    "yourChild": "votre enfant",
     "childOf": "enfant de {name}",
     "suggestedBy": "suggéré par {names}",
     "suggestions": {

@@ -84,9 +84,20 @@
         </div>
       </template>
 
-      <SectionTitle>{{ t('friends.friendsTitle', { count: store.friends.length }) }}</SectionTitle>
-      <EmptyState v-if="!store.friends.length" :icon="peopleOutline">{{ t('friends.empty.friends') }}</EmptyState>
+      <SectionTitle>{{ t('friends.friendsTitle', { count: myChildren.length + store.friends.length }) }}</SectionTitle>
+      <EmptyState v-if="!myChildren.length && !store.friends.length" :icon="peopleOutline">{{ t('friends.empty.friends') }}</EmptyState>
       <ion-list v-else class="ic-card-list" lines="inset">
+        <!-- Spec §11 décision 67: my children, first, opening their list as myself (décision 66). -->
+        <ion-item v-for="c in myChildren" :key="c.id" :router-link="`/tabs/friends/${c.id}`" button detail data-cy="my-child">
+          <AppAvatar slot="start" :id="c.id" :name="c.displayName" :url="c.avatarUrl" :size="48" />
+          <ion-label>
+            <div class="name">{{ c.displayName }}</div>
+            <p>{{ childSubtitle(c) }}</p>
+          </ion-label>
+          <span v-if="upcomingOn(c.birthDay, c.birthMonth) !== null" slot="end" class="birthday-pill">
+            <ion-icon :icon="calendarOutline" aria-hidden="true" />{{ t('friends.daysBefore', { days: upcomingOn(c.birthDay, c.birthMonth) }) }}
+          </span>
+        </ion-item>
         <ion-item v-for="f in store.friends" :key="f.id" :router-link="`/tabs/friends/${f.user.id}`" button detail>
           <AppAvatar slot="start" :id="f.user.id" :name="f.user.displayName" :url="f.user.avatarUrl" :size="48" />
           <ion-label>
@@ -119,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { bookOutline, calendarOutline, linkOutline, mailOutline, peopleOutline, personAddOutline } from 'ionicons/icons';
 import {
@@ -151,6 +162,7 @@ import ScreenHeader from '../components/ScreenHeader.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import { daysUntilBirthday, formatBirthday, UPCOMING_BIRTHDAY_DAYS } from '../utils/birthday';
 import type { Friendship } from '../types/friendship';
+import type { ManagedProfile } from '../types/user';
 
 const { t, locale } = useI18n();
 const store = useFriendsStore();
@@ -202,8 +214,29 @@ async function answer(action: () => Promise<void>, done?: string): Promise<void>
   }
 }
 
+/**
+ * Spec §11 décision 67: the children I manage show among my friends —
+ * a display only, no friendship (I read their list as its manager).
+ * Not while acting as one: the list is then that child's friends.
+ */
+const myChildren = computed<ManagedProfile[]>(() =>
+  activeProfile.active
+    ? []
+    : activeProfile.children.filter((c) => !c.deletionScheduledAt && !store.friends.some((f) => f.user.id === c.id)),
+);
+
+function childSubtitle(c: ManagedProfile): string {
+  const parts = [t('friends.yourChild'), t('friends.ideaCount', { count: c.ideaCount }, c.ideaCount)];
+  if (c.birthDay && c.birthMonth) parts.push(t('friends.birthdayOn', { date: formatBirthday(c.birthDay, c.birthMonth, locale.value) }));
+
+  return parts.join(' · ');
+}
+
 function upcoming(f: Friendship): number | null {
-  const { birthDay, birthMonth } = f.user;
+  return upcomingOn(f.user.birthDay, f.user.birthMonth);
+}
+
+function upcomingOn(birthDay: number | null | undefined, birthMonth: number | null | undefined): number | null {
   if (!birthDay || !birthMonth) return null;
   const days = daysUntilBirthday(birthDay, birthMonth);
 
