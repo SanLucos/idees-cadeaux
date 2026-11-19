@@ -98,7 +98,7 @@
             <ion-icon :icon="calendarOutline" aria-hidden="true" />{{ t('friends.daysBefore', { days: upcomingOn(c.birthDay, c.birthMonth) }) }}
           </span>
         </ion-item>
-        <ion-item v-for="f in store.friends" :key="f.id" :router-link="`/tabs/friends/${f.user.id}`" button detail>
+        <ion-item v-for="f in sortedFriends" :key="f.id" :router-link="`/tabs/friends/${f.user.id}`" button detail>
           <AppAvatar slot="start" :id="f.user.id" :name="f.user.displayName" :url="f.user.avatarUrl" :size="48" />
           <ion-label>
             <div class="name">{{ f.user.displayName }}</div>
@@ -148,7 +148,7 @@ import {
 } from '@ionic/vue';
 import { useFriendSuggestionsStore } from '../stores/friendSuggestions';
 import { useErrorMessage } from '../composables/useErrorMessage';
-import { joinNames } from '../utils/names';
+import { compareNames, joinNames } from '../utils/names';
 import type { ReceivedFriendSuggestion } from '../types/friendSuggestion';
 import { useFriendsStore } from '../stores/friends';
 import { isWeb } from '../utils/platform';
@@ -221,7 +221,14 @@ async function answer(action: () => Promise<void>, done?: string): Promise<void>
 const myChildren = computed<ManagedProfile[]>(() =>
   activeProfile.active
     ? []
-    : activeProfile.children.filter((c) => !c.deletionScheduledAt && !store.friends.some((f) => f.user.id === c.id)),
+    : activeProfile.children
+        .filter((c) => !c.deletionScheduledAt && !store.friends.some((f) => f.user.id === c.id))
+        .sort((a, b) => compareNames(a.displayName, b.displayName, locale.value)),
+);
+
+/** Friends in alphabetical order, after my children. */
+const sortedFriends = computed<Friendship[]>(() =>
+  [...store.friends].sort((a, b) => compareNames(a.user.displayName, b.user.displayName, locale.value)),
 );
 
 function childSubtitle(c: ManagedProfile): string {
