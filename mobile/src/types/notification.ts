@@ -54,7 +54,9 @@ export interface AppNotification {
   payload: {
     actor?: Person;
     friend?: Person;
+    /** The idea's first recipient; `recipients` names them all (décision 69). */
     owner?: Person;
+    recipients?: Person[];
     subject?: Person;
     /** Manager invitations (spec §11 décision 60): the child concerned. */
     child?: Person;

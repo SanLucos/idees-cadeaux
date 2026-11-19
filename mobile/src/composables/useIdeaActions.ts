@@ -42,6 +42,8 @@ export function useIdeaActions(onChange: (change: IdeaChange) => void) {
   const isOwnerView = (idea: Idea) => 'owner' === idea.view;
   /** A personal idea its owner (or their manager, acting) may mark « reçue ». */
   const canMarkReceived = (idea: Idea) => !idea.isSuggestion && idea.canEdit && 'active' === idea.status;
+  /** `isMine` absent: a document synced before lot 15, always the author's then. */
+  const canPublish = (idea: Idea) => false !== idea.isMine;
   // Author, reserver or contribution initiator (spec §5.4): the server decides.
   const canMarkGifted = (idea: Idea) => !isOwnerView(idea) && !!idea.canMarkGifted;
 
@@ -100,6 +102,9 @@ export function useIdeaActions(onChange: (change: IdeaChange) => void) {
 
     if (idea.canEdit) {
       buttons.push({ text: t('ideas.actions.edit'), handler: () => ionRouter.push(`/ideas/${idea.id}/edit`) });
+    }
+    // Publishing is the author's (décision 69): another recipient of a shared idea edits it, no more.
+    if (idea.canEdit && canPublish(idea)) {
       buttons.push(
         'private' === idea.visibility
           ? { text: t('ideas.actions.publish'), handler: () => void publish(idea) }
@@ -124,5 +129,5 @@ export function useIdeaActions(onChange: (change: IdeaChange) => void) {
     await sheet.present();
   }
 
-  return { openSheet, publish, unpublish, remove, archive, unarchive, canMarkGifted, canMarkReceived };
+  return { openSheet, publish, unpublish, remove, archive, unarchive, canMarkGifted, canMarkReceived, canPublish };
 }

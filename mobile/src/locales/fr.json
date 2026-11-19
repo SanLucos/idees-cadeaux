@@ -502,7 +502,8 @@
     "deleteConfirm": {
       "title": "Supprimer cette idée ?",
       "message": "« {title} » sera supprimée définitivement."
-    }
+    },
+    "forNames": "Pour {name}"
   },
   "friendList": {
     "sizesAndTastes": "Tailles et goûts",
@@ -524,7 +525,8 @@
     "intro": "Vos brouillons ne sont visibles que de vous. Publiez-les quand vous voulez.",
     "forMe": "Pour moi",
     "forFriend": "Pour {name}",
-    "empty": "Aucun brouillon pour le moment."
+    "empty": "Aucun brouillon pour le moment.",
+    "meInList": "moi"
   },
   "ideaForm": {
     "editTitle": "Modifier l'idée",
@@ -571,7 +573,12 @@
         "image": "image",
         "price": "prix"
       }
-    }
+    },
+    "several": "Plusieurs personnes",
+    "severalHint": "Une seule idée pour tous : réservée chez l'un, elle l'est chez tous.",
+    "publishedHintShared": "Sur la liste de {name}, visible de leurs amis.",
+    "publishedHintSharedSuggestion": "Visible des amis de {name}. Jamais d'aucun d'eux.",
+    "recipientsLocked": "Pour {name}. Pour changer les destinataires, repassez l'idée en brouillon."
   },
   "secret": {
     "zoneTitle": "Entre amis · invisible pour {name}"

@@ -115,6 +115,8 @@ import { useFriendsStore } from '../stores/friends';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { formatPrice } from '../utils/price';
+import { joinNames } from '../utils/names';
+import { recipientsOf } from '../utils/recipients';
 import AppAvatar from '../components/AppAvatar.vue';
 import ContributionProgress from '../components/ContributionProgress.vue';
 import EmptyState from '../components/EmptyState.vue';
@@ -138,9 +140,13 @@ const amountInput = ref<InstanceType<typeof IonInput>>();
 
 const isOpen = computed(() => 'open' === contribution.value?.status);
 const canPledge = computed(() => 'active' === contribution.value?.idea?.status);
-const ownerName = computed(
-  () => friendsStore.friends.find((f) => f.user.id === contribution.value?.idea?.ownerId)?.user.displayName ?? '',
-);
+// Every recipient of the idea (décision 69), by the name I know them by.
+const ownerName = computed(() => {
+  const idea = contribution.value?.idea;
+  if (!idea) return '';
+
+  return joinNames(recipientsOf(idea).map((r) => friendsStore.friends.find((f) => f.user.id === r.id)?.user.displayName ?? r.displayName), locale.value);
+});
 
 const money = (value: string | null) => formatPrice(value, contribution.value?.currency ?? 'EUR', locale.value) ?? '';
 

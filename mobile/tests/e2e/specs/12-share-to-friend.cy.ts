@@ -21,10 +21,10 @@ describe('Share to the app', () => {
         // Issue #7: back on Hugo's list, where the suggestion now is.
         cy.location('pathname').should('eq', `/tabs/friends/${hugo.id}`);
         cy.see('Platine vinyle');
-        cy.apiAs(luc, 'GET', `/users/${hugo.id}/ideas?kind=suggestion`).its('body.member').should((ideas: { id: string; title: string; ownerId: string; isSuggestion: boolean }[]) => {
+        cy.apiAs(luc, 'GET', `/users/${hugo.id}/ideas?kind=suggestion`).its('body.member').should((ideas: { id: string; title: string; recipients: { id: string }[]; isSuggestion: boolean }[]) => {
           expect(ideas).to.have.length(1);
           expect(ideas[0].title).to.equal('Platine vinyle');
-          expect(ideas[0].ownerId).to.equal(hugo.id);
+          expect(ideas[0].recipients.map((r) => r.id)).to.deep.equal([hugo.id]);
           expect(ideas[0].isSuggestion).to.equal(true);
         }).then((ideas) => {
           // The golden rule: Hugo never sees it.

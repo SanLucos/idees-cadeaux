@@ -502,7 +502,8 @@
     "deleteConfirm": {
       "title": "Delete this idea?",
       "message": "“{title}” will be deleted for good."
-    }
+    },
+    "forNames": "For {name}"
   },
   "friendList": {
     "sizesAndTastes": "Sizes and tastes",
@@ -524,7 +525,8 @@
     "intro": "Your drafts are visible to you only. Publish them whenever you like.",
     "forMe": "For me",
     "forFriend": "For {name}",
-    "empty": "No drafts for now."
+    "empty": "No drafts for now.",
+    "meInList": "me"
   },
   "ideaForm": {
     "editTitle": "Edit idea",
@@ -571,7 +573,12 @@
         "image": "image",
         "price": "price"
       }
-    }
+    },
+    "several": "Several people",
+    "severalHint": "One idea for all of them: reserved for one, it is reserved for all.",
+    "publishedHintShared": "On the lists of {name}, visible to their friends.",
+    "publishedHintSharedSuggestion": "Visible to the friends of {name}. Never to any of them.",
+    "recipientsLocked": "For {name}. To change who it is for, turn the idea back into a draft."
   },
   "secret": {
     "zoneTitle": "Between friends · invisible to {name}"

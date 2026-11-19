@@ -66,7 +66,12 @@ export interface Comment {
  */
 export interface Idea {
   id: string;
-  ownerId: string;
+  /**
+   * Who the idea is for (spec §11 décision 69): one person, or several
+   * for a shared idea. Each of them is its owner. Read it through
+   * utils/recipients (documents synced before lot 15 had `ownerId`).
+   */
+  recipients: PersonRef[];
   title: string;
   url: string | null;
   priceAmount: string | null;
@@ -87,6 +92,7 @@ export interface Idea {
   canEdit: boolean;
   canUnarchive: boolean;
   isSuggestion?: boolean;
+  /** I wrote it: in the owner view, whether I may publish it or change its recipients. */
   isMine?: boolean;
   author?: IdeaAuthor;
   canMarkGifted?: boolean;
@@ -101,9 +107,8 @@ export interface Idea {
   canReact?: boolean;
 }
 
-export interface PrivateIdea extends Idea {
-  recipient: { id: string; displayName: string | null };
-}
+/** A draft of mine, on the « Privées » screen, grouped by its recipients. */
+export type PrivateIdea = Idea;
 
 /**
  * « Mes cadeaux pour mes amis » (spec §11 décision 62): an idea of a
@@ -112,12 +117,21 @@ export interface PrivateIdea extends Idea {
  */
 export type MyGiftKind = 'reserved' | 'contribution' | 'given';
 
+export interface MyGiftPerson {
+  id: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  birthDay: number | null;
+  birthMonth: number | null;
+}
+
 export interface MyGift {
   idea: Idea;
   kind: MyGiftKind;
   /** How I took part: kept for a given gift, to say how it was offered. */
   via: 'reservation' | 'contribution';
-  recipient: { id: string; displayName: string | null; avatarUrl: string | null; birthDay: number | null; birthMonth: number | null };
+  /** Who it's for: several people for a shared idea (décision 69). */
+  recipients: MyGiftPerson[];
 }
 
 export interface IdeaPage {
@@ -143,7 +157,8 @@ export interface IdeaListQuery {
 
 export interface IdeaInput {
   id?: string;
-  ownerId?: string;
+  /** Who it's for (décision 69); me when absent. Only changes while the idea is private. */
+  recipientIds?: string[];
   title: string;
   url: string | null;
   priceAmount: string | null;

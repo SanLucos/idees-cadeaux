@@ -56,7 +56,7 @@ describe('X-Acting-As', () => {
 
     const [create, reserve] = db.outbox
     expect(create.actingAs).toBe(CHILD)
-    expect((create.body as { ownerId: string }).ownerId).toBe(CHILD)
+    expect((create.body as { recipientIds: string[] }).recipientIds).toEqual([CHILD])
     expect(reserve.actingAs).toBeNull()
   })
 

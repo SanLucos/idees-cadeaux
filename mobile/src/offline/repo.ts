@@ -4,6 +4,7 @@ import type { Friendship } from '../types/friendship';
 import type { ManagedProfile, User } from '../types/user';
 import type { ProfilePreference, ProfileSize } from '../types/profile';
 import type { AppNotification } from '../types/notification';
+import { isFor, recipientsOf } from '../utils/recipients';
 
 /**
  * Reads for the screens, from the device's synced documents (spec §8:
@@ -12,9 +13,12 @@ import type { AppNotification } from '../types/notification';
  * already are the API's views: nothing here decides visibility.
  */
 export const repo = {
-  /** Ideas on `ownerId`'s list as synced — the owner, friend or manager view the server chose. */
+  /**
+   * Ideas on `ownerId`'s list as synced — every idea they're a recipient
+   * of (décision 69), in the owner, friend or manager view the server chose.
+   */
   ideas(ownerId: string, query: IdeaListQuery): IdeaPage {
-    const all = useLocalDb().all<Idea>('idea').filter((i) => i.ownerId === ownerId);
+    const all = useLocalDb().all<Idea>('idea').filter((i) => isFor(i, ownerId));
     const status = query.status ?? 'active';
 
     let list = all.filter((i) => i.status === status);
@@ -57,20 +61,17 @@ export const repo = {
   },
 
   /**
-   * « Privées »: every draft I wrote, with its recipient — my
+   * « Privées »: every draft I wrote, with its recipients — my
    * suggestions for my children included (manager view). While managing
    * a child (`childId`), that child's own drafts.
    */
   privateIdeas(myId: string, childId: string | null = null): PrivateIdea[] {
-    const db = useLocalDb();
-    const drafts = db.all<Idea>('idea').filter((i) => 'private' === i.visibility && 'active' === i.status);
+    const drafts = useLocalDb().all<Idea>('idea').filter((i) => 'private' === i.visibility && 'active' === i.status);
     const mine = null !== childId
-      ? drafts.filter((i) => i.ownerId === childId && i.isMine && !i.isSuggestion)
-      : drafts.filter((i) => ('owner' === i.view && i.ownerId === myId) || (('friend' === i.view || ('manager' === i.view && i.isSuggestion)) && i.isMine));
+      ? drafts.filter((i) => isFor(i, childId) && i.isMine && !i.isSuggestion)
+      : drafts.filter((i) => ('owner' === i.view && isFor(i, myId)) || (('friend' === i.view || ('manager' === i.view && i.isSuggestion)) && i.isMine));
 
-    return mine
-      .sort(comparator('recent'))
-      .map((i) => ({ ...i, recipient: { id: i.ownerId, displayName: db.get<User>('user', i.ownerId)?.displayName ?? null } }));
+    return mine.sort(comparator('recent'));
   },
 
   /**
@@ -90,18 +91,22 @@ export const repo = {
       const via = idea.reservation?.isMine ? 'reservation' : contributed ? 'contribution' : null;
       if (null === via) continue;
 
-      const person = db.get<User>('user', idea.ownerId) ?? db.get<ManagedProfile>('managed_profile', idea.ownerId);
       gifts.push({
         idea,
         via,
         kind: 'archived' === idea.status ? 'given' : 'reservation' === via ? 'reserved' : 'contribution',
-        recipient: {
-          id: idea.ownerId,
-          displayName: person?.displayName ?? null,
-          avatarUrl: person?.avatarUrl ?? null,
-          birthDay: person?.birthDay ?? null,
-          birthMonth: person?.birthMonth ?? null,
-        },
+        // A co-recipient who isn't my friend has no profile here: the idea's own names, no birthday.
+        recipients: recipientsOf(idea).map((r) => {
+          const person = db.get<User>('user', r.id) ?? db.get<ManagedProfile>('managed_profile', r.id);
+
+          return {
+            id: r.id,
+            displayName: person?.displayName ?? r.displayName,
+            avatarUrl: person?.avatarUrl ?? r.avatarUrl,
+            birthDay: person?.birthDay ?? null,
+            birthMonth: person?.birthMonth ?? null,
+          };
+        }),
       });
     }
     const date = (g: MyGift) => g.idea.archivedAt ?? g.idea.createdAt;
@@ -133,7 +138,8 @@ export const repo = {
     const mine = db.all<Friendship & { profileId: string }>('friendship').filter((f) => f.profileId === profileId);
     const ideaCounts = new Map<string, number>();
     for (const idea of db.all<Idea>('idea')) {
-      if ('published' === idea.visibility && 'active' === idea.status) ideaCounts.set(idea.ownerId, (ideaCounts.get(idea.ownerId) ?? 0) + 1);
+      if ('published' !== idea.visibility || 'active' !== idea.status) continue;
+      for (const r of recipientsOf(idea)) ideaCounts.set(r.id, (ideaCounts.get(r.id) ?? 0) + 1);
     }
     const byDate = (a: Friendship, b: Friendship) => (b.respondedAt ?? b.createdAt).localeCompare(a.respondedAt ?? a.createdAt);
 

@@ -13,6 +13,9 @@
             <span>{{ t('ideas.visibleToYouOnly') }}</span>
           </template>
         </div>
+        <div v-if="sharedWith" class="idea-card__for">
+          <ion-icon :icon="peopleOutline" aria-hidden="true" />{{ t('ideas.forNames', { name: sharedWith }) }}
+        </div>
         <div v-if="$slots.pills" class="idea-card__pills"><slot name="pills" /></div>
       </div>
     </router-link>
@@ -35,9 +38,11 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { IonButton, IonIcon } from '@ionic/vue';
-import { ellipsisHorizontal } from 'ionicons/icons';
+import { ellipsisHorizontal, peopleOutline } from 'ionicons/icons';
 import IdeaThumb from './IdeaThumb.vue';
 import { formatPrice } from '../utils/price';
+import { joinNames } from '../utils/names';
+import { isShared, recipientsOf } from '../utils/recipients';
 import type { Idea } from '../types/idea';
 
 /**
@@ -61,9 +66,22 @@ const occasionLabel = computed(() => {
   return te(`occasions.${code}`) ? t(`occasions.${code}`) : code;
 });
 const isDraft = computed(() => 'private' === props.idea.visibility);
+/** An idea for several people (décision 69): who it's for, on each of their lists. */
+const sharedWith = computed(() =>
+  isShared(props.idea) ? joinNames(recipientsOf(props.idea).map((r) => r.displayName), locale.value) : null,
+);
 </script>
 
 <style scoped>
+.idea-card__for {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  color: var(--ic-text-secondary);
+}
+
 .idea-card {
   display: flex;
   gap: 4px;

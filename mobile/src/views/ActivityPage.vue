@@ -37,7 +37,7 @@
                 <template #actor><strong>{{ item.payload.actor?.displayName }}</strong></template>
                 <template #friend><strong>{{ item.payload.friend?.displayName }}</strong></template>
                 <template #idea>{{ item.payload.idea?.title }}</template>
-                <template #owner>{{ item.payload.owner?.displayName }}</template>
+                <template #owner>{{ ownerNames(item) }}</template>
                 <template #manager>{{ item.payload.actor?.managedBy }}</template>
                 <template #days>{{ item.payload.days }}</template>
                 <template #child><strong>{{ item.payload.child?.displayName }}</strong></template>
@@ -78,6 +78,7 @@ import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { notificationsApi } from '../services/notifications';
 import { useNotificationsStore } from '../stores/notifications';
 import { useActiveProfileStore } from '../stores/activeProfile';
+import { joinNames } from '../utils/names';
 import { notificationTarget } from '../utils/notificationTarget';
 import { relativeTime } from '../utils/relativeTime';
 import AppAvatar from '../components/AppAvatar.vue';
@@ -150,6 +151,13 @@ async function open(item: AppNotification): Promise<void> {
   const target = notificationTarget(item);
   if (target.actAs) activeProfile.switchTo(target.actAs);
   ionRouter.push(target.path);
+}
+
+/** The idea's recipients (décision 69); older notifications only name the first. */
+function ownerNames(item: AppNotification): string {
+  const people = item.payload.recipients ?? (item.payload.owner ? [item.payload.owner] : []);
+
+  return joinNames(people.map((p) => p.displayName), locale.value);
 }
 
 function person(item: AppNotification) {

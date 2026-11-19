@@ -38,25 +38,34 @@ import IdeaCard from '../components/IdeaCard.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import TopBar from '../components/TopBar.vue';
 import type { PrivateIdea } from '../types/idea';
+import { joinNames } from '../utils/names';
+import { recipientsKey, recipientsOf } from '../utils/recipients';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const auth = useAuthStore();
 
 const ideas = ref<PrivateIdea[]>([]);
 const loaded = ref(false);
 
-/** Spec §5.4: "tous mes brouillons, groupés par destinataire" — mine first. */
+/**
+ * Spec §5.4: "tous mes brouillons, groupés par destinataire" — mine
+ * first. A draft for several people (décision 69) has its own group.
+ */
 const groups = computed(() => {
-  const byRecipient = new Map<string, { recipientId: string; name: string | null; isMe: boolean; ideas: PrivateIdea[] }>();
+  const me = auth.user?.id;
+  const byRecipients = new Map<string, { recipientId: string; name: string | null; isMe: boolean; ideas: PrivateIdea[] }>();
   for (const idea of ideas.value) {
-    const id = idea.recipient.id;
-    if (!byRecipient.has(id)) {
-      byRecipient.set(id, { recipientId: id, name: idea.recipient.displayName, isMe: id === auth.user?.id, ideas: [] });
+    const people = recipientsOf(idea);
+    const key = recipientsKey(people.map((r) => r.id));
+    if (!byRecipients.has(key)) {
+      const isMe = 1 === people.length && people[0].id === me;
+      const name = joinNames(people.map((r) => (r.id === me ? t('privateIdeas.meInList') : r.displayName)), locale.value);
+      byRecipients.set(key, { recipientId: key, name, isMe, ideas: [] });
     }
-    byRecipient.get(id)!.ideas.push(idea);
+    byRecipients.get(key)!.ideas.push(idea);
   }
 
-  return [...byRecipient.values()].sort((a, b) => Number(b.isMe) - Number(a.isMe) || (a.name ?? '').localeCompare(b.name ?? ''));
+  return [...byRecipients.values()].sort((a, b) => Number(b.isMe) - Number(a.isMe) || (a.name ?? '').localeCompare(b.name ?? '', locale.value));
 });
 
 const actions = useIdeaActions(() => load());

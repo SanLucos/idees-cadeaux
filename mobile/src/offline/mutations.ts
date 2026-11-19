@@ -8,6 +8,8 @@ import type { Comment, Contribution, ContributionParticipant, Idea, IdeaArchiveK
 import type { ProfilePreference, ProfilePreferenceCategory, ProfileSize } from '../types/profile';
 import type { SizeUnit } from '../utils/sizeUnits';
 import type { AppNotification } from '../types/notification';
+import type { ManagedProfile, User } from '../types/user';
+import { isFor } from '../utils/recipients';
 
 /**
  * Offline writes (spec §8, §11 décision 35): each one updates the local
@@ -59,9 +61,28 @@ function context(profileId?: string) {
 function actingAsFor(id: string): string | null {
   const idea = useLocalDb().get<Idea>('idea', id);
   if (idea?.isSuggestion) return null;
-  if (idea && useActiveProfileStore().children.some((c) => c.id === idea.ownerId)) return idea.ownerId;
+  if (idea) {
+    // An idea for me and others (décision 69) is mine to change, in my own name.
+    if (isFor(idea, useAuthStore().user?.id)) return null;
+    const child = useActiveProfileStore().children.find((c) => isFor(idea, c.id));
+    if (child) return child.id;
+  }
 
   return context().actingAs;
+}
+
+/** Display data of the people an idea is for, from what the device knows. */
+function people(ids: string[]): PersonRef[] {
+  const db = useLocalDb();
+  const { me, actor } = context();
+
+  return ids.map((id) => {
+    if (id === me.id) return me;
+    if (id === actor.id) return actor;
+    const person = db.get<User>('user', id) ?? db.get<ManagedProfile>('managed_profile', id);
+
+    return { id, displayName: person?.displayName ?? null, avatarUrl: person?.avatarUrl ?? null };
+  });
 }
 
 async function queue(op: NewOp): Promise<void> {
@@ -81,13 +102,15 @@ export const ideaMutations = onlineOnlyOnWeb({
   async create(input: IdeaInput, image?: { dataUrl: string; filename: string }): Promise<Idea> {
     const { me, actor, actingAs } = context();
     const id = uuidv7();
-    const ownerId = input.ownerId ?? actor.id;
-    const isSuggestion = ownerId !== actor.id;
+    const recipientIds = input.recipientIds?.length ? input.recipientIds : [actor.id];
+    const isSuggestion = !recipientIds.includes(actor.id);
+    // For me among others, even while acting as a child: the server's owner view.
+    const forMe = recipientIds.includes(me.id);
     const visibility = input.visibility ?? 'published';
 
     const idea: Idea = {
       id,
-      ownerId,
+      recipients: people(recipientIds),
       title: input.title,
       url: input.url,
       priceAmount: input.priceAmount ? Number(input.priceAmount.replace(',', '.')).toFixed(2) : null,
@@ -105,19 +128,19 @@ export const ideaMutations = onlineOnlyOnWeb({
       updatedAt: now(),
       canEdit: true,
       canUnarchive: false,
-      ...(actingAs
+      ...(actingAs && !forMe
         ? { view: 'manager' as const, isSuggestion: false, isMine: true, author: actor, reservation: null, contribution: null, reactions: { count: 0, likedByMe: false }, commentCount: 0, canReact: false, canMarkGifted: false }
         : isSuggestion
           ? { view: 'friend' as const, isSuggestion: true, isMine: true, author: me, canMarkGifted: true,
               ...('published' === visibility ? { reservation: null, contribution: null, reactions: { count: 0, likedByMe: false }, commentCount: 0, canReact: false } : {}) }
-          : { view: 'owner' as const }),
+          : { view: 'owner' as const, isMine: true }),
     };
     await useLocalDb().put('idea', [idea]);
 
     await queue({
       method: 'POST',
       path: '/ideas',
-      body: { id, ...input, ownerId },
+      body: { id, ...input, recipientIds },
       actingAs,
       entities: [{ type: 'idea', id }],
       label: { kind: 'idea.create', title: input.title },
@@ -138,7 +161,9 @@ export const ideaMutations = onlineOnlyOnWeb({
 
   async update(id: string, patch: Partial<IdeaInput>): Promise<Idea> {
     const actingAs = actingAsFor(id);
-    const local: Partial<Idea> = { ...patch } as Partial<Idea>;
+    const { recipientIds, ...fields } = patch;
+    const local: Partial<Idea> = { ...fields } as Partial<Idea>;
+    if (recipientIds?.length) local.recipients = people(recipientIds);
     if ('priceAmount' in patch) local.priceAmount = patch.priceAmount ? Number(patch.priceAmount.replace(',', '.')).toFixed(2) : null;
     const idea = await patchIdea(id, local);
     await queue({ method: 'PATCH', path: `/ideas/${id}`, body: patch, actingAs, entities: [{ type: 'idea', id }], label: { kind: 'idea.update', title: idea.title } });

@@ -45,10 +45,12 @@
         {{ all.length ? t('myGifts.empty.filtered') : t('myGifts.empty.none') }}
       </EmptyState>
 
-      <section v-for="g in groups" :key="g.recipient.id" class="group">
-        <router-link :to="recipientLink(g.recipient.id)" class="group__head">
-          <AppAvatar :id="g.recipient.id" :name="g.recipient.displayName" :url="g.recipient.avatarUrl" :size="40" />
-          <h2 class="group__name">{{ g.recipient.displayName }}</h2>
+      <section v-for="g in groups" :key="g.key" class="group">
+        <router-link :to="recipientLink(g.recipients)" class="group__head">
+          <div class="group__avatars">
+            <AppAvatar v-for="r in g.recipients" :id="r.id" :key="r.id" :name="r.displayName" :url="r.avatarUrl" :size="40" />
+          </div>
+          <h2 class="group__name">{{ joinNames(g.recipients.map((r) => r.displayName), locale) }}</h2>
           <span v-if="null !== g.days" class="birthday-pill">
             <ion-icon :icon="calendarOutline" aria-hidden="true" />{{ t('friends.daysBefore', { days: g.days }) }}
           </span>
@@ -91,7 +93,8 @@ import StatusPill from '../components/StatusPill.vue';
 import TopBar from '../components/TopBar.vue';
 import { groupMyGifts, type MyGiftFilter } from '../utils/myGifts';
 import { formatPrice } from '../utils/price';
-import type { MyGift } from '../types/idea';
+import type { MyGift, MyGiftPerson } from '../types/idea';
+import { joinNames } from '../utils/names';
 
 /**
  * « Mes cadeaux pour mes amis » (spec §11 décision 62): read from the
@@ -109,8 +112,8 @@ const person = ref<string | null>(null);
 // Re-read whenever the device copy moves (a sync, a queued write).
 const all = computed(() => (db.revision, repo.myGifts()));
 const people = computed(() => {
-  const seen = new Map<string, MyGift['recipient']>();
-  for (const g of all.value) seen.set(g.recipient.id, g.recipient);
+  const seen = new Map<string, MyGiftPerson>();
+  for (const g of all.value) for (const r of g.recipients) seen.set(r.id, r);
 
   return [...seen.values()].sort((a, b) => (a.displayName ?? '').localeCompare(b.displayName ?? '', locale.value));
 });
@@ -122,11 +125,16 @@ const { pullToRefresh } = useLocalRefresh(() => undefined);
 onIonViewWillEnter(() => void sync.run());
 
 function countOf(k: MyGiftFilter): number {
-  return all.value.filter((g) => ('all' === k || g.kind === k) && (null === person.value || g.recipient.id === person.value)).length;
+  return all.value.filter((g) => ('all' === k || g.kind === k) && (null === person.value || g.recipients.some((r) => r.id === person.value))).length;
 }
 
-function recipientLink(id: string): string {
-  return db.get('managed_profile', id) ? `/profile/children/${id}` : `/tabs/friends/${id}`;
+/** One of them I can open: a child of mine, or a friend (a co-recipient may be neither). */
+function recipientLink(recipients: MyGiftPerson[]): string {
+  const child = recipients.find((r) => db.get('managed_profile', r.id));
+  if (child) return `/profile/children/${child.id}`;
+  const friend = recipients.find((r) => db.get('user', r.id)) ?? recipients[0];
+
+  return `/tabs/friends/${friend.id}`;
 }
 
 function contributionLabel(gift: MyGift): string {
@@ -166,6 +174,15 @@ function myPledge(gift: MyGift): string | null {
   margin-bottom: 10px;
   color: inherit;
   text-decoration: none;
+}
+
+.group__avatars {
+  display: flex;
+  flex: none;
+}
+
+.group__avatars > * + * {
+  margin-left: -12px;
 }
 
 .group__name {

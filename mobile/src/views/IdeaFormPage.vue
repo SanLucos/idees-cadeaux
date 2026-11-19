@@ -4,26 +4,37 @@
       <TopBar :default-href="cancelHref" close-icon>{{ screenTitle }}</TopBar>
 
       <form class="form" novalidate @submit.prevent="submit">
-        <!-- Recipient: only when creating; an idea never changes owner. -->
-        <fieldset v-if="!isEdit && !activeProfile.isActing" class="block">
+        <!--
+          Recipients (spec §11 décision 69): chosen when creating, and changed
+          only while the idea is a draft of mine (nobody else sees it yet).
+        -->
+        <fieldset v-if="canChooseRecipients" class="block">
           <legend class="label">{{ t('ideaForm.forWhom') }}</legend>
-          <div class="recipients" role="radiogroup">
+          <div class="recipients" :role="several ? 'group' : 'radiogroup'">
             <button
               v-for="r in recipients"
               :key="r.id"
               type="button"
-              role="radio"
+              :role="several ? 'checkbox' : 'radio'"
               class="recipient"
-              :class="{ 'recipient--selected': r.id === ownerId }"
-              :aria-checked="r.id === ownerId"
-              @click="ownerId = r.id"
+              :class="{ 'recipient--selected': selectedIds.includes(r.id) }"
+              :aria-checked="selectedIds.includes(r.id)"
+              @click="pick(r.id)"
             >
               <AppAvatar :id="r.id" :name="r.name" :url="r.avatarUrl" :size="40" :primary="r.isMe" />
               <span>{{ r.isMe ? t('ideaForm.me') : r.name }}</span>
               <small v-if="r.hint" class="recipient__hint">{{ r.hint }}</small>
             </button>
           </div>
+          <ion-toggle v-model="several" class="several" justify="space-between">
+            {{ t('ideaForm.several') }}
+          </ion-toggle>
+          <p v-if="several" class="several__hint">{{ t('ideaForm.severalHint') }}</p>
         </fieldset>
+        <p v-else-if="isEdit && existing && isShared(existing)" class="recipients-locked">
+          <ion-icon :icon="peopleOutline" aria-hidden="true" />
+          {{ existing.isMine && 'published' === existing.visibility ? t('ideaForm.recipientsLocked', { name: recipientName }) : t('ideas.forNames', { name: recipientName }) }}
+        </p>
 
         <SecretBand v-if="isSuggestion">{{ t('ideaForm.suggestionBand', { name: recipientName }) }}</SecretBand>
 
@@ -137,7 +148,8 @@
           </ion-button>
         </div>
 
-        <fieldset class="block">
+        <!-- Publishing is the author's: another recipient of a shared idea only edits it (décision 69). -->
+        <fieldset v-if="!isEdit || false !== existing?.isMine" class="block">
           <legend class="label">{{ t('ideaForm.visibility') }}</legend>
           <ion-radio-group v-model="visibility" class="visibility">
             <ion-item class="visibility-option" :class="{ 'visibility-option--selected': 'published' === visibility }" lines="none">
@@ -166,7 +178,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { compareNames, sharedNameIds } from '../utils/names';
+import { compareNames, joinNames, sharedNameIds } from '../utils/names';
+import { isShared, recipientIds as recipientIdsOf, recipientsOf } from '../utils/recipients';
 import { formatBirthday } from '../utils/birthday';
 import { useRoute } from 'vue-router';
 import {
@@ -195,6 +208,7 @@ import {
   IonSpinner,
   IonText,
   IonTextarea,
+  IonToggle,
   useIonRouter,
 } from '@ionic/vue';
 import { ideasApi } from '../services/ideas';
@@ -235,7 +249,9 @@ const existing = ref<Idea | null>(null);
 
 /** "Moi": the active child when managing one (its own ideas only, spec §11 décision 25). */
 const selfId = computed(() => activeProfile.activeId ?? auth.user?.id ?? '');
-const ownerId = ref(String(activeProfile.activeId ?? route.query.ownerId ?? auth.user?.id ?? ''));
+/** Who the idea is for: one person, or several when `several` is on (décision 69). */
+const selectedIds = ref<string[]>([String(activeProfile.activeId ?? route.query.ownerId ?? auth.user?.id ?? '')]);
+const several = ref(false);
 const url = ref('');
 const title = ref('');
 const priceAmount = ref('');
@@ -299,12 +315,45 @@ const recipients = computed(() => {
   ];
 });
 
-const isSuggestion = computed(() => (isEdit ? !!existing.value?.isSuggestion && 'owner' !== existing.value?.view : ownerId.value !== selfId.value));
-const recipientName = computed(() => {
-  const id = isEdit ? existing.value?.ownerId : ownerId.value;
+/**
+ * Choosing is for a new idea, outside a child's own list (its ideas only,
+ * spec §11 décision 25); or for a draft I wrote, while it's still private.
+ */
+const canChooseRecipients = computed(() => {
+  if (activeProfile.isActing) return false;
+  if (!isEdit) return true;
 
-  return recipients.value.find((r) => r.id === id)?.name ?? '';
+  return !!existing.value?.isMine && 'private' === existing.value.visibility;
 });
+
+function pick(id: string): void {
+  if (!several.value) {
+    selectedIds.value = [id];
+  } else if (!selectedIds.value.includes(id)) {
+    selectedIds.value = [...selectedIds.value, id];
+  } else if (selectedIds.value.length > 1) {
+    // Always someone: the last one stays.
+    selectedIds.value = selectedIds.value.filter((s) => s !== id);
+  }
+}
+
+// Back to one person: the first one chosen.
+watch(several, (on) => {
+  if (!on) selectedIds.value = selectedIds.value.slice(0, 1);
+});
+
+const isSuggestion = computed(() => {
+  if (isEdit && !canChooseRecipients.value) return !!existing.value?.isSuggestion && 'owner' !== existing.value?.view;
+
+  return !selectedIds.value.includes(selfId.value);
+});
+const recipientName = computed(() => {
+  if (isEdit && !canChooseRecipients.value) return joinNames(recipientsOf(existing.value!).map((r) => r.displayName), locale.value);
+  const names = new Map(recipients.value.map((r) => [r.id, r.isMe ? auth.user?.displayName ?? '' : r.name]));
+
+  return joinNames(selectedIds.value.map((id) => names.get(id) ?? recipientsOf(existing.value ?? { recipients: [] }).find((r) => r.id === id)?.displayName), locale.value);
+});
+const isForSeveral = computed(() => (isEdit && !canChooseRecipients.value ? !!existing.value && isShared(existing.value) : selectedIds.value.length > 1));
 
 const screenTitle = computed(() => {
   if (isEdit) return t('ideaForm.editTitle');
@@ -312,9 +361,13 @@ const screenTitle = computed(() => {
   return isSuggestion.value ? t('ideaForm.newSuggestion') : t('ideas.new');
 });
 
-const publishedHint = computed(() =>
-  isSuggestion.value ? t('ideaForm.publishedHintSuggestion', { name: recipientName.value }) : t('ideaForm.publishedHintOwn'),
-);
+const publishedHint = computed(() => {
+  if (isForSeveral.value) {
+    return isSuggestion.value ? t('ideaForm.publishedHintSharedSuggestion', { name: recipientName.value }) : t('ideaForm.publishedHintShared', { name: recipientName.value });
+  }
+
+  return isSuggestion.value ? t('ideaForm.publishedHintSuggestion', { name: recipientName.value }) : t('ideaForm.publishedHintOwn');
+});
 
 const submitLabel = computed(() => {
   if (isEdit) return t('common.save');
@@ -326,7 +379,7 @@ const submitLabel = computed(() => {
 const cancelHref = computed(() => {
   if (isEdit) return `/ideas/${editId}`;
 
-  return isSuggestion.value ? `/tabs/friends/${ownerId.value}` : '/tabs/list';
+  return isSuggestion.value ? `/tabs/friends/${selectedIds.value[0]}` : '/tabs/list';
 });
 
 const visibleOccasions = computed(() => {
@@ -340,7 +393,7 @@ const visibleOccasions = computed(() => {
 });
 
 const thumbStyle = computed(() => {
-  const index = colorIndex(editId ?? ownerId.value, 5);
+  const index = colorIndex(editId ?? selectedIds.value[0], 5);
 
   return { background: `var(--ic-thumb-bg-${index})`, color: `var(--ic-thumb-fg-${index})` };
 });
@@ -485,6 +538,8 @@ onMounted(async () => {
   occasion.value = idea.occasion;
   visibility.value = idea.visibility;
   imagePreview.value = idea.thumbnailUrl;
+  selectedIds.value = recipientIdsOf(idea);
+  several.value = selectedIds.value.length > 1;
 });
 
 function onImagePicked(event: Event): void {
@@ -531,7 +586,7 @@ async function confirmUnpublish(idea: Idea): Promise<boolean> {
 
 /** The list showing a new idea: mine (drafts tab for a draft), or the friend's (my drafts for them included). */
 function listOf(idea: Idea): string {
-  if (isSuggestion.value) return `/tabs/friends/${idea.ownerId}`;
+  if (isSuggestion.value) return `/tabs/friends/${recipientIdsOf(idea)[0]}`;
 
   return `/tabs/list?tab=${'private' === idea.visibility ? 'drafts' : 'published'}`;
 }
@@ -545,14 +600,15 @@ async function submit(): Promise<void> {
       if ('private' === visibility.value && 'published' === existing.value.visibility && !(await confirmUnpublish(existing.value))) {
         return;
       }
-      idea = await ideasApi.update(existing.value.id, fields());
+      const changed = canChooseRecipients.value && [...selectedIds.value].sort().join() !== recipientIdsOf(existing.value).sort().join();
+      idea = await ideasApi.update(existing.value.id, { ...fields(), ...(changed ? { recipientIds: selectedIds.value } : {}) });
       if (visibility.value !== idea.visibility) {
         idea = 'published' === visibility.value ? await ideasApi.publish(idea.id) : await ideasApi.unpublish(idea.id);
       }
     } else {
       idea = await ideasApi.create({
         ...fields(),
-        ownerId: ownerId.value,
+        recipientIds: selectedIds.value,
         visibility: visibility.value,
       });
     }
@@ -643,6 +699,25 @@ fieldset {
 .recipient--selected {
   border: 2px solid var(--ion-color-primary);
   background: var(--ic-primary-soft);
+}
+
+.several {
+  margin-top: 10px;
+  font-size: 0.9375rem;
+}
+
+.several__hint,
+.recipients-locked {
+  margin: 6px 0 0;
+  font-size: 0.8125rem;
+  color: var(--ic-text-secondary);
+}
+
+.recipients-locked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
 }
 
 /* Rows of fields wrap rather than squeeze them with large text (spec §9). */

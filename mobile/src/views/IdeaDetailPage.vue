@@ -31,6 +31,9 @@
         </div>
 
         <h1 class="title">{{ idea.title }}</h1>
+        <p v-if="sharedWith" class="shared-with">
+          <ion-icon :icon="peopleOutline" aria-hidden="true" />{{ t('ideas.forNames', { name: sharedWith }) }}
+        </p>
         <div v-if="price" class="price">{{ price }}</div>
         <p v-if="idea.note" class="note">{{ idea.note }}</p>
 
@@ -44,7 +47,7 @@
             <ion-icon aria-hidden="true" slot="start" :icon="createOutline" />
             {{ t('ideas.actions.edit') }}
           </ion-button>
-          <ion-button v-if="idea.canEdit && 'private' === idea.visibility" expand="block" @click="actions.publish(idea)">
+          <ion-button v-if="idea.canEdit && actions.canPublish(idea) && 'private' === idea.visibility" expand="block" @click="actions.publish(idea)">
             {{ t('ideas.actions.publish') }}
           </ion-button>
           <ion-button v-if="actions.canMarkReceived(idea)" class="ic-button-surface" expand="block" @click="actions.archive(idea)">
@@ -80,6 +83,7 @@ import {
   imageOutline,
   lockClosedOutline,
   openOutline,
+  peopleOutline,
 } from 'ionicons/icons';
 import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue';
 import { ApiError, isNetworkError } from '../services/api';
@@ -88,6 +92,8 @@ import { useIdeaActions } from '../composables/useIdeaActions';
 import { useLocalRefresh } from '../composables/useLocalRefresh';
 import { colorIndex } from '../utils/colorIndex';
 import { formatPrice } from '../utils/price';
+import { joinNames } from '../utils/names';
+import { isFor, isShared, recipientIds, recipientsOf } from '../utils/recipients';
 import { useFriendsStore } from '../stores/friends';
 import { useActiveProfileStore } from '../stores/activeProfile';
 import EmptyState from '../components/EmptyState.vue';
@@ -128,18 +134,29 @@ const hasSecretZone = computed(() => {
 
   return 'manager' === i.view || ('friend' === i.view && !activeProfile.isActing);
 });
-const ownerName = computed(
-  () =>
-    friendsStore.friends.find((f) => f.user.id === idea.value?.ownerId)?.user.displayName
-    ?? activeProfile.children.find((c) => c.id === idea.value?.ownerId)?.displayName
-    ?? null,
-);
+/** Who it's for, in the secret zone's wording: every recipient (décision 69). */
+const ownerName = computed(() => {
+  const i = idea.value;
+  if (!i) return null;
+  const names = recipientsOf(i).map(
+    (r) =>
+      friendsStore.friends.find((f) => f.user.id === r.id)?.user.displayName
+      ?? activeProfile.children.find((c) => c.id === r.id)?.displayName
+      ?? r.displayName,
+  );
+
+  return names.some(Boolean) ? joinNames(names, locale.value) : null;
+});
+const sharedWith = computed(() => (idea.value && isShared(idea.value) ? ownerName.value : null));
 
 const backHref = computed(() => {
   const i = idea.value;
-  if (!i || 'owner' === i.view || (activeProfile.activeId === i.ownerId)) return '/tabs/list';
+  if (!i || 'owner' === i.view || isFor(i, activeProfile.activeId)) return '/tabs/list';
+  // The list I came from, if it's one of them; else the first recipient's that I can open.
+  const ids = recipientIds(i);
+  const known = ids.find((id) => friendsStore.friends.some((f) => f.user.id === id) || activeProfile.children.some((c) => c.id === id));
 
-  return `/tabs/friends/${i.ownerId}`;
+  return `/tabs/friends/${known ?? ids[0]}`;
 });
 const hasActions = computed(() => !!idea.value && (idea.value.canEdit || idea.value.canUnarchive || !!idea.value.canMarkGifted));
 const price = computed(() => (idea.value ? formatPrice(idea.value.priceAmount, idea.value.priceCurrency, locale.value) : null));
@@ -171,6 +188,14 @@ useLocalRefresh(load);
 </script>
 
 <style scoped>
+.shared-with {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  color: var(--ic-text-secondary);
+}
+
 .hero {
   display: flex;
   align-items: center;
