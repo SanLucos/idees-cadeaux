@@ -72,7 +72,7 @@ $P start php worker
 
 ## Appli web
 
-Rien à faire en plus : `./deploy-prod.sh` la construit et la publie avec le reste. Le bas de l'onglet Profil affiche la version (`mobile/package.json`, à mettre au numéro du tag avant de le poser) et le commit construit : « Version 0.0.3 · abc1234 ».
+Rien à faire en plus : `./deploy-prod.sh` la construit et la publie avec le reste. Le bas de l'onglet Profil affiche la version, reprise automatiquement du tag déployé (`deploy-prod.sh` la passe au build, sans le « v »), et le commit construit : « Version 0.0.3 · abc1234 ». Rien à modifier à la main ; la version de `mobile/package.json` ne sert qu'en dernier recours, quand aucun tag n'est trouvé.
 
 Après un déploiement, vérifier que l'appli est installable depuis Chrome (icône « Installer » dans la barre d'adresse, ou menu → « Caster, enregistrer et partager » → « Installer la page en tant qu'appli ») : `https://<APP_HOST>/site.webmanifest` doit renvoyer du JSON (et non la page HTML de l'appli), le titre de l'onglet doit être « Idées Cadeaux ». La connexion y est gardée dans un cookie `httpOnly` (jamais lisible par le JavaScript), l'appli ne garde aucune copie locale et fonctionne en ligne uniquement.
 
