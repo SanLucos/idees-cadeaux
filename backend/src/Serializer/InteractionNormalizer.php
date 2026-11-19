@@ -8,6 +8,7 @@ use App\Entity\Comment;
 use App\Entity\Contribution;
 use App\Entity\ContributionPledge;
 use App\Entity\Idea;
+use App\Security\IdeaAccess;
 use App\Entity\Reservation;
 use App\Entity\User;
 use App\Repository\CommentRepository;
@@ -52,7 +53,8 @@ final class InteractionNormalizer
      */
     public function summarize(array $ideas, User $viewer): array
     {
-        $eligible = array_values(array_filter($ideas, static fn (Idea $i) => $i->getOwner() !== $viewer && $i->isPublished()));
+        // Never for a recipient (règle d'or, décision 69): a second lock behind the callers' views.
+        $eligible = array_values(array_filter($ideas, static fn (Idea $i) => $i->isPublished() && !$i->hasRecipient($viewer) && !IdeaAccess::isOwnerSide($i, $viewer)));
         $ids = array_map(static fn (Idea $i) => $i->getId()->toRfc4122(), $eligible);
         if ([] === $ids) {
             return [];

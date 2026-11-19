@@ -50,8 +50,12 @@ final class IdeaController
     ) {
     }
 
+    /** More than enough for a family (décision 69), and a bound on the checks. */
+    private const int MAX_RECIPIENTS = 20;
+
     /**
-     * Creates an idea for me, or a suggestion for a friend (`ownerId`).
+     * Creates an idea for me, or a suggestion for a friend (`ownerId`),
+     * or an idea for several people at once (`recipientIds`, décision 69).
      * Idempotent on the client-generated `id` (spec §8): replaying the
      * same create returns the existing idea instead of a duplicate.
      */
@@ -75,26 +79,14 @@ final class IdeaController
             }
         }
 
-        $owner = $me;
-        if (isset($body['ownerId']) && $body['ownerId'] !== $me->getId()->toRfc4122()) {
-            if ($me->isManaged()) {
-                // Spec §11 décision 25: no suggestion on behalf of a child.
-                throw new ApiProblemException('acting_as.not_allowed', 'This action is not available on behalf of a managed profile.', 403);
-            }
-            $candidate = \is_string($body['ownerId']) && Uuid::isValid($body['ownerId']) ? $this->users->find($body['ownerId']) : null;
-            // Not a friend and non-existent answer alike: never reveals an account.
-            if (null === $candidate || !$this->access->canSuggestTo($candidate, $me)) {
-                throw new HiddenResourceException();
-            }
-            $owner = $candidate;
-        }
+        $recipients = $this->parseRecipients($body, $me) ?? [$me];
 
         $visibility = IdeaVisibility::tryFrom((string) ($body['visibility'] ?? IdeaVisibility::Published->value));
         if (null === $visibility) {
             throw new ApiProblemException('validation.idea_visibility_invalid', 'Visibility must be "private" or "published".', 422);
         }
 
-        $idea = new Idea($owner, $me, IdeaFieldsApplier::parseTitle($body['title'] ?? null), $visibility, $id);
+        $idea = new Idea($recipients, $me, IdeaFieldsApplier::parseTitle($body['title'] ?? null), $visibility, $id);
         $this->fields->apply($idea, $body);
 
         $this->em->persist($idea);
@@ -118,8 +110,19 @@ final class IdeaController
     {
         $idea = $this->find($id);
         $this->access->assertCanEdit($idea, $me);
+        $body = self::decode($request);
 
-        $this->fields->apply($idea, self::decode($request));
+        $recipients = $this->parseRecipients($body, $me);
+        if (null !== $recipients && !self::sameUsers($recipients, $idea->getRecipients())) {
+            // Décision 69: the author's alone, and only while nobody else can see the idea.
+            $this->access->assertIsAuthor($idea, $me);
+            if ($idea->isPublished()) {
+                throw new ApiProblemException('idea.recipients_locked', 'Recipients can only change while the idea is private.', 422);
+            }
+            $idea->setRecipients($recipients);
+        }
+
+        $this->fields->apply($idea, $body);
         $this->em->flush();
 
         return new JsonResponse($this->view($idea, $me));
@@ -139,18 +142,20 @@ final class IdeaController
     }
 
     /**
-     * Spec §5.4: publishing a suggestion needs an active friendship with
-     * its recipient — a draft written before a removal stays readable by
+     * Spec §5.4: publishing needs an active friendship with each
+     * recipient — a draft written before a removal stays readable by
      * its author but can't be published any more.
      */
     #[Route('/api/ideas/{id}/publish', name: 'ideas_publish', methods: ['POST'], requirements: ['id' => Requirement::UUID])]
     public function publish(string $id, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
-        $this->access->assertCanEdit($idea, $me);
+        $this->access->assertIsAuthor($idea, $me);
 
-        if ($idea->isSuggestion() && !$this->access->canSuggestTo($idea->getOwner(), $me)) {
-            throw new ApiProblemException('idea.friendship_required', 'You are no longer friends with this person.', 422);
+        foreach ($idea->getRecipients() as $recipient) {
+            if (!$this->access->canAddRecipient($recipient, $me)) {
+                throw new ApiProblemException('idea.friendship_required', 'You are no longer friends with this person.', 422);
+            }
         }
 
         $idea->publish();
@@ -169,7 +174,7 @@ final class IdeaController
     public function unpublish(string $id, #[ActingUser] User $me): JsonResponse
     {
         $idea = $this->find($id);
-        $this->access->assertCanEdit($idea, $me);
+        $this->access->assertIsAuthor($idea, $me);
 
         $notified = $this->events->beforeUnpublish($idea);
         $idea->unpublish();
@@ -248,6 +253,63 @@ final class IdeaController
         $this->em->flush();
 
         return new JsonResponse($this->view($idea, $me));
+    }
+
+    /**
+     * `recipientIds` (or the older `ownerId`, one recipient) from a
+     * body; null when it names none. Anyone `$me` may not name is the
+     * same 404 as an unknown id: never reveals an account.
+     *
+     * @param array<string, mixed> $body
+     *
+     * @return User[]|null
+     */
+    private function parseRecipients(array $body, User $me): ?array
+    {
+        if (\array_key_exists('recipientIds', $body)) {
+            $ids = $body['recipientIds'];
+            if (!\is_array($ids) || [] === $ids || \count($ids) > self::MAX_RECIPIENTS) {
+                throw new ApiProblemException('validation.idea_recipients_invalid', 'recipientIds must list 1 to 20 people.', 422);
+            }
+        } elseif (isset($body['ownerId'])) {
+            $ids = [$body['ownerId']];
+        } else {
+            return null;
+        }
+
+        $recipients = [];
+        foreach ($ids as $id) {
+            if (!\is_string($id) || !Uuid::isValid($id)) {
+                throw new HiddenResourceException();
+            }
+            $user = $id === $me->getId()->toRfc4122() ? $me : $this->users->find($id);
+            if (null === $user || !$this->access->canAddRecipient($user, $me)) {
+                throw new HiddenResourceException();
+            }
+            $recipients[$user->getId()->toRfc4122()] = $user;
+        }
+
+        if ($me->isManaged() && !isset($recipients[$me->getId()->toRfc4122()])) {
+            // Spec §11 décision 25: no suggestion on behalf of a child.
+            throw new ApiProblemException('acting_as.not_allowed', 'This action is not available on behalf of a managed profile.', 403);
+        }
+
+        return array_values($recipients);
+    }
+
+    /**
+     * @param User[] $a
+     * @param User[] $b
+     */
+    private static function sameUsers(array $a, array $b): bool
+    {
+        $ids = static fn (array $users): array => array_map(static fn (User $u) => $u->getId()->toRfc4122(), $users);
+        $x = $ids($a);
+        $y = $ids($b);
+        sort($x);
+        sort($y);
+
+        return $x === $y;
     }
 
     /**

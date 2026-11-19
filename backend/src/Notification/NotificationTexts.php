@@ -25,7 +25,7 @@ final class NotificationTexts
             '%actor%' => $payload['actor']['displayName'] ?? '',
             '%manager%' => $payload['actor']['managedBy'] ?? '',
             '%idea%' => $payload['idea']['title'] ?? '',
-            '%owner%' => $payload['owner']['displayName'] ?? '',
+            '%owner%' => $this->names($payload['recipients'] ?? (isset($payload['owner']) ? [$payload['owner']] : []), $notification->getUser()->getLocale()),
             '%friend%' => $payload['friend']['displayName'] ?? '',
             '%child%' => $payload['child']['displayName'] ?? '',
             '%suggestedBy%' => $payload['suggestedBy']['displayName'] ?? '',
@@ -47,6 +47,23 @@ final class NotificationTexts
         }
 
         return $text;
+    }
+
+    /**
+     * "Anne", "Anne et Luc", "Anne, Luc et Marc" — an idea's recipients
+     * (décision 69).
+     *
+     * @param list<array{displayName?: ?string}> $people
+     */
+    private function names(array $people, string $locale): string
+    {
+        $names = array_values(array_map(static fn (array $p): string => (string) ($p['displayName'] ?? ''), $people));
+        if (\count($names) < 2) {
+            return $names[0] ?? '';
+        }
+        $last = array_pop($names);
+
+        return $this->translator->trans('names_and', ['%first%' => implode(', ', $names), '%last%' => $last], 'notifications', $locale);
     }
 
     public function title(Notification $notification): string

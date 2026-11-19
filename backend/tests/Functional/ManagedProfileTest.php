@@ -69,7 +69,7 @@ final class ManagedProfileTest extends AuthTestCase
         self::assertSame('Julot', $this->expect(200, $this->manager, 'GET', '/api/managed-profiles')[0]['displayName']);
 
         $idea = $this->expect(201, $this->manager, 'POST', '/api/ideas', ['title' => 'Lego'], $jules);
-        self::assertSame($jules, $idea['ownerId']);
+        self::assertSame([$jules], array_column($idea['recipients'], 'id'));
         self::assertTrue($idea['canEdit']);
         $this->expect(200, $this->manager, 'POST', "/api/ideas/{$idea['id']}/archive", ['kind' => 'received'], $jules);
         self::assertSame(1, $this->expect(200, $this->manager, 'GET', '/api/users/me/ideas', null, $jules)['counts']['archived']);
@@ -169,7 +169,7 @@ final class ManagedProfileTest extends AuthTestCase
         self::assertSame(1, $task());
         $connection = self::getContainer()->get(Connection::class);
         self::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM app_user WHERE id = :id', ['id' => $jules]));
-        self::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM idea WHERE owner_id = :id', ['id' => $jules]), 'its ideas go with it');
+        self::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM idea i WHERE EXISTS (SELECT 1 FROM idea_recipient r WHERE r.idea_id = i.id AND r.user_id = :id)', ['id' => $jules]), 'its ideas go with it');
         self::assertSame([], $this->expect(200, $this->manager, 'GET', '/api/managed-profiles'));
     }
 

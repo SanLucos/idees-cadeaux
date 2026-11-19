@@ -128,7 +128,9 @@ final class Notifier
             // The one who acted: a child's name when its manager acted for it.
             'actor' => null !== $actor ? self::person($actor) : null,
             'idea' => ['id' => $idea->getId()->toRfc4122(), 'title' => $idea->getTitle()],
-            'owner' => self::person($idea->getOwner()),
+            // First recipient, for older clients; `recipients` names them all (décision 69).
+            'owner' => self::person($idea->getRecipients()[0]),
+            'recipients' => array_map(self::person(...), $idea->getRecipients()),
         ]);
     }
 

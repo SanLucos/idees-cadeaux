@@ -66,7 +66,7 @@ class ContributionRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('c')
             ->join('c.idea', 'i')
-            ->andWhere('c.initiator = :initiator AND i.owner = :owner AND c.status = :open')
+            ->andWhere('c.initiator = :initiator AND '.IdeaRepository::hasRecipient('owner').' AND c.status = :open')
             ->setParameter('initiator', $initiator->getId(), 'uuid')
             ->setParameter('owner', $owner->getId(), 'uuid')
             ->setParameter('open', ContributionStatus::Open)

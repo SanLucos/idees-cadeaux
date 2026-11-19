@@ -14,6 +14,7 @@ use App\Entity\ProfilePreference;
 use App\Entity\ProfileSize;
 use App\Entity\User;
 use App\Repository\FriendshipRepository;
+use App\Repository\IdeaRepository;
 use App\Repository\UserRepository;
 use App\Security\IdeaAccess;
 use App\Serializer\FriendshipNormalizer;
@@ -96,13 +97,13 @@ final class SyncService
         $interactionVersions = $this->interactionVersions(array_keys($ideas));
         foreach ($ideas as $id => $idea) {
             $inventory['idea'][$id] = [
-                'version' => self::v(max($idea->getUpdatedAt(), $idea->getAuthor()->getUpdatedAt(), $idea->getOwner()->getUpdatedAt()), $interactionVersions[$id] ?? null, $media),
+                'version' => self::v(max($idea->getUpdatedAt(), $idea->getAuthor()->getUpdatedAt(), ...array_map(static fn (User $u) => $u->getUpdatedAt(), $idea->getRecipients())), $interactionVersions[$id] ?? null, $media),
                 'entity' => $idea,
             ];
         }
 
         // Comments: only where the interactions are visible — never on one's own list (règle 1).
-        $withInteractions = array_keys(array_filter($ideas, static fn (Idea $i) => $i->getOwner() !== $me && $i->isPublished()));
+        $withInteractions = array_keys(array_filter($ideas, static fn (Idea $i) => !IdeaAccess::isOwnerSide($i, $me) && $i->isPublished()));
         foreach ($this->findIn(Comment::class, 'idea', $withInteractions) as $comment) {
             $inventory['comment'][$comment->getId()->toRfc4122()] = ['version' => self::v(max($comment->getUpdatedAt(), $comment->getAuthor()->getUpdatedAt()), $media), 'entity' => $comment];
         }
@@ -185,18 +186,22 @@ final class SyncService
         $friendIds = $ids($friends) ?: ['00000000-0000-0000-0000-000000000000'];
         $childIds = $ids($children) ?: ['00000000-0000-0000-0000-000000000000'];
 
+        $recipientIn = static fn (string $param): string => "EXISTS (SELECT 1 FROM App\\Entity\\IdeaRecipient r_{$param} WHERE r_{$param}.idea = i AND r_{$param}.user IN (:{$param}) AND r_{$param}.deletedAt IS NULL)";
         $qb = $this->em->getRepository(Idea::class)->createQueryBuilder('i')
-            ->addSelect('a', 'o')->join('i.author', 'a')->join('i.owner', 'o')
+            ->addSelect('a')->join('i.author', 'a')
             ->andWhere(implode(' OR ', [
-                // Vue propriétaire: my own ideas, never a suggestion.
-                '(i.owner = :me AND i.author = :me)',
+                // Vue propriétaire: personal ideas I'm a recipient of, published or my drafts.
+                '('.IdeaRepository::hasRecipient('me').' AND '.IdeaRepository::isPersonal('own').' AND (i.visibility = :published OR i.author = :me))',
                 // Vue ami: friends' published ideas and suggestions, and my drafts for them.
-                '(i.owner IN (:friends) AND (i.visibility = :published OR i.author = :me))',
+                '('.$recipientIn('friends').' AND (i.visibility = :published OR i.author = :me))',
                 // Vue gestionnaire: my children's lists, friends' drafts excluded (règle 2).
-                '(i.owner IN (:children) AND (i.visibility = :published OR i.author = i.owner OR i.author = :me))',
+                '('.$recipientIn('children').' AND (i.visibility = :published OR i.author IN (:children) OR i.author = :me))',
                 // My drafts for anyone else (e.g. an ex-friend): mine alone to see.
                 '(i.author = :me AND i.visibility = :private)',
             ]))
+            // A suggestion for me among others never comes, whichever list holds it (règle d'or).
+            ->andWhere('NOT ('.IdeaRepository::hasRecipient('me_too').') OR '.IdeaRepository::isPersonal('mine'))
+            ->setParameter('me_too', $me->getId(), 'uuid')
             ->setParameter('me', $me->getId(), 'uuid')
             ->setParameter('friends', $friendIds)
             ->setParameter('children', $childIds)
@@ -219,31 +224,28 @@ final class SyncService
      */
     private function ideaDocuments(array $ideas, User $me, array $entries): array
     {
-        $managed = $owned = $friendly = [];
+        $byChild = $owned = $friendly = [];
         foreach ($ideas as $idea) {
-            if (IdeaAccess::readsAsManager($idea->getOwner(), $me)) {
-                $managed[] = $idea;
-            } elseif ($idea->getOwner() === $me && !$idea->isSuggestion()) {
+            if (IdeaAccess::isOwnerSide($idea, $me)) {
                 $owned[] = $idea;
+            } elseif (null !== $child = IdeaAccess::managedRecipient($idea, $me)) {
+                $byChild[$child->getId()->toRfc4122()][] = $idea;
             } else {
                 $friendly[] = $idea;
             }
         }
 
         $docs = [
-            ...array_map($this->ideaNormalizer->normalizeForOwner(...), $owned),
+            ...array_map(fn (Idea $idea) => $this->ideaNormalizer->normalizeForOwner($idea, $me), $owned),
             ...$this->ideaNormalizer->normalizeManyForFriend($friendly, $me),
         ];
         // A child's list is only edited while acting as the child (X-Acting-As):
         // compute canEdit / isMine from the child's side, exactly as the API
         // answers when acting. Interactions, and the suggestions the manager
         // wrote, stay the manager's own.
-        $byChild = [];
-        foreach ($managed as $idea) {
-            $byChild[$idea->getOwner()->getId()->toRfc4122()][] = $idea;
-        }
         foreach ($byChild as $ideasOfChild) {
-            array_push($docs, ...$this->ideaNormalizer->normalizeManyForManager($ideasOfChild, $ideasOfChild[0]->getOwner(), $me));
+            $child = IdeaAccess::managedRecipient($ideasOfChild[0], $me);
+            array_push($docs, ...$this->ideaNormalizer->normalizeManyForManager($ideasOfChild, $child, $me));
         }
 
         return array_map(static fn (array $d) => $d + ['_version' => $entries[$d['id']]['version']], $docs);

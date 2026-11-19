@@ -51,3 +51,4 @@ unsubscribe:
   done_all: "Done: you won't get notification emails any more."
   invalid: "This unsubscribe link isn't valid."
   transactional: "Essential emails (verification, password, export) will still arrive."
+names_and: "%first% and %last%"

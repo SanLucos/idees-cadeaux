@@ -11,7 +11,8 @@ use App\Entity\User;
 
 /**
  * Spec §5.11's idea-related rows, in one place. Every call passes the
- * idea's owner to Notifier's exclusions — on top of
+ * idea's recipients (each of them its owner, décision 69) to Notifier's
+ * exclusions — on top of
  * NotificationRecipients filtering them out already — so a slip in one
  * layer still can't notify an owner about their own list (règle d'or).
  */
@@ -40,7 +41,7 @@ final class IdeaEvents
             $this->recipients->friendsSeeing($idea),
             Notifier::ideaPayload($idea, $actor),
             $actor,
-            [$idea->getOwner(), $idea->getAuthor()],
+            [...$idea->getRecipients(), $idea->getAuthor()],
             $type->value.':'.$idea->getId()->toRfc4122(),
         );
     }
@@ -61,7 +62,7 @@ final class IdeaEvents
      */
     public function unpublished(Idea $idea, array $recipients, User $actor): void
     {
-        $this->notifier->notify(NotificationType::IdeaUnpublished, $recipients, Notifier::ideaPayload($idea, $actor), $actor, [$idea->getOwner()]);
+        $this->notifier->notify(NotificationType::IdeaUnpublished, $recipients, Notifier::ideaPayload($idea, $actor), $actor, $idea->getRecipients());
     }
 
     /**
@@ -78,7 +79,7 @@ final class IdeaEvents
             $this->recipients->interactionGroup($idea),
             Notifier::ideaPayload($idea, $actor) + $extra,
             $actor,
-            [$idea->getOwner()],
+            $idea->getRecipients(),
             $dedupeKey,
         );
     }

@@ -56,7 +56,7 @@ class ContributionPledgeRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('p')
             ->join('p.contribution', 'c')
             ->join('c.idea', 'i')
-            ->andWhere('p.user = :user AND i.owner = :owner')
+            ->andWhere('p.user = :user AND '.IdeaRepository::hasRecipient('owner'))
             ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('owner', $owner->getId(), 'uuid')
             ->getQuery()->getResult();

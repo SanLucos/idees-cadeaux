@@ -42,7 +42,7 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * `$user`'s reservations on ideas owned by `$owner` (friend removal, spec §5.3).
+     * `$user`'s reservations on ideas `$owner` is a recipient of (friend removal, spec §5.3).
      *
      * @return Reservation[]
      */
@@ -50,7 +50,7 @@ class ReservationRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('r')
             ->join('r.idea', 'i')
-            ->andWhere('r.user = :user AND i.owner = :owner')
+            ->andWhere('r.user = :user AND '.IdeaRepository::hasRecipient('owner'))
             ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('owner', $owner->getId(), 'uuid')
             ->getQuery()->getResult();

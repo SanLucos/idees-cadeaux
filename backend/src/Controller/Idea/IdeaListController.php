@@ -49,7 +49,7 @@ final class IdeaListController
         }
 
         return new JsonResponse(
-            $this->page($this->ideas->findOwnerView($me, $filter), $filter, fn (array $ideas) => array_map($this->normalizer->normalizeForOwner(...), $ideas))
+            $this->page($this->ideas->findOwnerView($me, $filter), $filter, fn (array $ideas) => $this->normalizer->normalizeMany($ideas, $me))
             + ['counts' => $this->ideas->countOwnerView($me)],
         );
     }
@@ -77,23 +77,18 @@ final class IdeaListController
         $filter = IdeaListFilter::fromRequest($request);
 
         return new JsonResponse(
-            $this->page($this->ideas->findFriendView($owner, $me, $filter), $filter, fn (array $ideas) => $this->normalizer->normalizeManyForFriend($ideas, $me)),
+            $this->page($this->ideas->findFriendView($owner, $me, $filter, IdeaAccess::humanBehind($me)), $filter, fn (array $ideas) => $this->normalizer->normalizeMany($ideas, $me)),
         );
     }
 
     /**
-     * Every private idea I wrote (the « Privées » screen), each with its
-     * recipient so the client can group them.
+     * Every private idea I wrote (the « Privées » screen); the client
+     * groups them by their `recipients`.
      */
     #[Route('/api/ideas/private', name: 'ideas_private', methods: ['GET'], priority: 10)]
     public function private(#[ActingUser] User $me): JsonResponse
     {
-        return new JsonResponse(array_map(function (Idea $idea) use ($me): array {
-            $owner = $idea->getOwner();
-            $data = $this->normalizer->normalizeFor($idea, $me);
-
-            return $data + ['recipient' => ['id' => $owner->getId()->toRfc4122(), 'displayName' => $owner->getDisplayName()]];
-        }, $this->ideas->findPrivateByAuthor($me)));
+        return new JsonResponse($this->normalizer->normalizeMany($this->ideas->findPrivateByAuthor($me), $me));
     }
 
     private function managerView(User $child, User $viewer, IdeaListFilter $filter): JsonResponse
@@ -102,7 +97,7 @@ final class IdeaListController
             $this->page(
                 $this->ideas->findManagerView($child, IdeaAccess::humanBehind($viewer), $filter),
                 $filter,
-                fn (array $ideas) => $this->normalizer->normalizeManyForManager($ideas, $viewer),
+                fn (array $ideas) => $this->normalizer->normalizeMany($ideas, $viewer),
             ) + ['counts' => $this->ideas->countOwnerView($child)],
         );
     }

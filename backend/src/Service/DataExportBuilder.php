@@ -24,6 +24,12 @@ use Doctrine\DBAL\Connection;
  */
 final class DataExportBuilder
 {
+    /** SQL: an idea `i`'s recipients' names (décision 69). */
+    private const string RECIPIENT_NAMES = "(SELECT string_agg(ru.display_name, ', ' ORDER BY rn.id) FROM idea_recipient rn JOIN app_user ru ON ru.id = rn.user_id WHERE rn.idea_id = i.id AND rn.deleted_at IS NULL)";
+
+    /** SQL: idea `i`'s author is one of its recipients (not a suggestion). */
+    private const string PERSONAL = 'EXISTS (SELECT 1 FROM idea_recipient ra WHERE ra.idea_id = i.id AND ra.user_id = i.author_id AND ra.deleted_at IS NULL)';
+
     public function __construct(
         private readonly Connection $db,
         private readonly FriendshipRepository $friendships,
@@ -46,11 +52,13 @@ final class DataExportBuilder
         $ideas = $this->rows(
             'SELECT i.id, i.title, i.url, i.price_amount, i.price_currency, i.note, o.code AS occasion, i.visibility, i.status,
                     i.archive_kind, i.published_at, i.archived_at, i.created_at, i.updated_at, i.image_path,
-                    CASE WHEN i.owner_id <> i.author_id THEN owner.display_name END AS suggested_to
+                    CASE WHEN NOT '.self::PERSONAL.' THEN '.self::RECIPIENT_NAMES.' END AS suggested_to,
+                    '.self::RECIPIENT_NAMES.' AS recipients
              FROM idea i
-             JOIN app_user owner ON owner.id = i.owner_id
              LEFT JOIN occasion o ON o.id = i.occasion_id
-             WHERE i.author_id = :id AND i.deleted_at IS NULL
+             WHERE i.deleted_at IS NULL AND (i.author_id = :id
+                -- Shared with me by another recipient (décision 69): mine too, owner view.
+                OR (i.visibility = \'published\' AND EXISTS (SELECT 1 FROM idea_recipient rm WHERE rm.idea_id = i.id AND rm.user_id = :id AND rm.deleted_at IS NULL) AND '.self::PERSONAL.'))
              ORDER BY i.created_at',
             $id,
         );
@@ -85,35 +93,35 @@ final class DataExportBuilder
                 'friends.json' => $this->friends($subject),
                 'ideas.json' => $ideas,
                 'comments.json' => $this->rows(
-                    'SELECT c.body, c.created_at, c.edited_at, i.title AS idea, owner.display_name AS idea_owner
-                     FROM comment c JOIN idea i ON i.id = c.idea_id JOIN app_user owner ON owner.id = i.owner_id
+                    'SELECT c.body, c.created_at, c.edited_at, i.title AS idea, '.self::RECIPIENT_NAMES.' AS idea_owner
+                     FROM comment c JOIN idea i ON i.id = c.idea_id
                      WHERE c.author_id = :id AND c.deleted_at IS NULL ORDER BY c.created_at',
                     $id,
                 ),
                 'reactions.json' => $this->rows(
-                    'SELECT r.type, r.created_at, i.title AS idea, owner.display_name AS idea_owner
-                     FROM reaction r JOIN idea i ON i.id = r.idea_id JOIN app_user owner ON owner.id = i.owner_id
+                    'SELECT r.type, r.created_at, i.title AS idea, '.self::RECIPIENT_NAMES.' AS idea_owner
+                     FROM reaction r JOIN idea i ON i.id = r.idea_id
                      WHERE r.user_id = :id AND r.deleted_at IS NULL ORDER BY r.created_at',
                     $id,
                 ),
                 'reservations.json' => $this->rows(
-                    'SELECT r.created_at, i.title AS idea, owner.display_name AS idea_owner
-                     FROM reservation r JOIN idea i ON i.id = r.idea_id JOIN app_user owner ON owner.id = i.owner_id
+                    'SELECT r.created_at, i.title AS idea, '.self::RECIPIENT_NAMES.' AS idea_owner
+                     FROM reservation r JOIN idea i ON i.id = r.idea_id
                      WHERE r.user_id = :id AND r.deleted_at IS NULL ORDER BY r.created_at',
                     $id,
                 ),
                 'contributions.json' => [
                     // My own pledges only: never someone else's amount.
                     'pledges' => $this->rows(
-                        'SELECT p.amount, c.currency, p.created_at, i.title AS idea, owner.display_name AS idea_owner
+                        'SELECT p.amount, c.currency, p.created_at, i.title AS idea, '.self::RECIPIENT_NAMES.' AS idea_owner
                          FROM contribution_pledge p JOIN contribution c ON c.id = p.contribution_id
-                         JOIN idea i ON i.id = c.idea_id JOIN app_user owner ON owner.id = i.owner_id
+                         JOIN idea i ON i.id = c.idea_id
                          WHERE p.user_id = :id AND p.deleted_at IS NULL ORDER BY p.created_at',
                         $id,
                     ),
                     'initiated' => $this->rows(
-                        'SELECT c.target_amount, c.currency, c.status, c.created_at, c.closed_at, i.title AS idea, owner.display_name AS idea_owner
-                         FROM contribution c JOIN idea i ON i.id = c.idea_id JOIN app_user owner ON owner.id = i.owner_id
+                        'SELECT c.target_amount, c.currency, c.status, c.created_at, c.closed_at, i.title AS idea, '.self::RECIPIENT_NAMES.' AS idea_owner
+                         FROM contribution c JOIN idea i ON i.id = c.idea_id
                          WHERE c.initiator_id = :id AND c.deleted_at IS NULL ORDER BY c.created_at',
                         $id,
                     ),

@@ -57,7 +57,7 @@ class ReactionRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('r')
             ->join('r.idea', 'i')
-            ->andWhere('r.user = :user AND i.owner = :owner')
+            ->andWhere('r.user = :user AND '.IdeaRepository::hasRecipient('owner'))
             ->setParameter('user', $user->getId(), 'uuid')
             ->setParameter('owner', $owner->getId(), 'uuid')
             ->getQuery()->getResult();

@@ -133,7 +133,7 @@ final class GuestPageController
             // Re-checked, not trusted from the signature alone: the idea
             // must still be in the guest view (published, personal, active).
             $idea = $this->ideas->find($id);
-            $visible = null !== $idea && $idea->getOwner() === $owner && $idea->getAuthor() === $owner
+            $visible = null !== $idea && $idea->hasRecipient($owner) && !$idea->isSuggestion()
                 && $idea->isPublished() && !$idea->isArchived() && null !== $idea->getImagePath();
             $path = $visible ? ('thumb' === $kind ? IdeaNormalizer::thumbnailPath((string) $idea->getImagePath()) : $idea->getImagePath()) : null;
         }

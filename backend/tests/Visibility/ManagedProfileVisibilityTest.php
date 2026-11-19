@@ -53,7 +53,7 @@ final class ManagedProfileVisibilityTest extends AuthTestCase
     {
         $personal = $this->expect(201, $this->manager, 'POST', '/api/ideas', ['title' => 'Lego'], $this->jules);
         $draft = $this->expect(201, $this->manager, 'POST', '/api/ideas', ['title' => 'Draft', 'visibility' => 'private'], $this->jules);
-        self::assertSame($this->jules, $personal['ownerId'], 'created on behalf of the child, attributed to the child');
+        self::assertSame([$this->jules], array_column($personal['recipients'], 'id'), 'created on behalf of the child, attributed to the child');
 
         $suggestion = $this->expect(201, $this->hugo, 'POST', '/api/ideas', ['title' => 'Vélo', 'ownerId' => $this->jules]);
         $hugoDraft = $this->expect(201, $this->hugo, 'POST', '/api/ideas', ['title' => 'Hugo draft', 'ownerId' => $this->jules, 'visibility' => 'private']);

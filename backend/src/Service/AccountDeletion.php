@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Enum\ContributionStatus;
+use App\Entity\Enum\IdeaVisibility;
 use App\Entity\User;
 use App\Message\SendAccountEmail;
 use App\Repository\UserRepository;
@@ -38,6 +39,9 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  */
 final class AccountDeletion
 {
+    /** SQL: the idea's author is one of its recipients (a personal idea). */
+    private const string PERSONAL_SQL = 'EXISTS (SELECT 1 FROM idea_recipient ra WHERE ra.idea_id = idea.id AND ra.user_id = idea.author_id AND ra.deleted_at IS NULL)';
+
     public const string GRACE = '14 days';
 
     public function __construct(
@@ -148,17 +152,36 @@ final class AccountDeletion
             $params = ['ids' => $ids, 'open' => ContributionStatus::Open->value, 'closed' => ContributionStatus::Closed->value, 'now' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')];
             $types = ['ids' => ArrayParameterType::STRING];
 
+            // Ideas shared with others (décision 69): a published one they wrote for
+            // themselves and others passes to another recipient; the ideas left
+            // without any recipient go once the accounts are gone.
+            $affected = $db->fetchFirstColumn('SELECT DISTINCT idea_id FROM idea_recipient WHERE user_id IN (:ids)', $params, $types);
+            $db->executeStatement(
+                'UPDATE idea SET author_id = (SELECT r.user_id FROM idea_recipient r WHERE r.idea_id = idea.id AND r.deleted_at IS NULL AND r.user_id NOT IN (:ids) ORDER BY r.id LIMIT 1), updated_at = :now
+                 WHERE author_id IN (:ids) AND visibility = :published AND '.self::PERSONAL_SQL.'
+                   AND EXISTS (SELECT 1 FROM idea_recipient r WHERE r.idea_id = idea.id AND r.deleted_at IS NULL AND r.user_id NOT IN (:ids))',
+                $params + ['published' => IdeaVisibility::Published->value],
+                $types,
+            );
             // Their contributions on other lists: closed, others' pledges kept.
             $db->executeStatement('UPDATE contribution SET status = :closed, closed_at = :now, updated_at = :now WHERE initiator_id IN (:ids) AND status = :open', $params, $types);
             // Notifications that name them, in anyone's centre.
             $db->executeStatement(
-                "DELETE FROM notification WHERE payload::jsonb -> 'actor' ->> 'id' IN (:ids) OR payload::jsonb -> 'friend' ->> 'id' IN (:ids) OR payload::jsonb -> 'owner' ->> 'id' IN (:ids)",
+                "DELETE FROM notification WHERE payload::jsonb -> 'actor' ->> 'id' IN (:ids) OR payload::jsonb -> 'friend' ->> 'id' IN (:ids) OR payload::jsonb -> 'owner' ->> 'id' IN (:ids)
+                 OR EXISTS (SELECT 1 FROM jsonb_array_elements(CASE WHEN jsonb_typeof(payload::jsonb -> 'recipients') = 'array' THEN payload::jsonb -> 'recipients' ELSE '[]'::jsonb END) e WHERE e ->> 'id' IN (:ids))",
                 $params,
                 $types,
             );
             // Children first (they point at the account), then the account; cascades do the rest.
             $db->executeStatement('DELETE FROM app_user WHERE managed_by_id IN (:ids)', $params, $types);
             $db->executeStatement('DELETE FROM app_user WHERE id IN (:ids)', $params, $types);
+            if ([] !== $affected) {
+                $db->executeStatement(
+                    'DELETE FROM idea WHERE id IN (:affected) AND NOT EXISTS (SELECT 1 FROM idea_recipient r WHERE r.idea_id = idea.id AND r.deleted_at IS NULL)',
+                    ['affected' => $affected],
+                    ['affected' => ArrayParameterType::STRING],
+                );
+            }
         });
         $this->em->clear();
 
@@ -184,7 +207,9 @@ final class AccountDeletion
     }
 
     /**
-     * Avatars, and the images of every idea they own or wrote (thumbnails included).
+     * Avatars, and the images of every idea that goes with them (thumbnails
+     * included): left without another recipient, or written by them and
+     * not passed on to another recipient (see erase()).
      *
      * @param string[] $ids
      *
@@ -194,8 +219,11 @@ final class AccountDeletion
     {
         $paths = $this->connection->fetchFirstColumn(
             'SELECT avatar_path FROM app_user WHERE id IN (:ids) AND avatar_path IS NOT NULL
-             UNION SELECT image_path FROM idea WHERE (owner_id IN (:ids) OR author_id IN (:ids)) AND image_path IS NOT NULL',
-            ['ids' => $ids],
+             UNION SELECT image_path FROM idea WHERE image_path IS NOT NULL AND (
+                NOT EXISTS (SELECT 1 FROM idea_recipient r WHERE r.idea_id = idea.id AND r.deleted_at IS NULL AND r.user_id NOT IN (:ids))
+                OR (author_id IN (:ids) AND NOT (visibility = :published AND '.self::PERSONAL_SQL.'))
+             )',
+            ['ids' => $ids, 'published' => IdeaVisibility::Published->value],
             ['ids' => ArrayParameterType::STRING],
         );
 

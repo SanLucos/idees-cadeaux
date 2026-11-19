@@ -113,6 +113,34 @@ final class AccountDeletionTest extends AuthTestCase
         self::assertNotNull($this->expect(200, $this->camille, 'POST', '/api/account/deletion', ['code' => $code])['deletionScheduledAt']);
     }
 
+    /**
+     * Décision 69: an idea for several people stays with the others —
+     * passed to another recipient when the leaver wrote it — and goes
+     * with the last of them; the leaver's private drafts go too.
+     */
+    public function testSharedIdeasStayWithTheOtherRecipients(): void
+    {
+        $camilleId = $this->userId($this->camille);
+        $hugoId = $this->userId($this->hugo);
+        $written = $this->expect(201, $this->camille, 'POST', '/api/ideas', ['title' => 'Airfryer', 'recipientIds' => [$camilleId, $hugoId]])['id'];
+        $hugos = $this->expect(201, $this->hugo, 'POST', '/api/ideas', ['title' => 'Lamp', 'recipientIds' => [$camilleId, $hugoId]])['id'];
+        $draft = $this->expect(201, $this->camille, 'POST', '/api/ideas', ['title' => 'Draft', 'visibility' => 'private', 'recipientIds' => [$camilleId, $hugoId]])['id'];
+        $alone = $this->expect(201, $this->camille, 'POST', '/api/ideas', ['title' => 'Mine'])['id'];
+
+        $this->expect(200, $this->camille, 'POST', '/api/account/deletion', ['password' => 'correcthorsebattery']);
+        $db = self::getContainer()->get(Connection::class);
+        $db->executeStatement("UPDATE app_user SET deletion_scheduled_at = NOW() - INTERVAL '1 minute' WHERE id = :id", ['id' => $camilleId]);
+        self::assertSame(1, self::getContainer()->get(DeleteScheduledProfilesTask::class)());
+
+        $list = $this->expect(200, $this->hugo, 'GET', '/api/users/me/ideas');
+        self::assertEqualsCanonicalizing([$written, $hugos], array_column($list['member'], 'id'));
+        foreach ($list['member'] as $idea) {
+            self::assertSame([$hugoId], array_column($idea['recipients'], 'id'));
+            self::assertTrue($idea['isMine'], 'the idea Camille wrote is now Hugo\'s');
+        }
+        self::assertSame(0, (int) $db->fetchOne('SELECT COUNT(*) FROM idea WHERE id IN (:a, :b)', ['a' => $draft, 'b' => $alone]));
+    }
+
     public function testAtTheEndOfTheGracePeriodEverythingIsErased(): void
     {
         $lea = $this->registerVerifyAndLogin('ad-lea@example.com');
@@ -156,7 +184,7 @@ final class AccountDeletionTest extends AuthTestCase
         self::assertSame('ad-camille@example.com', $this->accountEmails('deleted')[0]->email, 'she is told');
 
         self::assertSame(0, (int) $db->fetchOne('SELECT COUNT(*) FROM app_user WHERE id IN (:a, :b)', ['a' => $camilleId, 'b' => $jules]), 'the account and its child profile');
-        self::assertSame(0, (int) $db->fetchOne('SELECT COUNT(*) FROM idea WHERE owner_id IN (:a, :b) OR author_id IN (:a, :b)', ['a' => $camilleId, 'b' => $jules]));
+        self::assertSame(0, (int) $db->fetchOne('SELECT COUNT(*) FROM idea i WHERE author_id IN (:a, :b) OR EXISTS (SELECT 1 FROM idea_recipient r WHERE r.idea_id = i.id AND r.user_id IN (:a, :b))', ['a' => $camilleId, 'b' => $jules]));
         self::assertSame(0, (int) $db->fetchOne("SELECT COUNT(*) FROM comment WHERE body IN ('Camille comment', 'On Camille''s idea')"));
 
         // Hugo's list: her suggestion, reservation, comment and reaction are gone…

@@ -7,6 +7,7 @@ namespace App\Controller\Friendship;
 use App\Entity\User;
 use App\Repository\FriendshipRepository;
 use App\Repository\IdeaRepository;
+use App\Security\IdeaAccess;
 use App\Serializer\FriendshipNormalizer;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -27,6 +28,7 @@ final class FriendshipListController
         $friendships = $this->friendships->findAccepted($me);
         $counts = $this->ideas->countFriendVisibleByOwner(
             array_map(static fn ($f) => $f->otherParty($me)->getId()->toRfc4122(), $friendships),
+            IdeaAccess::humanBehind($me),
         );
 
         // "N idées" on the friends list (Amis mock-up): published, active

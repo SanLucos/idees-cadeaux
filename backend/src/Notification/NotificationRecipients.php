@@ -20,8 +20,8 @@ use App\Security\IdeaAccess;
  * suggestion's author, commenters, reserver, contribution initiators
  * and participants — kept only if they can still see the idea's
  * interactions (IdeaAccess::canSeeInteractions). That filter alone
- * removes the owner (règle d'or) and ex-friends; callers still pass the
- * owner to Notifier's `$exclude` as a second lock.
+ * removes every recipient (règle d'or) and ex-friends; callers still
+ * pass the recipients to Notifier's `$exclude` as a second lock.
  *
  * Call it *before* a change that would hide the idea (unpublish).
  */
@@ -72,16 +72,24 @@ final class NotificationRecipients
     }
 
     /**
-     * Friends of `$owner` who can see this (published) idea — for "new
-     * idea / new suggestion" (spec §5.11). Never includes the owner.
+     * Friends of any recipient who can see this (published) idea — for
+     * "new idea / new suggestion" (spec §5.11), each of them once
+     * (décision 69). Never includes a recipient.
      *
      * @return User[]
      */
     public function friendsSeeing(Idea $idea): array
     {
+        $people = [];
+        foreach ($idea->getRecipients() as $recipient) {
+            foreach ($this->friendsOf($recipient) as $friend) {
+                $people[$friend->getId()->toRfc4122()] = $friend;
+            }
+        }
+
         return array_values(array_filter(
-            $this->friendsOf($idea->getOwner()),
-            fn (User $u) => $u !== $idea->getOwner() && $this->access->canView($idea, $u),
+            $people,
+            fn (User $u) => !$idea->hasRecipient($u) && $this->access->canView($idea, $u),
         ));
     }
 

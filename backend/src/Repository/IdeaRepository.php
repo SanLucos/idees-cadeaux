@@ -15,9 +15,14 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * List queries apply the same rules as App\Security\IdeaAccess::canView,
+ * List queries apply the same rules as App\Security\IdeaAccess::viewOf,
  * in SQL. Keep the two in step: tests/Visibility/IdeaVisibilityTest
  * checks both paths.
+ *
+ * An idea has one or more recipients (IdeaRecipient, décision 69): "X's
+ * list" is every idea X is a recipient of. A suggestion is an idea whose
+ * author isn't among its recipients; it never shows to any recipient,
+ * whichever list they read it from.
  *
  * @extends ServiceEntityRepository<Idea>
  */
@@ -28,19 +33,47 @@ class IdeaRepository extends ServiceEntityRepository
         parent::__construct($registry, Idea::class);
     }
 
+    /** DQL: `:param` is one of idea `i`'s recipients. */
+    public static function hasRecipient(string $param, string $idea = 'i'): string
+    {
+        $r = 'r_'.$param;
+
+        return "EXISTS (SELECT 1 FROM App\\Entity\\IdeaRecipient {$r} WHERE {$r}.idea = {$idea} AND {$r}.user = :{$param} AND {$r}.deletedAt IS NULL)";
+    }
+
     /**
-     * Vue propriétaire: my own ideas only (author = owner = me). A
-     * suggestion on my list never appears here, whatever its state.
+     * DQL: idea `i`'s author is one of its recipients (a personal idea,
+     * not a suggestion). Each use in one query takes its own `$tag`.
+     */
+    public static function isPersonal(string $tag = 'p', string $idea = 'i'): string
+    {
+        $r = 'r_author_'.$tag;
+
+        return "EXISTS (SELECT 1 FROM App\\Entity\\IdeaRecipient {$r} WHERE {$r}.idea = {$idea} AND {$r}.user = {$idea}.author AND {$r}.deletedAt IS NULL)";
+    }
+
+    /**
+     * Vue propriétaire: the personal ideas I'm a recipient of, published
+     * or my own drafts. A suggestion on my list never appears here,
+     * whatever its state; nor does another recipient's draft (règle 2).
      *
      * @return Paginator<Idea>
      */
     public function findOwnerView(User $me, IdeaListFilter $filter): Paginator
     {
-        $qb = $this->createQueryBuilder('i')
-            ->andWhere('i.owner = :me AND i.author = :me')
-            ->setParameter('me', $me->getId(), 'uuid');
+        $qb = $this->ownerViewQuery($me);
 
         return $this->paginate($this->applyFilter($qb, $filter), $filter);
+    }
+
+    private function ownerViewQuery(User $me): QueryBuilder
+    {
+        return $this->createQueryBuilder('i')
+            ->andWhere(self::hasRecipient('me'))
+            ->andWhere(self::isPersonal())
+            ->andWhere('i.visibility = :ov_published OR i.author = :me')
+            ->setParameter('me', $me->getId(), 'uuid')
+            ->setParameter('ov_published', IdeaVisibility::Published);
     }
 
     /**
@@ -52,7 +85,8 @@ class IdeaRepository extends ServiceEntityRepository
     public function findGuestView(User $owner, IdeaListFilter $filter): Paginator
     {
         $qb = $this->createQueryBuilder('i')
-            ->andWhere('i.owner = :owner AND i.author = :owner')
+            ->andWhere(self::hasRecipient('owner'))
+            ->andWhere(self::isPersonal())
             ->andWhere('i.visibility = :published')
             ->setParameter('owner', $owner->getId(), 'uuid')
             ->setParameter('published', IdeaVisibility::Published);
@@ -76,7 +110,8 @@ class IdeaRepository extends ServiceEntityRepository
         return array_column($this->createQueryBuilder('i')
             ->select('DISTINCT o.code AS code, o.sortOrder AS sortOrder')
             ->innerJoin('i.occasion', 'o')
-            ->andWhere('i.owner = :owner AND i.author = :owner')
+            ->andWhere(self::hasRecipient('owner'))
+            ->andWhere(self::isPersonal())
             ->andWhere('i.visibility = :published AND i.status = :active')
             ->setParameter('owner', $owner->getId(), 'uuid')
             ->setParameter('published', IdeaVisibility::Published)
@@ -90,23 +125,24 @@ class IdeaRepository extends ServiceEntityRepository
      * Vue ami: `$owner`'s personal ideas and their friends' suggestions,
      * published — plus my own drafts for them (visible to me alone).
      * The caller has already checked `$viewer` is `$owner`'s friend.
+     * `$human` (the adult behind `$viewer`) may be a co-recipient of some
+     * of them: their personal ones come back (owner view, decided per
+     * idea by the normalizer), suggestions never (règle d'or).
      *
      * @return Paginator<Idea>
      */
-    public function findFriendView(User $owner, User $viewer, IdeaListFilter $filter): Paginator
+    public function findFriendView(User $owner, User $viewer, IdeaListFilter $filter, ?User $human = null): Paginator
     {
         $qb = $this->createQueryBuilder('i')
-            ->andWhere('i.owner = :owner')
+            ->andWhere(self::hasRecipient('owner'))
             ->andWhere('i.visibility = :published OR i.author = :viewer')
+            ->andWhere(\sprintf('NOT (%s) OR %s', self::hasRecipient('human'), self::isPersonal()))
             ->setParameter('owner', $owner->getId(), 'uuid')
             ->setParameter('viewer', $viewer->getId(), 'uuid')
+            ->setParameter('human', ($human ?? $viewer)->getId(), 'uuid')
             ->setParameter('published', IdeaVisibility::Published);
 
-        if ('personal' === $filter->kind) {
-            $qb->andWhere('i.author = i.owner');
-        } elseif ('suggestion' === $filter->kind) {
-            $qb->andWhere('i.author != i.owner');
-        }
+        $this->applyKind($qb, $filter);
 
         return $this->paginate($this->applyFilter($qb, $filter), $filter);
     }
@@ -122,19 +158,26 @@ class IdeaRepository extends ServiceEntityRepository
     public function findManagerView(User $child, User $manager, IdeaListFilter $filter): Paginator
     {
         $qb = $this->createQueryBuilder('i')
-            ->andWhere('i.owner = :child')
+            ->andWhere(self::hasRecipient('child'))
             ->andWhere('i.visibility = :published OR i.author = :child OR i.author = :manager')
+            // A suggestion the manager is a co-recipient of stays hidden from them.
+            ->andWhere(\sprintf('NOT (%s) OR %s', self::hasRecipient('manager'), self::isPersonal()))
             ->setParameter('child', $child->getId(), 'uuid')
             ->setParameter('manager', $manager->getId(), 'uuid')
             ->setParameter('published', IdeaVisibility::Published);
 
-        if ('personal' === $filter->kind) {
-            $qb->andWhere('i.author = i.owner');
-        } elseif ('suggestion' === $filter->kind) {
-            $qb->andWhere('i.author != i.owner');
-        }
+        $this->applyKind($qb, $filter);
 
         return $this->paginate($this->applyFilter($qb, $filter), $filter);
+    }
+
+    private function applyKind(QueryBuilder $qb, IdeaListFilter $filter): void
+    {
+        if ('personal' === $filter->kind) {
+            $qb->andWhere(self::isPersonal('kind'));
+        } elseif ('suggestion' === $filter->kind) {
+            $qb->andWhere(\sprintf('NOT (%s)', self::isPersonal('kind')));
+        }
     }
 
     /**
@@ -162,10 +205,8 @@ class IdeaRepository extends ServiceEntityRepository
      */
     public function countOwnerView(User $me): array
     {
-        $rows = $this->createQueryBuilder('i')
+        $rows = $this->ownerViewQuery($me)
             ->select('i.status AS status, i.visibility AS visibility, COUNT(i.id) AS total')
-            ->andWhere('i.owner = :me AND i.author = :me')
-            ->setParameter('me', $me->getId(), 'uuid')
             ->groupBy('i.status, i.visibility')
             ->getQuery()
             ->getArrayResult();
@@ -187,28 +228,32 @@ class IdeaRepository extends ServiceEntityRepository
     }
 
     /**
-     * Published, active ideas per owner, as seen by a friend (personal
-     * ideas and suggestions alike; never anyone's drafts) — the friends
-     * list's "N idées".
+     * Published, active ideas per owner, as seen by `$viewer`, a friend
+     * (personal ideas and suggestions alike; never anyone's drafts) —
+     * the friends list's "N idées". A suggestion `$viewer` is a
+     * co-recipient of is never counted (règle d'or, décision 69).
      *
      * @param string[] $ownerIds
      *
      * @return array<string, int>
      */
-    public function countFriendVisibleByOwner(array $ownerIds): array
+    public function countFriendVisibleByOwner(array $ownerIds, User $viewer): array
     {
         if ([] === $ownerIds) {
             return [];
         }
 
         $rows = $this->createQueryBuilder('i')
-            ->select('IDENTITY(i.owner) AS ownerId, COUNT(i.id) AS total')
-            ->andWhere('i.owner IN (:owners)')
+            ->select('IDENTITY(ro.user) AS ownerId, COUNT(i.id) AS total')
+            ->innerJoin('App\\Entity\\IdeaRecipient', 'ro', 'WITH', 'ro.idea = i AND ro.deletedAt IS NULL')
+            ->andWhere('ro.user IN (:owners)')
             ->andWhere('i.visibility = :published AND i.status = :active')
+            ->andWhere(\sprintf('NOT (%s) OR %s', self::hasRecipient('viewer'), self::isPersonal()))
             ->setParameter('owners', $ownerIds)
+            ->setParameter('viewer', $viewer->getId(), 'uuid')
             ->setParameter('published', IdeaVisibility::Published)
             ->setParameter('active', IdeaStatus::Active)
-            ->groupBy('i.owner')
+            ->groupBy('ro.user')
             ->getQuery()
             ->getArrayResult();
 

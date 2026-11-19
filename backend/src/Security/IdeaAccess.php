@@ -14,34 +14,39 @@ use App\Repository\FriendshipRepository;
 use App\Repository\ReservationRepository;
 
 /**
- * Every "who may see / change this idea" rule (spec §4, §5.4), in one
- * place so the list queries (App\Repository\IdeaRepository), the item
- * endpoints and the tests all agree.
+ * Every "who may see / change this idea" rule (spec §4, §5.4, §11
+ * décision 69), in one place so the list queries
+ * (App\Repository\IdeaRepository), the item endpoints, /sync, the
+ * notifications and the tests all agree.
  *
- * Seeing an idea:
- * - its **author** always does, except a published suggestion once
- *   they're no longer the owner's friend (spec §5.3: "leur auteur n'a
- *   plus accès à la liste") — their private drafts stay theirs;
- * - its **owner** only when they also wrote it: a suggestion is never
- *   visible to its owner (CLAUDE.md règle 1);
- * - an accepted **friend** of the owner, once it's published.
+ * An idea has one or more recipients, each of them its owner. The view
+ * `$viewer` gets of it (viewOf()), with `human` the adult behind the
+ * request (the manager when acting as a managed profile):
+ * 1. `human` is a recipient → **owner** view of a personal idea
+ *    (published, or their own draft); nothing of a suggestion, ever
+ *    (CLAUDE.md règle 1) — whatever else they are to the other
+ *    recipients (friend, manager);
+ * 2. a recipient is a profile `human` manages → **manager** view (spec
+ *    §5.15, the one exception to the règle d'or): published ideas, the
+ *    child's drafts and `human`'s own; never a friend's draft (règle 2);
+ * 3. `$viewer` wrote it → **friend** view: their draft, or their
+ *    published suggestion while they're still friends with (or manager
+ *    of) a recipient (spec §5.3);
+ * 4. published, and `$viewer` is a friend of at least one recipient →
+ *    **friend** view.
  * Anyone else: not found — 404, never 403.
  *
- * Changing it is the author's alone. A visible-but-not-yours idea
- * (a friend's personal idea) is a plain 403: its existence is no secret
- * to someone who can already read it.
- *
- * Manager view (spec §5.15, the one exception to the règle d'or): a
- * managed profile's list is read by its manager — acting as the child
- * or not — with everything on it: friends' published suggestions and
- * every interaction, plus the child's own drafts. Friends' private
- * drafts stay their author's alone (règle 2), and pledge amounts keep
- * their rule (règle 3).
+ * Changing a personal idea's fields, deleting it or marking it
+ * "reçue" is any recipient's right; publishing, unpublishing and
+ * choosing the recipients is its author's alone. A suggestion is its
+ * author's. A visible-but-not-yours idea is a plain 403: its existence
+ * is no secret to someone who can already read it.
  *
  * Interactions (reservation, contribution and pledges, comments,
- * reactions — spec §5.7–5.10) exist for whoever sees the idea except
- * its owner, and only on a published idea. For the owner every
- * interaction endpoint is a 404, exactly like a non-existent one.
+ * reactions — spec §5.7–5.10) exist for whoever has the friend or
+ * manager view, on a published idea, and never for a recipient: for
+ * them every interaction endpoint is a 404, exactly like a non-existent
+ * one.
  */
 final class IdeaAccess
 {
@@ -68,24 +73,69 @@ final class IdeaAccess
         return $viewer->isManaged() ? ($viewer->getActingManager() ?? $viewer) : $viewer;
     }
 
-    public function canView(Idea $idea, User $viewer): bool
+    /**
+     * Whether `$viewer` stands on the owner side of the idea: the adult
+     * behind the request is one of its recipients.
+     */
+    public static function isOwnerSide(Idea $idea, User $viewer): bool
     {
-        $owner = $idea->getOwner();
-        $author = $idea->getAuthor();
+        return $idea->hasRecipient(self::humanBehind($viewer));
+    }
 
-        if (self::readsAsManager($owner, $viewer)) {
-            return $idea->isPublished() || $author === $owner || $author === self::humanBehind($viewer);
+    /**
+     * The recipient `$viewer` reads the idea for as its manager, if any.
+     */
+    public static function managedRecipient(Idea $idea, User $viewer): ?User
+    {
+        $human = self::humanBehind($viewer);
+        foreach ($idea->getRecipients() as $recipient) {
+            if ($recipient->isManaged() && $recipient->isManagedBy($human)) {
+                return $recipient;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 'owner', 'manager', 'friend' or null (the idea doesn't exist for
+     * `$viewer`). See the class comment.
+     */
+    public function viewOf(Idea $idea, User $viewer): ?string
+    {
+        $human = self::humanBehind($viewer);
+        $author = $idea->getAuthor();
+        $isOwnDraft = $author === $viewer || $author === $human || ($author->isManaged() && $author->isManagedBy($human));
+
+        if ($idea->hasRecipient($human)) {
+            return !$idea->isSuggestion() && ($idea->isPublished() || $isOwnDraft) ? 'owner' : null;
+        }
+
+        if (null !== self::managedRecipient($idea, $viewer)) {
+            return $idea->isPublished() || $isOwnDraft ? 'manager' : null;
         }
 
         if ($author === $viewer) {
-            return $owner === $viewer || !$idea->isPublished() || $this->friendships->areFriends($viewer, $owner);
+            return !$idea->isPublished() || $this->isFriendOfARecipient($idea, $viewer) ? 'friend' : null;
         }
 
-        if ($owner === $viewer) {
-            return false;
+        return $idea->isPublished() && $this->isFriendOfARecipient($idea, $viewer) ? 'friend' : null;
+    }
+
+    public function canView(Idea $idea, User $viewer): bool
+    {
+        return null !== $this->viewOf($idea, $viewer);
+    }
+
+    private function isFriendOfARecipient(Idea $idea, User $viewer): bool
+    {
+        foreach ($idea->getRecipients() as $recipient) {
+            if ($recipient !== $viewer && $this->friendships->areFriends($viewer, $recipient)) {
+                return true;
+            }
         }
 
-        return $idea->isPublished() && $this->friendships->areFriends($viewer, $owner);
+        return false;
     }
 
     /**
@@ -98,7 +148,30 @@ final class IdeaAccess
         }
     }
 
+    /**
+     * Fields, image, deletion: any recipient of a personal idea (a
+     * managed one while acting as it), the author of a suggestion.
+     */
+    public function canEdit(Idea $idea, User $viewer): bool
+    {
+        if (!$this->canView($idea, $viewer)) {
+            return false;
+        }
+
+        return $idea->isSuggestion() ? $idea->getAuthor() === $viewer : $idea->hasRecipient($viewer);
+    }
+
     public function assertCanEdit(Idea $idea, User $viewer): void
+    {
+        $this->assertCanView($idea, $viewer);
+
+        if (!$this->canEdit($idea, $viewer)) {
+            throw new ApiProblemException('idea.forbidden', 'Only the author can change this idea.', 403);
+        }
+    }
+
+    /** Publishing, unpublishing, choosing the recipients: the author's alone (décision 69). */
+    public function assertIsAuthor(Idea $idea, User $viewer): void
     {
         $this->assertCanView($idea, $viewer);
 
@@ -109,15 +182,15 @@ final class IdeaAccess
 
     public function canSeeInteractions(Idea $idea, User $viewer): bool
     {
-        return $idea->getOwner() !== $viewer && $idea->isPublished() && $this->canView($idea, $viewer);
+        return $idea->isPublished() && !$idea->hasRecipient($viewer) && \in_array($this->viewOf($idea, $viewer), ['friend', 'manager'], true);
     }
 
     /**
-     * @throws HiddenResourceException for the owner and anyone who can't see the idea
+     * @throws HiddenResourceException for a recipient and anyone who can't see the idea
      */
     public function assertCanSeeInteractions(Idea $idea, User $viewer): void
     {
-        if ($idea->getOwner() === $viewer || !$this->canView($idea, $viewer)) {
+        if ($idea->hasRecipient($viewer) || !\in_array($this->viewOf($idea, $viewer), ['friend', 'manager'], true)) {
             throw new HiddenResourceException();
         }
         if (!$idea->isPublished()) {
@@ -141,7 +214,7 @@ final class IdeaAccess
      */
     public function canMarkGifted(Idea $idea, User $viewer): bool
     {
-        if (!$idea->isSuggestion() || $idea->isArchived() || !$this->canView($idea, $viewer) || $idea->getOwner() === $viewer) {
+        if (!$idea->isSuggestion() || $idea->isArchived() || $idea->hasRecipient($viewer) || !\in_array($this->viewOf($idea, $viewer), ['friend', 'manager'], true)) {
             return false;
         }
         if ($idea->getAuthor() === $viewer) {
@@ -161,15 +234,16 @@ final class IdeaAccess
     }
 
     /**
-     * Spec §5.4 "Archivage": `received` by the owner on their own idea;
-     * `gifted` on a suggestion, see canMarkGifted().
+     * Spec §5.4 "Archivage": `received` by a recipient on a personal
+     * idea (for all of them, décision 69); `gifted` on a suggestion, see
+     * canMarkGifted().
      */
     public function assertCanArchive(Idea $idea, User $viewer, IdeaArchiveKind $kind): void
     {
         $this->assertCanView($idea, $viewer);
 
         $allowed = match ($kind) {
-            IdeaArchiveKind::Received => !$idea->isSuggestion() && $idea->getOwner() === $viewer,
+            IdeaArchiveKind::Received => !$idea->isSuggestion() && $idea->hasRecipient($viewer),
             IdeaArchiveKind::Gifted => $idea->isArchived() ? $idea->isSuggestion() : $this->canMarkGifted($idea, $viewer),
         };
 
@@ -185,6 +259,22 @@ final class IdeaAccess
     public function canSuggestTo(User $owner, User $author): bool
     {
         return $owner->isManagedBy($author) || $this->friendships->areFriends($author, $owner);
+    }
+
+    /**
+     * Who `$author` may name as one of an idea's recipients (décision
+     * 69): themselves, their friends, the profiles they manage — and,
+     * acting as a managed profile, its manager, the manager's other
+     * children and friends too.
+     */
+    public function canAddRecipient(User $recipient, User $author): bool
+    {
+        $human = self::humanBehind($author);
+
+        return $recipient === $author
+            || $recipient === $human
+            || $this->canSuggestTo($recipient, $author)
+            || ($human !== $author && $this->canSuggestTo($recipient, $human));
     }
 
     /** Spec §5.4: "seul celui qui a archivé peut annuler l'archivage". */

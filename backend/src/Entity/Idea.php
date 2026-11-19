@@ -11,18 +11,20 @@ use App\Entity\Trait\IdentifiableTrait;
 use App\Entity\Trait\SoftDeletableTrait;
 use App\Entity\Trait\TimestampableTrait;
 use App\Repository\IdeaRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A gift idea for `owner` (spec §5.4, §6). A *suggestion* is an idea
- * whose author isn't its owner: invisible to that owner, always
+ * A gift idea for one or more recipients (spec §5.4, §6, §11 décision
+ * 69): each of them is its owner. A *suggestion* is an idea whose
+ * author isn't one of its recipients: invisible to all of them, always
  * (CLAUDE.md règle 1). Who may see or change an idea is decided in one
  * place, App\Security\IdeaAccess — never inline in controllers.
  */
 #[ORM\Entity(repositoryClass: IdeaRepository::class)]
 #[ORM\Table(name: 'idea')]
-#[ORM\Index(name: 'idx_idea_owner_status', columns: ['owner_id', 'status'])]
 #[ORM\Index(name: 'idx_idea_author_visibility', columns: ['author_id', 'visibility'])]
 class Idea implements TimestampableInterface, SoftDeletableInterface
 {
@@ -34,9 +36,10 @@ class Idea implements TimestampableInterface, SoftDeletableInterface
     public const int NOTE_MAX_LENGTH = 2000;
     public const int URL_MAX_LENGTH = 2048;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private User $owner;
+    /** @var Collection<int, IdeaRecipient> active and removed rows alike: see getRecipients() */
+    #[ORM\OneToMany(targetEntity: IdeaRecipient::class, mappedBy: 'idea', cascade: ['persist'])]
+    #[ORM\OrderBy(['id' => 'ASC'])]
+    private Collection $recipients;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
@@ -84,11 +87,15 @@ class Idea implements TimestampableInterface, SoftDeletableInterface
     #[ORM\Column(nullable: true, enumType: IdeaArchiveKind::class)]
     private ?IdeaArchiveKind $archiveKind = null;
 
-    public function __construct(User $owner, User $author, string $title, IdeaVisibility $visibility = IdeaVisibility::Published, ?Uuid $id = null)
+    /**
+     * @param User|User[] $recipients one recipient, or several (décision 69)
+     */
+    public function __construct(User|array $recipients, User $author, string $title, IdeaVisibility $visibility = IdeaVisibility::Published, ?Uuid $id = null)
     {
         $this->initializeId($id);
         $this->initializeTimestamps();
-        $this->owner = $owner;
+        $this->recipients = new ArrayCollection();
+        $this->setRecipients(\is_array($recipients) ? $recipients : [$recipients]);
         $this->author = $author;
         $this->title = $title;
         $this->visibility = IdeaVisibility::Private;
@@ -97,9 +104,75 @@ class Idea implements TimestampableInterface, SoftDeletableInterface
         }
     }
 
-    public function getOwner(): User
+    /**
+     * The idea's current recipients, in the order they were added.
+     *
+     * @return list<User>
+     */
+    public function getRecipients(): array
     {
-        return $this->owner;
+        $users = [];
+        foreach ($this->recipients as $row) {
+            if (!$row->isDeleted()) {
+                $users[] = $row->getUser();
+            }
+        }
+
+        return $users;
+    }
+
+    public function hasRecipient(User $user): bool
+    {
+        foreach ($this->recipients as $row) {
+            if (!$row->isDeleted() && $row->getUser() === $user) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Replaces the recipients (callers check the rules: décision 69
+     * allows it on a private idea only). Removed rows are soft-deleted.
+     *
+     * @param User[] $users at least one
+     */
+    public function setRecipients(array $users): void
+    {
+        if ([] === $users) {
+            throw new \InvalidArgumentException('An idea needs at least one recipient.');
+        }
+        $changed = false;
+        $wanted = [];
+        foreach ($users as $user) {
+            $wanted[$user->getId()->toRfc4122()] = $user;
+        }
+        foreach ($this->recipients as $row) {
+            if ($row->isDeleted()) {
+                continue;
+            }
+            $key = $row->getUser()->getId()->toRfc4122();
+            if (isset($wanted[$key])) {
+                unset($wanted[$key]);
+            } else {
+                $row->markDeleted();
+                $changed = true;
+            }
+        }
+        foreach ($wanted as $user) {
+            $this->recipients->add(new IdeaRecipient($this, $user));
+            $changed = true;
+        }
+        if ($changed && isset($this->updatedAt)) {
+            // The idea's document changes with its recipients (/sync versions).
+            $this->updatedAt = new \DateTimeImmutable();
+        }
+    }
+
+    public function isShared(): bool
+    {
+        return \count($this->getRecipients()) > 1;
     }
 
     public function getAuthor(): User
@@ -109,7 +182,7 @@ class Idea implements TimestampableInterface, SoftDeletableInterface
 
     public function isSuggestion(): bool
     {
-        return $this->author !== $this->owner;
+        return !$this->hasRecipient($this->author);
     }
 
     public function getTitle(): string

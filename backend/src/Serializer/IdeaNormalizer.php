@@ -12,9 +12,9 @@ use App\Service\MediaUrls;
 /**
  * Spec §4 "Conséquences techniques" 1: distinct serialisation views.
  *
- * - normalizeForOwner(): the owner's own idea. No author, no
- *   suggestion flag — and, from lot 4, never reservation, comments,
- *   contribution, reactions nor any counter.
+ * - normalizeForOwner(): a personal idea, for one of its recipients
+ *   (décision 69: each of them is its owner). Never reservation,
+ *   comments, contribution, reactions nor any counter.
  * - normalizeForFriend(): what a friend of the owner (or the author of
  *   a draft) sees, plus the hidden interactions from
  *   InteractionNormalizer on a published idea.
@@ -37,14 +37,20 @@ final class IdeaNormalizer
     }
 
     /**
+     * `$viewer` is one of the recipients (or acts as one). Fields,
+     * deletion and "reçue" are every recipient's; publishing and the
+     * recipients, the author's (`isMine`).
+     *
      * @return array<string, mixed>
      */
-    public function normalizeForOwner(Idea $idea): array
+    public function normalizeForOwner(Idea $idea, User $viewer): array
     {
         return $this->publicFields($idea) + [
             'view' => 'owner',
-            'canEdit' => true,
-            'canUnarchive' => $idea->isArchived(),
+            // Never `author` here (a visibility invariant): only whether it's mine.
+            'isMine' => $idea->getAuthor() === $viewer,
+            'canEdit' => $idea->hasRecipient($viewer),
+            'canUnarchive' => $idea->isArchived() && $idea->getArchivedBy() === $viewer,
         ];
     }
 
@@ -104,11 +110,7 @@ final class IdeaNormalizer
             'view' => 'friend',
             'isSuggestion' => $idea->isSuggestion(),
             'isMine' => $isMine,
-            'author' => [
-                'id' => $author->getId()->toRfc4122(),
-                'displayName' => $author->getDisplayName(),
-                'avatarUrl' => $this->url($author->getAvatarPath()),
-            ],
+            'author' => $this->person($author),
             'canEdit' => $isMine,
             'canUnarchive' => $idea->isArchived() && $idea->getArchivedBy() === $viewer,
         ];
@@ -145,12 +147,9 @@ final class IdeaNormalizer
                     'view' => 'manager',
                     'isSuggestion' => $idea->isSuggestion(),
                     'isMine' => $isMine,
-                    'author' => [
-                        'id' => $author->getId()->toRfc4122(),
-                        'displayName' => $author->getDisplayName(),
-                        'avatarUrl' => $this->url($author->getAvatarPath()),
-                    ],
-                    'canEdit' => $isMine,
+                    'author' => $this->person($author),
+                    // A personal idea: any recipient, so the child acted as (décision 69).
+                    'canEdit' => $idea->isSuggestion() ? $isMine : $idea->hasRecipient($viewer),
                     'canUnarchive' => $idea->isArchived() && \in_array($idea->getArchivedBy(), [$viewer, $human], true),
                 ],
                 ['canMarkGifted' => $isMine && $idea->isSuggestion() && !$idea->isArchived()],
@@ -166,13 +165,54 @@ final class IdeaNormalizer
      */
     public function normalizeFor(Idea $idea, User $viewer): array
     {
-        if (IdeaAccess::readsAsManager($idea->getOwner(), $viewer)) {
-            return $this->normalizeManyForManager([$idea], $viewer)[0];
+        return $this->normalizeMany([$idea], $viewer)[0];
+    }
+
+    /**
+     * Each idea in the view `$viewer` gets of it (IdeaAccess::viewOf,
+     * which the caller has already checked): owner for a recipient,
+     * manager for the manager of a recipient, friend otherwise. Keeps
+     * the order.
+     *
+     * @param Idea[] $ideas
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function normalizeMany(array $ideas, User $viewer): array
+    {
+        $friendly = $managed = [];
+        foreach ($ideas as $idea) {
+            if (IdeaAccess::isOwnerSide($idea, $viewer)) {
+                continue;
+            }
+            if (null !== IdeaAccess::managedRecipient($idea, $viewer)) {
+                $managed[] = $idea;
+            } else {
+                $friendly[] = $idea;
+            }
         }
 
-        return $idea->getOwner() === $viewer && !$idea->isSuggestion()
-            ? $this->normalizeForOwner($idea)
-            : $this->normalizeForFriend($idea, $viewer);
+        $docs = [];
+        foreach ([...$this->normalizeManyForFriend($friendly, $viewer), ...$this->normalizeManyForManager($managed, $viewer)] as $doc) {
+            $docs[$doc['id']] = $doc;
+        }
+
+        return array_values(array_map(
+            fn (Idea $idea) => $docs[$idea->getId()->toRfc4122()] ?? $this->normalizeForOwner($idea, $viewer),
+            $ideas,
+        ));
+    }
+
+    /**
+     * @return array{id: string, displayName: string, avatarUrl: ?string}
+     */
+    private function person(User $user): array
+    {
+        return [
+            'id' => $user->getId()->toRfc4122(),
+            'displayName' => $user->getDisplayName(),
+            'avatarUrl' => $this->url($user->getAvatarPath()),
+        ];
     }
 
     /**
@@ -184,7 +224,8 @@ final class IdeaNormalizer
 
         return [
             'id' => $idea->getId()->toRfc4122(),
-            'ownerId' => $idea->getOwner()->getId()->toRfc4122(),
+            // Every recipient, whoever reads it (décision 69): never the guest view.
+            'recipients' => array_map($this->person(...), $idea->getRecipients()),
             'title' => $idea->getTitle(),
             'url' => $idea->getUrl(),
             'priceAmount' => $idea->getPriceAmount(),
