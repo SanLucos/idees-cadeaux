@@ -29,7 +29,7 @@ Application web (point d'entrée principal, spec §11 décision 56) et mobile (i
 
 ## Méthode de travail
 
-- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8, 9 (appli web, spec §11 décision 56), puis 10 (icônes et vérification native), 11 (unités des tailles, tailles des enfants), 12 (« Partager avec mes amis », deuxième gestionnaire) — décisions 57 à 61, puis 13 (« Mes cadeaux pour mes amis », décision 62), puis 14 (mise en relation entre amis, décision 65).
+- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8, 9 (appli web, spec §11 décision 56), puis 10 (icônes et vérification native), 11 (unités des tailles, tailles des enfants), 12 (« Partager avec mes amis », deuxième gestionnaire) — décisions 57 à 61, puis 13 (« Mes cadeaux pour mes amis », décision 62), puis 14 (mise en relation entre amis, décision 65), puis 15 (idées communes à plusieurs destinataires, décision 69).
 - Ne passe pas au lot suivant si la CI ou la suite de visibilité est rouge.
 - Avant chaque lot : relis les sections concernées, propose un plan court, puis implémente.
 - Écris les tests avec le code (PHPUnit et client de test API Platform côté back, Vitest côté front).
