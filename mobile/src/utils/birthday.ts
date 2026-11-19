@@ -30,3 +30,20 @@ export function formatBirthday(day: number, month: number, locale: string): stri
 
 /** Threshold under which the "J-x" pill is shown on the friends list (J-14 is the default first reminder, spec §5.11). */
 export const UPCOMING_BIRTHDAY_DAYS = 14;
+
+/**
+ * Birthday fields of a form, ready for PATCH /users/me (spec §5.2: the
+ * birthday is optional). An emptied number input yields '' rather than
+ * null, which the API rejects; and a year alone means no birthday.
+ */
+export function birthDatePatch(
+  day: number | string | null,
+  month: number | string | null,
+  year: number | string | null,
+): { birthDay: number | null; birthMonth: number | null; birthYear: number | null } {
+  const value = (v: number | string | null): number | null => ('number' === typeof v && Number.isFinite(v) ? v : null);
+  const birthDay = value(day);
+  const birthMonth = value(month);
+
+  return { birthDay, birthMonth, birthYear: null === birthDay && null === birthMonth ? null : value(year) };
+}

@@ -53,6 +53,7 @@ import { useRouter } from 'vue-router';
 import { IonButton, IonContent, IonHeader, IonInput, IonItem, IonList, IonPage, IonText, IonTitle, IonToolbar } from '@ionic/vue';
 import { useAuthStore } from '../stores/auth';
 import { useErrorMessage } from '../composables/useErrorMessage';
+import { birthDatePatch } from '../utils/birthday';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -72,9 +73,7 @@ async function submit(): Promise<void> {
   try {
     await auth.updateProfile({
       displayName: displayName.value,
-      birthDay: birthDay.value,
-      birthMonth: birthMonth.value,
-      birthYear: birthYear.value,
+      ...birthDatePatch(birthDay.value, birthMonth.value, birthYear.value),
     });
     router.replace('/onboarding/notifications');
   } catch (e) {

@@ -25,7 +25,7 @@ final class ProfileFields
 
     /**
      * Applies birthDay / birthMonth / birthYear present in `$body`:
-     * day and month together, year optional, all null clears it.
+     * day and month together, year optional, all null (or '') clears it.
      *
      * @param array<string, mixed> $body
      */
@@ -35,9 +35,11 @@ final class ProfileFields
             return;
         }
 
-        $day = \array_key_exists('birthDay', $body) ? $body['birthDay'] : $user->getBirthDay();
-        $month = \array_key_exists('birthMonth', $body) ? $body['birthMonth'] : $user->getBirthMonth();
-        $year = \array_key_exists('birthYear', $body) ? $body['birthYear'] : $user->getBirthYear();
+        // An emptied form field may arrive as '': same as null (the birthday is optional).
+        $field = static fn (string $key, ?int $current): mixed => \array_key_exists($key, $body) ? ('' === $body[$key] ? null : $body[$key]) : $current;
+        $day = $field('birthDay', $user->getBirthDay());
+        $month = $field('birthMonth', $user->getBirthMonth());
+        $year = $field('birthYear', $user->getBirthYear());
 
         if (null === $day && null === $month && null === $year) {
             $user->setBirthDate(null, null, null);

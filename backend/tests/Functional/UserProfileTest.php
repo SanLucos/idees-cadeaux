@@ -28,6 +28,23 @@ final class UserProfileTest extends AuthTestCase
         self::assertNull($after['birthYear']);
     }
 
+    public function testOnboardingWithoutBirthDate(): void
+    {
+        $this->registerAndVerify('nobirthday@example.com');
+        $token = $this->login('nobirthday@example.com');
+
+        $after = static::createClient()->request('PATCH', '/api/users/me', [
+            'auth_bearer' => $token,
+            // Emptied form fields: the birthday is optional (spec §5.2).
+            'json' => ['displayName' => 'Sans Date', 'birthDay' => '', 'birthMonth' => '', 'birthYear' => ''],
+        ])->toArray();
+
+        self::assertTrue($after['isOnboarded']);
+        self::assertNull($after['birthDay']);
+        self::assertNull($after['birthMonth']);
+        self::assertNull($after['birthYear']);
+    }
+
     public function testDisplayNameMustBeTwoToThirtyCharacters(): void
     {
         $this->registerAndVerify('shortname@example.com');

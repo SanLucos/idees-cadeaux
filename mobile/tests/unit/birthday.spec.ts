@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { daysUntilBirthday, formatBirthday } from '@/utils/birthday'
+import { birthDatePatch, daysUntilBirthday, formatBirthday } from '@/utils/birthday'
 
 describe('daysUntilBirthday', () => {
   test('counts days to a birthday later this year', () => {
@@ -23,5 +23,24 @@ describe('daysUntilBirthday', () => {
 describe('formatBirthday', () => {
   test('uses Intl month names', () => {
     expect(formatBirthday(4, 10, 'fr')).toBe('4 octobre')
+  })
+})
+
+describe('birthDatePatch', () => {
+  test('sends no birthday when the fields are left empty', () => {
+    expect(birthDatePatch(null, null, null)).toEqual({ birthDay: null, birthMonth: null, birthYear: null })
+  })
+
+  test('turns emptied inputs into null', () => {
+    expect(birthDatePatch('', '', '')).toEqual({ birthDay: null, birthMonth: null, birthYear: null })
+  })
+
+  test('ignores a year given without day and month', () => {
+    expect(birthDatePatch('', null, 1990)).toEqual({ birthDay: null, birthMonth: null, birthYear: null })
+  })
+
+  test('keeps a full or partial date as typed', () => {
+    expect(birthDatePatch(14, 7, '')).toEqual({ birthDay: 14, birthMonth: 7, birthYear: null })
+    expect(birthDatePatch(14, 7, 1990)).toEqual({ birthDay: 14, birthMonth: 7, birthYear: 1990 })
   })
 })
