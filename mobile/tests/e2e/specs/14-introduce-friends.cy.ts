@@ -38,7 +38,10 @@ describe('Introduce friends', () => {
           cy.loginUi(bruno);
           cy.visit('/tabs/friends');
           cy.see('suggéré par Luc');
+          // The tap only starts the request: ask Luc's notifications once it is answered.
+          cy.intercept('POST', '**/api/friendships/*/accept').as('accept');
           cy.tap('Accepter', 'ion-button');
+          cy.wait('@accept').its('response.statusCode').should('eq', 200);
 
           // Luc is told, and the suggestion is gone from Bruno's page.
           cy.apiAs(luc, 'GET', '/notifications').its('body.member').should((items) => {

@@ -18,6 +18,17 @@ const pageErrors: string[] = [];
 beforeEach(() => {
   pageErrors.length = 0;
 });
+// No service worker under Cypress: the app's (services/serviceWorker.ts,
+// unit-tested) only reloads on a new build, and it outlives each spec in
+// the browser. CI runs showed /login blank, with no request nor error, as
+// if the app never started (04-share-link, 12-share-to-friend): the one
+// piece of state shared across specs is the prime suspect.
+Cypress.on('window:before:load', (win) => {
+  if ('serviceWorker' in win.navigator) {
+    win.navigator.serviceWorker.register = () => new Promise<ServiceWorkerRegistration>(() => undefined);
+  }
+});
+
 Cypress.on('window:before:load', (win) => {
   const keep = (kind: string, message: unknown) => pageErrors.push(`[page ${kind}] ${win.location.pathname}: ${String(message)}`);
   const consoleError = win.console.error.bind(win.console);
