@@ -43,6 +43,7 @@ final class SyncService
 {
     public const array TYPES = ['user', 'managed_profile', 'friendship', 'idea', 'comment', 'profile_size', 'profile_preference', 'notification', 'occasion'];
     private const int NOTIFICATIONS_KEPT = 200;
+    private const string IDEA_FORMAT = '2026-11-19T18:00:00Z';
 
     /** @var array<string, array<string, array{version: string, entity: object, viewer?: User}>>|null */
     private ?array $inventory = null;
@@ -97,7 +98,7 @@ final class SyncService
         $interactionVersions = $this->interactionVersions(array_keys($ideas));
         foreach ($ideas as $id => $idea) {
             $inventory['idea'][$id] = [
-                'version' => self::v(max($idea->getUpdatedAt(), $idea->getAuthor()->getUpdatedAt(), ...array_map(static fn (User $u) => $u->getUpdatedAt(), $idea->getRecipients())), $interactionVersions[$id] ?? null, $media),
+                'version' => self::v(max($idea->getUpdatedAt(), $idea->getAuthor()->getUpdatedAt(), ...array_map(static fn (User $u) => $u->getUpdatedAt(), $idea->getRecipients())), $interactionVersions[$id] ?? null, $media, self::ideaFormat()),
                 'entity' => $idea,
             ];
         }
@@ -302,6 +303,15 @@ final class SyncService
         return $this->em->getRepository($class)->createQueryBuilder('x')
             ->andWhere("x.{$field} IN (:ids)")->setParameter('ids', $ids)
             ->getQuery()->getResult();
+    }
+
+    /**
+     * When the idea document's shape last changed (décision 69: `ownerId`
+     * became `recipients`): every device refetches its ideas once.
+     */
+    private static function ideaFormat(): \DateTimeImmutable
+    {
+        return new \DateTimeImmutable(self::IDEA_FORMAT);
     }
 
     /** Version string: comparable as text. */

@@ -98,6 +98,8 @@ RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en
 
 **Connexion sans mot de passe** (issue #8, spec §11 décision 68) : `POST /api/auth/email-sign-in` puis `/verify` (`App\Security\EmailSignIn`, entité `EmailSignInCode`), écran `/login/email` (`EmailSignInPage.vue`). Le lien de l'email pointe vers `WEB_APP_URL`. Session longue : `RefreshToken.longSession`, prolongée à chaque rotation par `LongSessionRotationListener`.
 
+**Idées communes** (lot 15, spec §11 décision 69, plan `docs/lots/LOT-15-idees-communes.md`) : une idée a un ou plusieurs destinataires (`IdeaRecipient`, plus de `Idea.owner`), chacun propriétaire au sens de la règle d'or. Les règles de vue sont dans `IdeaAccess::viewOf()` (back) et les fragments DQL `IdeaRepository::hasRecipient()` / `isPersonal()` ; côté appli, lire les destinataires via `src/utils/recipients.ts` (repli sur l'ancien `ownerId` des documents synchronisés). Destinataires modifiables seulement sur une idée privée, par son auteur.
+
 **Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, builds web et natifs).
 
 **CI** : `.github/workflows/ci.yml`, trois jobs (`backend`, `mobile` : lint + tests ; `e2e` : Cypress sur la stack Docker et le build web servi par `vite preview`), déclenchés sur push/PR vers `main` et avant chaque déploiement.
