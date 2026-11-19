@@ -165,6 +165,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { compareNames } from '../utils/names';
 import { useRoute } from 'vue-router';
 import {
   checkmarkOutline,
@@ -266,14 +267,26 @@ const sharedContent = useSharedContentStore();
 // here, and re-read as the copy fills.
 useLocalRefresh(() => friendsStore.refresh());
 
-const recipients = computed(() => [
-  { id: auth.user?.id ?? '', name: auth.user?.displayName ?? '', avatarUrl: auth.user?.avatarUrl ?? null, isMe: true },
-  ...friendsStore.friends.map((f) => ({ id: f.user.id, name: f.user.displayName, avatarUrl: f.user.avatarUrl, isMe: false })),
+// Me first, then my children, then my friends, each group in alphabetical order.
+const recipients = computed(() => {
+  const byName = (a: { name: string | null }, b: { name: string | null }) => compareNames(a.name, b.name, locale.value);
   // A manager may suggest to their children in their own name (spec §5.15).
-  ...activeProfile.children
+  const children = activeProfile.children
     .filter((c) => !c.deletionScheduledAt)
-    .map((c) => ({ id: c.id, name: c.displayName, avatarUrl: c.avatarUrl, isMe: false })),
-]);
+    .map((c) => ({ id: c.id, name: c.displayName, avatarUrl: c.avatarUrl, isMe: false }))
+    .sort(byName);
+  const childIds = new Set(children.map((c) => c.id));
+  const friends = friendsStore.friends
+    .filter((f) => !childIds.has(f.user.id))
+    .map((f) => ({ id: f.user.id, name: f.user.displayName, avatarUrl: f.user.avatarUrl, isMe: false }))
+    .sort(byName);
+
+  return [
+    { id: auth.user?.id ?? '', name: auth.user?.displayName ?? '', avatarUrl: auth.user?.avatarUrl ?? null, isMe: true },
+    ...children,
+    ...friends,
+  ];
+});
 
 const isSuggestion = computed(() => (isEdit ? !!existing.value?.isSuggestion && 'owner' !== existing.value?.view : ownerId.value !== selfId.value));
 const recipientName = computed(() => {

@@ -4,3 +4,8 @@ export function joinNames(names: (string | null | undefined)[], locale: string):
 
   return new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(list);
 }
+
+/** Alphabetical order of pseudos in the user's language: accents and case ignored, numbers in order. */
+export function compareNames(a: string | null | undefined, b: string | null | undefined, locale: string): number {
+  return (a ?? '').localeCompare(b ?? '', locale, { sensitivity: 'base', numeric: true });
+}
