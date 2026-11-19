@@ -20,6 +20,7 @@
             >
               <AppAvatar :id="r.id" :name="r.name" :url="r.avatarUrl" :size="40" :primary="r.isMe" />
               <span>{{ r.isMe ? t('ideaForm.me') : r.name }}</span>
+              <small v-if="r.hint" class="recipient__hint">{{ r.hint }}</small>
             </button>
           </div>
         </fieldset>
@@ -165,7 +166,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { compareNames } from '../utils/names';
+import { compareNames, sharedNameIds } from '../utils/names';
+import { formatBirthday } from '../utils/birthday';
 import { useRoute } from 'vue-router';
 import {
   checkmarkOutline,
@@ -268,23 +270,32 @@ const sharedContent = useSharedContentStore();
 useLocalRefresh(() => friendsStore.refresh());
 
 // Me first, then my children, then my friends, each group in alphabetical order.
+// Two with the same pseudo get a hint below it: whose child, or their birthday.
 const recipients = computed(() => {
   const byName = (a: { name: string | null }, b: { name: string | null }) => compareNames(a.name, b.name, locale.value);
+  const birthday = (day?: number | null, month?: number | null) => (day && month ? formatBirthday(day, month, locale.value) : null);
   // A manager may suggest to their children in their own name (spec §5.15).
   const children = activeProfile.children
     .filter((c) => !c.deletionScheduledAt)
-    .map((c) => ({ id: c.id, name: c.displayName, avatarUrl: c.avatarUrl, isMe: false }))
+    .map((c) => ({ id: c.id, name: c.displayName, avatarUrl: c.avatarUrl, isMe: false, hint: birthday(c.birthDay, c.birthMonth) ?? t('friends.yourChild') }))
     .sort(byName);
   const childIds = new Set(children.map((c) => c.id));
   const friends = friendsStore.friends
     .filter((f) => !childIds.has(f.user.id))
-    .map((f) => ({ id: f.user.id, name: f.user.displayName, avatarUrl: f.user.avatarUrl, isMe: false }))
+    .map((f) => ({
+      id: f.user.id,
+      name: f.user.displayName,
+      avatarUrl: f.user.avatarUrl,
+      isMe: false,
+      hint: f.user.managedBy ? t('friends.childOf', { name: f.user.managedBy.displayName }) : birthday(f.user.birthDay, f.user.birthMonth),
+    }))
     .sort(byName);
+  const others = [...children, ...friends];
+  const shared = sharedNameIds(others, locale.value);
 
   return [
-    { id: auth.user?.id ?? '', name: auth.user?.displayName ?? '', avatarUrl: auth.user?.avatarUrl ?? null, isMe: true },
-    ...children,
-    ...friends,
+    { id: auth.user?.id ?? '', name: auth.user?.displayName ?? '', avatarUrl: auth.user?.avatarUrl ?? null, isMe: true, hint: null },
+    ...others.map((r) => ({ ...r, hint: shared.has(r.id) ? r.hint : null })),
   ];
 });
 
@@ -617,6 +628,16 @@ fieldset {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.recipient__hint {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  margin-top: -4px;
+  font-weight: 400;
+  color: var(--ic-text-secondary);
 }
 
 .recipient--selected {
