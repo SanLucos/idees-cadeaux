@@ -53,6 +53,11 @@
     "incomingTitle": "Request received · {count} | Requests received · {count}",
     "wantsToBeFriend": "wants to be your friend",
     "friendsTitle": "My friends · {count}",
+    "sort": {
+      "label": "Sort friends",
+      "name": "A → Z",
+      "added": "Date added"
+    },
     "outgoingTitle": "Sent requests",
     "daysBefore": "D-{days}",
     "addedViaLink": "Added via your link",

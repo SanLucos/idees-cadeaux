@@ -53,6 +53,11 @@
     "incomingTitle": "Demande reçue · {count} | Demandes reçues · {count}",
     "wantsToBeFriend": "veut devenir votre ami",
     "friendsTitle": "Mes amis · {count}",
+    "sort": {
+      "label": "Trier les amis",
+      "name": "A → Z",
+      "added": "Date d'ajout"
+    },
     "outgoingTitle": "Demandes envoyées",
     "daysBefore": "J-{days}",
     "addedViaLink": "Ajouté via votre lien",

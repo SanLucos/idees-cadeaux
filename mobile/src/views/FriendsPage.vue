@@ -85,6 +85,21 @@
       </template>
 
       <SectionTitle>{{ t('friends.friendsTitle', { count: myChildren.length + store.friends.length }) }}</SectionTitle>
+      <div v-if="store.friends.length > 1" class="ic-chip-row sort-row" role="radiogroup" :aria-label="t('friends.sort.label')">
+        <ion-chip
+          v-for="s in sorts"
+          :key="s"
+          v-press
+          class="ic-chip"
+          :class="{ 'ic-chip-selected': s === friendSort }"
+          role="radio"
+          :aria-checked="s === friendSort"
+          :data-cy="`friend-sort-${s}`"
+          @click="setFriendSort(s)"
+        >
+          {{ t(`friends.sort.${s}`) }}
+        </ion-chip>
+      </div>
       <EmptyState v-if="!myChildren.length && !store.friends.length" :icon="peopleOutline">{{ t('friends.empty.friends') }}</EmptyState>
       <ion-list v-else class="ic-card-list" lines="inset">
         <!-- Spec §11 décision 67: my children, first, opening their list as myself (décision 66). -->
@@ -135,6 +150,7 @@ import { useI18n } from 'vue-i18n';
 import { bookOutline, calendarOutline, linkOutline, mailOutline, peopleOutline, personAddOutline } from 'ionicons/icons';
 import {
   IonButton,
+  IonChip,
   IonContent,
   IonIcon,
   IonItem,
@@ -149,6 +165,7 @@ import {
 import { useFriendSuggestionsStore } from '../stores/friendSuggestions';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { compareNames, joinNames } from '../utils/names';
+import { readFriendSort, sortFriends, storeFriendSort, type FriendSort } from '../utils/friendSort';
 import type { ReceivedFriendSuggestion } from '../types/friendSuggestion';
 import { useFriendsStore } from '../stores/friends';
 import { isWeb } from '../utils/platform';
@@ -226,10 +243,14 @@ const myChildren = computed<ManagedProfile[]>(() =>
         .sort((a, b) => compareNames(a.displayName, b.displayName, locale.value)),
 );
 
-/** Friends in alphabetical order, after my children. */
-const sortedFriends = computed<Friendship[]>(() =>
-  [...store.friends].sort((a, b) => compareNames(a.user.displayName, b.user.displayName, locale.value)),
-);
+/** Alphabetical or newest first, remembered on this device; my children stay first, alphabetical. */
+const sorts: FriendSort[] = ['name', 'added'];
+const friendSort = ref<FriendSort>(readFriendSort());
+function setFriendSort(sort: FriendSort): void {
+  friendSort.value = sort;
+  storeFriendSort(sort);
+}
+const sortedFriends = computed<Friendship[]>(() => sortFriends(store.friends, friendSort.value, locale.value));
 
 function childSubtitle(c: ManagedProfile): string {
   const parts = [t('friends.yourChild'), t('friends.ideaCount', { count: c.ideaCount }, c.ideaCount)];
@@ -266,6 +287,10 @@ function friendSubtitle(f: Friendship): string {
 </script>
 
 <style scoped>
+.sort-row {
+  margin-bottom: 10px;
+}
+
 .quick-actions {
   display: grid;
   /* Three across, fewer with large text (spec §9). */
