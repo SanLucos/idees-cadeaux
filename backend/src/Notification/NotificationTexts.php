@@ -14,8 +14,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class NotificationTexts
 {
-    public function __construct(private readonly TranslatorInterface $translator)
-    {
+    public function __construct(
+        private readonly TranslatorInterface $translator,
+        private readonly string $appName,
+    ) {
     }
 
     public function body(Notification $notification): string
@@ -31,6 +33,8 @@ final class NotificationTexts
             '%suggestedBy%' => $payload['suggestedBy']['displayName'] ?? '',
             '%days%' => (string) ($payload['days'] ?? ''),
             '%count%' => (int) ($payload['days'] ?? 0),
+            // « L'équipe [nom de l'appli] » (spec §11 décision 71).
+            '%app%' => $this->appName,
         ];
 
         $key = $notification->getType()->value;

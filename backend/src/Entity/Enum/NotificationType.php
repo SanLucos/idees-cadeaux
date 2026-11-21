@@ -31,6 +31,9 @@ enum NotificationType: string
     // Spec §11 décision 65: a friend suggests someone to me, and one of my suggestions succeeded.
     case FriendSuggestionReceived = 'friend_suggestion_received';
     case FriendSuggestionAccepted = 'friend_suggestion_accepted';
+    // Spec §11 décision 71: the team introduces me to someone, and we're friends once both accepted.
+    case IntroductionReceived = 'introduction_received';
+    case IntroductionAccepted = 'introduction_accepted';
 
     /**
      * @return NotificationChannel[]

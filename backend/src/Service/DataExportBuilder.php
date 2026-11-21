@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\Friendship;
 use App\Entity\FriendSuggestion;
+use App\Entity\Introduction;
 use App\Entity\User;
 use App\Repository\FriendshipRepository;
 use App\Serializer\FriendshipNormalizer;
@@ -29,6 +30,7 @@ final class DataExportBuilder
         private readonly FriendshipRepository $friendships,
         private readonly FriendshipNormalizer $friendshipNormalizer,
         private readonly FriendSuggestions $suggestions,
+        private readonly Introductions $introductions,
     ) {
     }
 
@@ -169,7 +171,7 @@ final class DataExportBuilder
             'friends' => array_map(fn (Friendship $f) => [
                 'displayName' => $person($f),
                 'since' => $f->getRespondedAt()?->format(\DATE_ATOM),
-                'origin' => $f->getOrigin()->value,
+                'origin' => $f->getOrigin()->exposed()->value,
             ], $this->friendships->findAccepted($subject)),
             // Status as the requester sees it: `declined` masked (règle 4).
             'requestsSent' => array_map(fn (Friendship $f) => [
@@ -193,6 +195,11 @@ final class DataExportBuilder
                 'suggested' => $s->getSuggested()->getDisplayName(),
                 'createdAt' => $s->getCreatedAt()->format(\DATE_ATOM),
             ], $this->suggestions->visibleTo($subject)),
+            // Spec §5.17: those still to answer; « l'équipe », never who.
+            'introductionsReceived' => array_map(fn (Introduction $i) => [
+                'with' => $i->otherThan($subject)->getDisplayName(),
+                'createdAt' => $i->getCreatedAt()->format(\DATE_ATOM),
+            ], $this->introductions->awaiting($subject)),
         ];
     }
 

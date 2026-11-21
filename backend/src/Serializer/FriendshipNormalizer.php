@@ -35,7 +35,7 @@ final class FriendshipNormalizer
         return [
             'id' => $friendship->getId()->toRfc4122(),
             'status' => $displayStatus->value,
-            'origin' => $friendship->getOrigin()->value,
+            'origin' => $friendship->getOrigin()->exposed()->value,
             'direction' => $friendship->getRequester() === $viewer ? 'outgoing' : 'incoming',
             'createdAt' => $friendship->getCreatedAt()->format(\DATE_ATOM),
             'respondedAt' => $isMasked ? null : $friendship->getRespondedAt()?->format(\DATE_ATOM),
