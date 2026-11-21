@@ -99,6 +99,8 @@ RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en
 
 **Connexion sans mot de passe** (issue #8, spec §11 décision 68) : `POST /api/auth/email-sign-in` puis `/verify` (`App\Security\EmailSignIn`, entité `EmailSignInCode`), écran `/login/email` (`EmailSignInPage.vue`). Le lien de l'email pointe vers `WEB_APP_URL`. Session longue : `RefreshToken.longSession`, prolongée à chaque rotation par `LongSessionRotationListener`.
 
+**Back-office** (lot 16, spec §11 décision 71) : rôle `ROLE_SUPERADMIN` donné uniquement par `docker compose run --rm php bin/console app:admin:grant <email>` (`--revoke` pour le retirer) ; écran `/admin` (`AdminPage.vue`, `AdminUserCard.vue`), API `/api/admin/*` en 404 pour les autres (`App\Security\AdminGuard`). Mise en relation par l'équipe : entité `Introduction` (`App\Service\Introductions`, `AdminFriendships`) ; « Ignorer » silencieux, la proposition reste chez l'autre jusqu'à expiration. Amitié forcée : origine `admin` stockée, exposée `request` (`FriendshipOrigin::exposed()`). Suppression par l'admin : `Friendship::removeByAdmin()` (pas de `removedBy`).
+
 **Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, builds web et natifs).
 
 **CI** : `.github/workflows/ci.yml`, trois jobs (`backend`, `mobile` : lint + tests ; `e2e` : Cypress sur la stack Docker et le build web servi par `vite preview`), déclenchés sur push/PR vers `main` et avant chaque déploiement.
