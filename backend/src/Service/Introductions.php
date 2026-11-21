@@ -33,28 +33,36 @@ final class Introductions
     }
 
     /**
-     * Still worth showing: open, the other person still an adult account
-     * not being deleted, and the two not friends by now.
+     * For the administration: could still end in a friendship, the two
+     * still adult accounts not being deleted, and not friends by now.
      */
     public function isLive(Introduction $introduction): bool
     {
-        $a = $introduction->getUserA();
-        $b = $introduction->getUserB();
-
-        return $introduction->isOpen()
-            && !$a->isSuspended() && !$b->isSuspended()
-            && !$a->isManaged() && !$b->isManaged()
-            && !$this->friendships->areFriends($a, $b);
+        return $introduction->isOpen() && $this->peopleStillFit($introduction);
     }
 
     /**
-     * What $user still has to answer.
+     * What $user still has to answer. One the other ignored stays, so
+     * that nothing tells it apart from one they haven't answered yet.
      *
      * @return Introduction[]
      */
     public function awaiting(User $user): array
     {
-        return array_values(array_filter($this->introductions->findAwaiting($user), $this->isLive(...)));
+        return array_values(array_filter(
+            $this->introductions->findAwaiting($user),
+            fn (Introduction $i) => $i->isAwaiting($user) && $this->peopleStillFit($i),
+        ));
+    }
+
+    private function peopleStillFit(Introduction $introduction): bool
+    {
+        $a = $introduction->getUserA();
+        $b = $introduction->getUserB();
+
+        return !$a->isSuspended() && !$b->isSuspended()
+            && !$a->isManaged() && !$b->isManaged()
+            && !$this->friendships->areFriends($a, $b);
     }
 
     /** One of mine to answer, or null (the caller answers 404). */

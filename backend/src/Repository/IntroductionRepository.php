@@ -57,16 +57,23 @@ class IntroductionRepository extends ServiceEntityRepository
     }
 
     /**
-     * What $user still has to answer, oldest first.
+     * What $user still has to answer, oldest first, whatever the other
+     * answered: an introduction the other ignored stays here until it
+     * expires (Introduction::isAwaiting()).
      *
      * @return Introduction[]
      */
     public function findAwaiting(User $user): array
     {
-        return array_values(array_filter(
-            $this->findOpenInvolving($user),
-            static fn (Introduction $i) => null === $i->answerOf($user),
-        ));
+        return $this->createQueryBuilder('i')
+            ->andWhere('(i.userA = :user AND i.answerA IS NULL) OR (i.userB = :user AND i.answerB IS NULL)')
+            ->andWhere('i.friendship IS NULL')
+            ->andWhere('i.expiresAt > :now')
+            ->setParameter('user', $user->getId(), 'uuid')
+            ->setParameter('now', new \DateTimeImmutable())
+            ->orderBy('i.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 
     private function between(User $a, User $b): QueryBuilder

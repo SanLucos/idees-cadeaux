@@ -148,10 +148,21 @@ class Introduction implements TimestampableInterface, SoftDeletableInterface
         return $this->expiresAt <= new \DateTimeImmutable();
     }
 
-    /** Still waiting for an answer from at least one of them, as far as anyone can tell. */
+    /** Could still end in a friendship: nobody ignored it, it hasn't expired nor been closed. */
     public function isOpen(): bool
     {
         return !$this->isDeleted() && !$this->isExpired() && null === $this->friendship && !$this->wasIgnored();
+    }
+
+    /**
+     * Still to be answered by $user. Not the same as isOpen(): when the
+     * other ignored it, $user keeps seeing it until it expires, exactly
+     * as if the other simply hadn't answered (« Ignorer » is silent).
+     */
+    public function isAwaiting(User $user): bool
+    {
+        return $this->involves($user) && null === $this->answerOf($user)
+            && !$this->isDeleted() && !$this->isExpired() && null === $this->friendship;
     }
 
     /** Closed without friendship: they became friends otherwise, or the administrator cancelled it. */
