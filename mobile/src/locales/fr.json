@@ -721,12 +721,14 @@
     "secret": "Vous ne serez jamais prévenu de ce que vos amis préparent pour vous.",
     "push": "Notifications push",
     "pushHint": "Sur ce téléphone. Le système vous demandera l'autorisation.",
+    "pushHintWeb": "Sur cet appareil, via le navigateur, qui vous demandera l'autorisation.",
     "email": "Emails",
     "emailHint": "À votre adresse de connexion, désinscription en un clic.",
     "continue": "Continuer",
     "later": "Plus tard",
     "changeLater": "Vous pourrez changer d'avis à tout moment dans Profil › Notifications.",
-    "denied": "Les notifications sont refusées par le système : autorisez-les dans les réglages du téléphone."
+    "denied": "Les notifications sont refusées par le système : autorisez-les dans les réglages du téléphone.",
+    "deniedWeb": "Les notifications sont bloquées par le navigateur : autorisez-les dans les paramètres du site (icône à gauche de l'adresse) ou de l'appli."
   },
   "notificationSettings": {
     "title": "Notifications",

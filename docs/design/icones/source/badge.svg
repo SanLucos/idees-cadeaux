@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="61 86 390 390">
+<title>Idées Cadeaux (badge des notifications web, silhouette blanche)</title>
+<defs><mask id="ribbon"><rect x="0" y="0" width="512" height="512" fill="#FFFFFF"/><rect x="240" y="176" width="32" height="300" fill="#000000"/><rect x="100" y="190" width="312" height="18" fill="#000000"/></mask></defs>
+<g fill="#FFFFFF" mask="url(#ribbon)">
+<path d="M116 190 H396 V462 Q396 470 388 470 H124 Q116 470 116 462 Z"/>
+<polygon points="116,190 396,190 362,140 150,140"/>
+</g>
+<g fill="#FFFFFF">
+<path d="M256 160 C228 104 154 92 150 124 C147 152 214 172 256 160 Z"/>
+<path d="M256 160 C284 104 358 92 362 124 C365 152 298 172 256 160 Z"/>
+<ellipse cx="256" cy="161" rx="24" ry="19"/>
+</g>
+</svg>

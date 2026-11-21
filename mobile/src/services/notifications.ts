@@ -40,8 +40,9 @@ export const notificationsApi = {
     return api.patch<NotificationSettings>('/notification-settings', { json: patch, ...OWN });
   },
 
-  registerDevice(token: string, platform: string): Promise<unknown> {
-    return api.post('/device-tokens', { json: { token, platform }, ...OWN });
+  /** web: the token is the Web Push subscription's endpoint, with its keys (spec §11 décision 70). */
+  registerDevice(token: string, platform: string, keys?: { p256dh: string; auth: string }): Promise<unknown> {
+    return api.post('/device-tokens', { json: keys ? { token, platform, keys } : { token, platform }, ...OWN });
   },
 
   unregisterDevice(token: string): Promise<unknown> {

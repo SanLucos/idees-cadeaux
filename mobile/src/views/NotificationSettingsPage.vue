@@ -7,7 +7,7 @@
         <SectionTitle>{{ t('notificationSettings.channels') }}</SectionTitle>
         <ion-list class="ic-card-list" lines="inset">
           <ion-item>
-            <ion-toggle :checked="settings.consents.push.granted" justify="space-between" @ion-change="togglePush($event.detail.checked)">
+            <ion-toggle :checked="pushOn" justify="space-between" @ion-change="togglePush($event.detail.checked)">
               <div class="label">{{ t('consent.push') }}</div>
               <div class="hint">{{ consentHint('push') }}</div>
             </ion-toggle>
@@ -69,6 +69,7 @@ import { add, closeCircle } from 'ionicons/icons';
 import { alertController, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPage, IonToggle, onIonViewWillEnter, toastController } from '@ionic/vue';
 import { notificationsApi } from '../services/notifications';
 import { usePushConsent } from '../composables/usePushConsent';
+import { push } from '../services/push';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import SectionTitle from '../components/SectionTitle.vue';
 import TopBar from '../components/TopBar.vue';
@@ -80,12 +81,17 @@ const { t, locale } = useI18n();
 const { describe } = useErrorMessage();
 const pushConsent = usePushConsent();
 const settings = ref<NotificationSettings | null>(null);
+// The consent is the account's; the permission, this device's (a browser
+// where push was accepted before Web Push existed never asked for it).
+const permissionHere = ref(true);
+const pushOn = computed(() => !!settings.value?.consents.push.granted && permissionHere.value);
+const webPush = push.isWebPush();
 
 // Share-link types arrive with lot 7 bis; nothing to tune until then.
 const visibleTypes = computed(() => NOTIFICATION_TYPES.filter((type) => !['friend_joined_via_link', 'share_link_suspended'].includes(type)));
 
 onIonViewWillEnter(async () => {
-  settings.value = await notificationsApi.settings();
+  [settings.value, permissionHere.value] = await Promise.all([notificationsApi.settings(), push.isPermissionGranted()]);
 });
 
 async function save(patch: Parameters<typeof notificationsApi.updateSettings>[0]): Promise<void> {
@@ -98,20 +104,21 @@ async function save(patch: Parameters<typeof notificationsApi.updateSettings>[0]
 }
 
 async function togglePush(on: boolean): Promise<void> {
-  if (on === settings.value?.consents.push.granted) return;
+  if (on === pushOn.value) return;
   if (on) {
     if (!(await pushConsent.enable())) {
-      await (await toastController.create({ message: t('consent.denied'), duration: 3500, color: 'danger' })).present();
+      await (await toastController.create({ message: t(webPush ? 'consent.deniedWeb' : 'consent.denied'), duration: 3500, color: 'danger' })).present();
     }
   } else {
     await pushConsent.disable();
   }
-  settings.value = await notificationsApi.settings();
+  [settings.value, permissionHere.value] = await Promise.all([notificationsApi.settings(), push.isPermissionGranted()]);
 }
 
 function consentHint(channel: 'push' | 'email'): string {
   const consent = settings.value?.consents[channel];
-  if (!consent?.granted || !consent.consentedAt) return t(`consent.${channel}Hint`);
+  if ('push' === channel && webPush && !pushOn.value) return t('consent.pushHintWeb');
+  if (!consent?.granted || !consent.consentedAt || ('push' === channel && !pushOn.value)) return t(`consent.${channel}Hint`);
 
   return t('notificationSettings.consentedOn', { date: new Date(consent.consentedAt).toLocaleDateString(locale.value) });
 }

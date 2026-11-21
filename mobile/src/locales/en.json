@@ -721,12 +721,14 @@
     "secret": "You'll never be told what your friends are planning for you.",
     "push": "Push notifications",
     "pushHint": "On this phone. The system will ask for permission.",
+    "pushHintWeb": "On this device, through the browser, which will ask for your permission.",
     "email": "Emails",
     "emailHint": "To your sign-in address, one-click unsubscribe.",
     "continue": "Continue",
     "later": "Later",
     "changeLater": "You can change your mind anytime in Profile › Notifications.",
-    "denied": "Notifications are blocked by the system: allow them in your phone's settings."
+    "denied": "Notifications are blocked by the system: allow them in your phone's settings.",
+    "deniedWeb": "Notifications are blocked by the browser: allow them in the site settings (icon left of the address) or the app settings."
   },
   "notificationSettings": {
     "title": "Notifications",

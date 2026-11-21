@@ -16,11 +16,11 @@
         </p>
 
         <ion-list class="ic-card-list" lines="inset">
-          <!-- No push on the web: the Activité tab and email (spec §11 décision 56). -->
-          <ion-item v-if="!web">
+          <!-- On the web, where the browser offers Web Push (spec §11 décision 70). -->
+          <ion-item v-if="pushAvailable">
             <ion-toggle v-model="pushWanted" justify="space-between">
               <div class="label">{{ t('consent.push') }}</div>
-              <div class="hint">{{ t('consent.pushHint') }}</div>
+              <div class="hint">{{ t(webPush ? 'consent.pushHintWeb' : 'consent.pushHint') }}</div>
             </ion-toggle>
           </ion-item>
           <ion-item>
@@ -31,7 +31,7 @@
           </ion-item>
         </ion-list>
 
-        <ion-text v-if="denied" color="danger"><p>{{ t('consent.denied') }}</p></ion-text>
+        <ion-text v-if="denied" color="danger"><p>{{ t(webPush ? 'consent.deniedWeb' : 'consent.denied') }}</p></ion-text>
 
         <ion-button expand="block" :disabled="saving" @click="save">{{ t('consent.continue') }}</ion-button>
         <ion-button expand="block" fill="clear" :disabled="saving" @click="done">{{ t('consent.later') }}</ion-button>
@@ -48,7 +48,7 @@ import { eyeOffOutline, notificationsOutline } from 'ionicons/icons';
 import { IonButton, IonContent, IonIcon, IonItem, IonList, IonPage, IonText, IonToggle, useIonRouter } from '@ionic/vue';
 import { notificationsApi } from '../services/notifications';
 import { usePushConsent } from '../composables/usePushConsent';
-import { isWeb } from '../utils/platform';
+import { push } from '../services/push';
 
 /**
  * Spec §5.11 / §5.1 onboarding: our explanation comes first; the
@@ -58,8 +58,9 @@ const { t } = useI18n();
 const ionRouter = useIonRouter();
 const pushConsent = usePushConsent();
 
-const web = isWeb();
-const pushWanted = ref(!web);
+const pushAvailable = push.isAvailable();
+const webPush = push.isWebPush();
+const pushWanted = ref(pushAvailable);
 const emailWanted = ref(false);
 const saving = ref(false);
 const denied = ref(false);
