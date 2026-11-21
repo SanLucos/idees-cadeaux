@@ -108,6 +108,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
     #[ORM\Column(type: 'json', options: ['default' => '[14,2]'])]
     private array $birthdayReminderDays = self::DEFAULT_BIRTHDAY_REMINDER_DAYS;
 
+    public const string ROLE_SUPERADMIN = 'ROLE_SUPERADMIN';
+
+    /**
+     * Extra roles beyond ROLE_USER. Only ROLE_SUPERADMIN exists (spec
+     * §5.17, §11 décision 71), granted by `app:admin:grant` alone.
+     *
+     * @var string[]
+     */
+    #[ORM\Column(type: 'json', options: ['default' => '[]'])]
+    private array $roles = [];
+
     public function __construct(
         UserType $type,
         ?string $displayName = null,
@@ -390,7 +401,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Timesta
 
     public function getRoles(): array
     {
-        return ['ROLE_USER'];
+        return array_values(array_unique(['ROLE_USER', ...$this->roles]));
+    }
+
+    /** Never a child profile, even if the column says otherwise. */
+    public function isSuperAdmin(): bool
+    {
+        return !$this->isManaged() && \in_array(self::ROLE_SUPERADMIN, $this->roles, true);
+    }
+
+    public function setSuperAdmin(bool $superAdmin): void
+    {
+        $others = array_values(array_diff($this->roles, [self::ROLE_SUPERADMIN]));
+        $this->roles = $superAdmin ? [...$others, self::ROLE_SUPERADMIN] : $others;
     }
 
     public function getPassword(): ?string

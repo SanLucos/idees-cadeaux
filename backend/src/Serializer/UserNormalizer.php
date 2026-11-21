@@ -41,6 +41,8 @@ final class UserNormalizer
             'deletionScheduledAt' => $user->getDeletionScheduledAt()?->format(\DATE_ATOM),
             // Re-authentication (spec §5.13): the password, or else an emailed code.
             'hasPassword' => null !== $user->getPasswordHash(),
+            // The « Administration » entry (spec §5.17).
+            'isSuperAdmin' => $user->isSuperAdmin(),
         ];
     }
 
