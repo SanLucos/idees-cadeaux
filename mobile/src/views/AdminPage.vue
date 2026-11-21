@@ -93,7 +93,7 @@
               <span v-for="key in signInKeys(u)" :key="key" class="tag" :class="`tag--${key}`">{{ t(`admin.signIn.${key}`) }}</span>
               <span v-if="!signInKeys(u).length" class="ic-muted small">{{ t('admin.signIn.none') }}</span>
             </span>
-            <span role="cell" class="num">{{ u.friendsCount }}<span class="label-narrow"> {{ t('admin.columns.friends').toLowerCase() }}</span></span>
+            <span role="cell" class="num">{{ u.friendsCount }}<span class="label-narrow">{{ t('admin.columns.friends').toLowerCase() }}</span></span>
             <span role="cell" class="ic-muted small">{{ date(u.createdAt) }}</span>
           </div>
 
@@ -457,6 +457,7 @@ async function toast(message: string, color: 'success' | 'danger'): Promise<void
 
   .label-narrow {
     display: inline;
+    margin-inline-start: 4px;
     font-size: 12px;
     color: var(--ic-text-secondary);
   }

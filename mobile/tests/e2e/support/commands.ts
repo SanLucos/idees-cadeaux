@@ -44,6 +44,8 @@ declare global {
       audit(screen: string): Chainable<void>;
       /** Taps the button of the open ion-alert whose text is `text`. */
       alertButton(text: string): Chainable<void>;
+      /** Makes the account superadmin, as `app:admin:grant` does (spec §5.17). */
+      grantSuperAdmin(user: TestUser): Chainable<void>;
     }
   }
 }
@@ -101,6 +103,11 @@ Cypress.Commands.add('createUser', (name: string) => {
 Cypress.Commands.add('apiAs', (user: TestUser, method: string, path: string, body?: unknown) =>
   cy.request({ method, url: api(path), headers: { Authorization: `Bearer ${user.token}` }, body: body as Cypress.RequestBody, failOnStatusCode: false }),
 );
+
+// The only way in (spec §5.17): the console command, in the Docker stack.
+Cypress.Commands.add('grantSuperAdmin', (user: TestUser) => {
+  cy.exec(`docker compose -f ../docker-compose.yaml exec -T php bin/console app:admin:grant ${user.email}`);
+});
 
 Cypress.Commands.add('befriend', (a: TestUser, b: TestUser) => {
   cy.apiAs(a, 'POST', '/friendships', { email: b.email });
