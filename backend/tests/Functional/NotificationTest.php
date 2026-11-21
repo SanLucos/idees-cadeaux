@@ -129,6 +129,33 @@ final class NotificationTest extends AuthTestCase
         self::assertSame(0, (int) self::getContainer()->get(Connection::class)->fetchOne('SELECT COUNT(*) FROM device_token'));
     }
 
+    public function testTheWebAppRegistersAWebPushSubscription(): void
+    {
+        // Spec §11 décision 70: the endpoint is the token, its keys come along.
+        $endpoint = 'https://fcm.googleapis.com/fcm/send/abc123';
+        $keys = ['p256dh' => 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM', 'auth' => 'tBHItJI5svbpez7KI4CCXg'];
+        self::assertSame('validation.device_token_invalid', $this->expect(422, $this->bob, 'POST', '/api/device-tokens', ['token' => $endpoint, 'platform' => 'web'])['code'], 'keys are required');
+        self::assertSame('validation.device_token_invalid', $this->expect(422, $this->bob, 'POST', '/api/device-tokens', ['token' => 'http://push.example/x', 'platform' => 'web', 'keys' => $keys])['code'], 'https only');
+        self::assertSame('validation.device_token_invalid', $this->expect(422, $this->bob, 'POST', '/api/device-tokens', ['token' => $endpoint, 'platform' => 'web', 'keys' => ['p256dh' => 'not base64!', 'auth' => 'x']])['code']);
+
+        $this->expect(201, $this->bob, 'POST', '/api/device-tokens', ['token' => $endpoint, 'platform' => 'web', 'keys' => $keys]);
+        $this->expect(201, $this->bob, 'POST', '/api/device-tokens', ['token' => $endpoint, 'platform' => 'web', 'keys' => $keys]);
+        $row = self::getContainer()->get(Connection::class)->fetchAllAssociative('SELECT platform, web_push_p256dh, web_push_auth FROM device_token');
+        self::assertSame([['platform' => 'web', 'web_push_p256dh' => $keys['p256dh'], 'web_push_auth' => $keys['auth']]], $row, 'idempotent');
+
+        $this->consentToEverything($this->bob);
+        $this->expect(200, $this->alice, 'POST', '/api/friendships', ['email' => 'nt-bob@example.com']);
+        self::assertSame([$endpoint], array_column($this->deliver()['pushes'], 'token'));
+
+        $this->call($this->bob, 'DELETE', '/api/device-tokens', ['token' => $endpoint]);
+        self::assertSame(0, (int) self::getContainer()->get(Connection::class)->fetchOne('SELECT COUNT(*) FROM device_token'));
+    }
+
+    public function testTheWebPushPublicKeyIsEmptyUntilConfigured(): void
+    {
+        self::assertSame(['publicKey' => ''], $this->expect(200, $this->bob, 'GET', '/api/web-push/public-key'));
+    }
+
     public function testNotificationsAreTheAdultsOwnNotAChilds(): void
     {
         $jules = $this->expect(201, $this->alice, 'POST', '/api/managed-profiles', ['displayName' => 'Jules', 'parentalConsent' => true])['id'];

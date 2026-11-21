@@ -12,7 +12,12 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A push token (spec §5.11): registered at sign-in, removed at
- * sign-out, dropped when FCM reports it invalid.
+ * sign-out, dropped when the push service reports it invalid.
+ *
+ * ios / android: an FCM token. web (spec §11 décision 70): a Web Push
+ * subscription of the web app installed from the browser — the token is
+ * its endpoint, with the browser's public key and auth secret needed to
+ * encrypt the payload (RFC 8291).
  */
 #[ORM\Entity(repositoryClass: DeviceTokenRepository::class)]
 #[ORM\Table(name: 'device_token')]
@@ -38,7 +43,18 @@ class DeviceToken implements TimestampableInterface, SoftDeletableInterface
     #[ORM\Column]
     private \DateTimeImmutable $lastSeenAt;
 
-    public function __construct(User $user, string $platform, string $token)
+    /** Web Push only: the subscription's P-256 public key (base64url). */
+    #[ORM\Column(length: 128, nullable: true)]
+    private ?string $webPushP256dh = null;
+
+    /** Web Push only: the subscription's auth secret (base64url). */
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $webPushAuth = null;
+
+    /**
+     * @param array{p256dh: string, auth: string}|null $webPushKeys
+     */
+    public function __construct(User $user, string $platform, string $token, ?array $webPushKeys = null)
     {
         $this->initializeId();
         $this->initializeTimestamps();
@@ -46,6 +62,7 @@ class DeviceToken implements TimestampableInterface, SoftDeletableInterface
         $this->platform = $platform;
         $this->token = $token;
         $this->lastSeenAt = new \DateTimeImmutable();
+        $this->setWebPushKeys($webPushKeys);
     }
 
     public function getUser(): User
@@ -54,11 +71,39 @@ class DeviceToken implements TimestampableInterface, SoftDeletableInterface
     }
 
     /** A token moves to whoever signs in on that device last. */
-    public function claim(User $user, string $platform): void
+    /**
+     * @param array{p256dh: string, auth: string}|null $webPushKeys
+     */
+    public function claim(User $user, string $platform, ?array $webPushKeys = null): void
     {
         $this->user = $user;
         $this->platform = $platform;
         $this->lastSeenAt = new \DateTimeImmutable();
+        $this->setWebPushKeys($webPushKeys);
+    }
+
+    public function isWebPush(): bool
+    {
+        return 'web' === $this->platform;
+    }
+
+    /**
+     * @return array{p256dh: string, auth: string}|null
+     */
+    public function getWebPushKeys(): ?array
+    {
+        return null === $this->webPushP256dh || null === $this->webPushAuth
+            ? null
+            : ['p256dh' => $this->webPushP256dh, 'auth' => $this->webPushAuth];
+    }
+
+    /**
+     * @param array{p256dh: string, auth: string}|null $keys
+     */
+    private function setWebPushKeys(?array $keys): void
+    {
+        $this->webPushP256dh = $keys['p256dh'] ?? null;
+        $this->webPushAuth = $keys['auth'] ?? null;
     }
 
     public function getPlatform(): string

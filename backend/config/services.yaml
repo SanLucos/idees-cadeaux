@@ -57,7 +57,7 @@ services:
                 region: '%env(STORAGE_REGION)%'
                 pathStyleEndpoint: true
 
-    App\Notification\Push\PushSender: '@App\Notification\Push\FcmPushSender'
+    App\Notification\Push\PushSender: '@App\Notification\Push\RoutingPushSender'
 
     # Raw transport behind SafeHttpFetcher (spec §5.5), which adds the
     # SSRF guard itself; swapped for a mock in tests.
