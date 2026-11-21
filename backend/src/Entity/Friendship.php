@@ -192,4 +192,14 @@ class Friendship implements TimestampableInterface, SoftDeletableInterface
         $this->removedBy = $by;
         $this->markDeleted();
     }
+
+    /**
+     * Ended by the administrator (spec §5.17): nobody's removal, so it
+     * neither blocks the pair nor starts a cooldown.
+     */
+    public function removeByAdmin(): void
+    {
+        $this->removedBy = null;
+        $this->markDeleted();
+    }
 }

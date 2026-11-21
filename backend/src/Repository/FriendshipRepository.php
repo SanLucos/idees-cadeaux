@@ -87,6 +87,56 @@ class FriendshipRepository extends ServiceEntityRepository
     }
 
     /**
+     * A past refusal (a declined request, either way) or a removal by
+     * one of them: the administrator never overrides it (spec §5.17).
+     * A removal by the administrator has no `removedBy` and doesn't count.
+     */
+    public function hasRefusalOrRemovalBetween(User $a, User $b): bool
+    {
+        return $this->withDeleted(fn () => (int) $this->createQueryBuilder('f')
+            ->select('COUNT(f.id)')
+            ->andWhere('(f.requester = :a AND f.addressee = :b) OR (f.requester = :b AND f.addressee = :a)')
+            ->andWhere('f.status = :declined OR (f.deletedAt IS NOT NULL AND f.removedBy IN (:a, :b))')
+            ->setParameter('a', $a->getId(), 'uuid')
+            ->setParameter('b', $b->getId(), 'uuid')
+            ->setParameter('declined', FriendshipStatus::Declined)
+            ->getQuery()
+            ->getSingleScalarResult() > 0);
+    }
+
+    /**
+     * Number of accepted friends per user id, for the administration's list.
+     *
+     * @param string[] $userIds
+     *
+     * @return array<string, int>
+     */
+    public function countAcceptedFor(array $userIds): array
+    {
+        if ([] === $userIds) {
+            return [];
+        }
+        $counts = array_fill_keys($userIds, 0);
+        $rows = $this->createQueryBuilder('f')
+            ->select('IDENTITY(f.requester) AS requesterId, IDENTITY(f.addressee) AS addresseeId')
+            ->andWhere('f.status = :accepted')
+            ->andWhere('f.requester IN (:ids) OR f.addressee IN (:ids)')
+            ->setParameter('accepted', FriendshipStatus::Accepted)
+            ->setParameter('ids', $userIds)
+            ->getQuery()
+            ->getArrayResult();
+        foreach ($rows as $row) {
+            foreach ([(string) $row['requesterId'], (string) $row['addresseeId']] as $id) {
+                if (isset($counts[$id])) {
+                    ++$counts[$id];
+                }
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
      * Friendships created through `$owner`'s share links since `$since`,
      * across regenerations and removals (spec §5.16 "plafond anti-abus").
      */
