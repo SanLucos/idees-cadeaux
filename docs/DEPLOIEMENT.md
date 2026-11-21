@@ -55,6 +55,16 @@ ssh -p 1138 deploy@frigologie.fr 'cd ~/ideescadeaux && git fetch --tags --force 
 
 Les migrations passent **avant** le redémarrage : le nouveau code ne tourne jamais sur un schéma ancien.
 
+## Commandes sur le serveur
+
+Toujours avec le fichier et le projet de prod, jamais un `docker compose` nu : il lirait `docker-compose.yaml` (stack de dev), dont les conteneurs portent les mêmes noms et remplaceraient ceux de la prod (postgres vide, port 5432 publié).
+
+```
+cd ~/ideescadeaux
+P="docker compose -p ideescadeaux -f docker-compose.prod.yaml --env-file .env.prod"
+$P exec php bin/console app:admin:grant <email>      # back-office (lot 16), --revoke pour retirer
+```
+
 ## Sauvegardes
 
 - Le service `backup` écrit chaque jour `DATA_DIR/backups/db-AAAA-MM-JJ.dump` (`pg_dump`, format custom) et supprime ceux de plus de 30 jours (spec §5.13).
