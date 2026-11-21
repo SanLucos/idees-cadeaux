@@ -1,6 +1,6 @@
 # Spécifications — Application « Idées Cadeaux »
 
-**Version :** 0.10 — 19 novembre 2026 (0.5 validée le 18 septembre 2026 ; lots 10 à 12 ajoutés le 14 octobre ; lot 13 ajouté le 4 novembre ; lot 14 ajouté le 10 novembre ; connexion sans mot de passe, décision 68 ; idées communes, décision 69 et lot 15)
+**Version :** 0.11 — 21 novembre 2026 (0.5 validée le 18 septembre 2026 ; lots 10 à 12 ajoutés le 14 octobre ; lot 13 ajouté le 4 novembre ; lot 14 ajouté le 10 novembre ; connexion sans mot de passe, décision 68 ; idées communes, décision 69 et lot 15 ; push web, décision 70 ; administration, décision 71 et lot 16)
 **Destinataire :** Claude Code (développement) — à lire en entier avant de coder.
 **Statut :** tous les points ouverts ont été traités et toutes les hypothèses validées ; la section 11 garde la trace des décisions prises.
 
@@ -127,6 +127,7 @@ Monorepo : `/backend` (Symfony/API Platform) et `/mobile` (Ionic Vue). CI qui ex
   - Aucune notification n'est envoyée pour ces annulations. Les deux personnes perdent l'accès à la liste de l'autre : purge du cache local à la prochaine synchronisation.
   - Une nouvelle demande d'ami est possible ; les actions annulées ne sont pas restaurées.
 - Liste d'amis avec accès à la liste d'idées de chacun.
+- **Par l'administrateur** (décision 71) : mise en relation proposée par l'équipe de l'appli, ou amitié créée directement, voir 5.17.
 
 ### 5.4 Idées
 - **Champs** : titre (obligatoire, 120 caractères max), lien (URL http/https), prix (montant décimal + devise, EUR par défaut), image (upload ou récupérée depuis un lien), note/description (2000 caractères max), occasion (optionnelle).
@@ -280,6 +281,23 @@ Voir section 8.
 
 **Hors-ligne** : rejoindre via un lien et la vue invité nécessitent le réseau ; un lien ouvert hors-ligne est conservé et traité au retour du réseau.
 
+### 5.17 Administration (décision 71)
+
+Un **back-office superadmin** dans l'appli, réservé au rôle `ROLE_SUPERADMIN`, pour voir les comptes et gérer les amitiés.
+
+- **Rôle** : donné ou retiré uniquement en ligne de commande (`bin/console app:admin:grant <email>`, `--revoke`). Aucun écran ne le donne.
+- **Accès** : entrée « Administration » dans l'onglet Profil, visible du seul superadmin ; écran `/admin`, mise en page large (tableaux), en ligne uniquement. API `/api/admin/*` : **404** pour tout autre compte, jamais au nom d'un enfant (`acting_as.not_allowed`).
+- **Utilisateurs** : pseudo, avatar, email, type (adulte / enfant, avec ses gestionnaires), email vérifié ou non, suppression programmée, nombre d'amis, date d'inscription. Recherche sur pseudo et email, filtre par type, pagination.
+- **Fiche d'un utilisateur** : ses amis (avec l'origine et la date), ses demandes en cours, les mises en relation en attente le concernant, et une recherche pour en ajouter.
+- **Jamais dans l'administration** : idées (ni leur nombre), suggestions, réservations, cotisations, commentaires, réactions, tailles, préférences, notifications. Un refus n'est jamais montré comme tel : la paire est « non disponible », sans raison.
+- **Deux modes** entre deux adultes A et B (ni profil enfant, ni compte en suppression) :
+  - **Mise en relation** : A et B reçoivent chacun « L'équipe [nom de l'appli] vous propose de devenir ami avec [X] » (in-app et push, pseudo et avatar de l'autre seulement), dans l'onglet Amis à côté des demandes reçues, avec « Accepter » ou « Ignorer ». Ils deviennent amis quand **les deux** ont accepté ; celui qui avait accepté en premier reçoit « Vous êtes maintenant ami avec [X] ». « Ignorer » est un **refus silencieux** : l'autre n'apprend jamais s'il y a eu refus, absence de réponse ou acceptation de l'autre ; la proposition disparaît chez qui a répondu. Elle expire 30 jours après sa création ; elle disparaît aussi si A et B deviennent amis autrement, et l'administrateur peut l'annuler tant qu'elle est en attente. Une seule mise en relation en attente par paire.
+  - **Forcée** : l'amitié est créée directement, **sans notification ni trace** : pour A et B (API, `/sync`, notifications, export RGPD), elle est indiscernable d'une amitié ordinaire (origine exposée `request`). Une demande en attente entre eux est acceptée sans notification ; une mise en relation en attente est close.
+- **Paire non disponible** (dans les deux modes) : déjà amis ; mise en relation déjà en attente (mode mise en relation) ; un **refus passé** entre eux (demande refusée dans un sens ou l'autre, mise en relation ignorée) ; un **retrait passé** fait par l'un d'eux. L'administrateur ne passe jamais outre.
+- **Plusieurs à la fois** : en sélectionnant plusieurs utilisateurs, l'administrateur met en relation (ou rend amis) toutes les paires ; le résultat donne le nombre de paires traitées et de paires non disponibles.
+- **Suppression d'une amitié** par l'administrateur : silencieuse, sans délai avant une nouvelle demande, ce n'est pas un retrait de l'un d'eux (ne rend pas la paire non disponible) ; mêmes effets sur les idées qu'un retrait (5.3). Les amitiés « famille » (décision 59) n'en font pas partie.
+- **RGPD** : la politique de confidentialité mentionne que l'administrateur voit la liste des comptes (pseudo, email, dates, nombre d'amis) et peut créer ou supprimer des amitiés. L'export contient les mises en relation reçues encore en attente.
+
 ---
 
 ## 6. Modèle de données (proposition)
@@ -293,6 +311,7 @@ Toutes les entités : `id` **UUID (v7) pouvant être généré par le client**, 
 | **SocialIdentity** | user, provider (google/apple), providerUserId |
 | **Friendship** | requester, addressee, status (pending/accepted/declined/expired), respondedAt, expiresAt (création + 30 jours), onBehalfOfManager (nullable : gestionnaire ayant agi au nom d'un enfant), origin (request/link/conversion/family), shareLink (nullable), removedBy (nullable), suggestedBy (nullable : auteur de la suggestion d'où vient la demande, décision 65). Une seule demande active par paire |
 | **FriendSuggestion** | suggestedBy, recipient (A), suggested (B), status (pending/sent/dismissed), friendship (nullable : demande envoyée depuis la suggestion), expiresAt (création + 30 jours). Une seule suggestion en attente par triplet (décision 65) |
+| **Introduction** | userA, userB, answerA / answerB (null, accepted, ignored), answeredAtA / answeredAtB, friendship (nullable : amitié créée quand les deux ont accepté), expiresAt (création + 30 jours) ; annulation par l'administrateur = suppression logique. Une seule en attente par paire (décision 71) |
 | **ShareLink** | owner (utilisateur ou profil enfant), token (aléatoire 128 bits, unique), status (active/revoked), revokedAt, lastUsedAt. Un seul lien actif par propriétaire |
 | **ProfileSize** | user, label, value, unit (nullable : pas d'unité ; cm, mm, m, g, kg, ml, l, eu, us, uk), note (nullable), sortOrder |
 | **ProfileSizeHistory** | size, value, unit ; `createdAt` = date depuis laquelle la taille a cette valeur. Jamais exposé aux amis |
@@ -457,6 +476,7 @@ Tous les points ouverts ont été traités et toutes les hypothèses validées.
    - **Suite de visibilité** : chaque destinataire ne voit aucun élément caché par aucun canal (API, `/sync`, notifications, compteurs, export) ; un ami d'un seul destinataire voit l'idée ; un non-ami de tous les destinataires reçoit 404 ; la vue invité ne cite pas les autres destinataires ; un gestionnaire destinataire n'a pas la vue gestionnaire.
    Ordre des lots : … 14, puis 15 (idées communes).
 70. ✅ **Tranché le 21 novembre 2026 — push sur l'appli web** (§5.11, révise la décision 56 sur ce point) : l'appli web installée depuis le navigateur (Chrome sur Android d'abord, tous les utilisateurs passant par elle) reçoit les notifications push, par le standard **Web Push** (VAPID, RFC 8030 / 8291 / 8292), sans Firebase. Mêmes règles que le push natif : même consentement (écran d'explication puis demande d'autorisation du navigateur), mêmes préférences par type, mêmes textes (traduits selon `User.locale`), même filtrage (règle d'or). L'abonnement du navigateur est un `DeviceToken` de plateforme `web` (le jeton est l'adresse de l'abonnement, avec ses clés `p256dh` / `auth`), enregistré au démarrage si l'autorisation est accordée, supprimé à la déconnexion ou quand le push est désactivé, nettoyé quand le service push répond 404 / 410. Le service worker affiche la notification (icône de l'appli, badge monochrome) et un appui ouvre l'onglet Activité. Clé publique : `GET /api/web-push/public-key` (vide = push web désactivé, l'interface ne propose alors que l'email). Paire de clés VAPID en configuration (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, générée par `bin/console app:web-push:generate-keys`) ; la changer oblige chaque navigateur à se réabonner, ce que l'appli fait seule à son démarrage. Navigateur sans Web Push (Safari iOS hors appli ajoutée à l'écran d'accueil, développement sans service worker) : pas de push, comme avant.
+71. ✅ **Tranché le 21 novembre 2026 (lot 16) — back-office superadmin** (§5.17) : rôle `ROLE_SUPERADMIN` (`User.roles`) donné uniquement par la commande `app:admin:grant` ; écran `/admin` dans l'appli (entrée dans l'onglet Profil pour le seul superadmin), API `/api/admin/*` en 404 pour les autres. Liste des utilisateurs et fiche (amis, demandes, mises en relation en attente), sans aucune donnée d'idée ni d'interaction. **Deux modes** : **mise en relation** proposée au nom de « l'équipe [nom de l'appli] » (jamais le pseudo de l'administrateur), reçue par A **et** B, amis quand les deux acceptent, « Ignorer » silencieux, expiration à 30 jours ; **forcée** : amitié acceptée d'emblée, sans notification, indiscernable d'une amitié ordinaire pour A et B (origine exposée `request`, stockée `admin`). L'administrateur ne passe jamais outre un refus passé (demande refusée, mise en relation ignorée) ni un retrait fait par l'un d'eux : paire « non disponible », sans raison. Il peut supprimer une amitié : silencieux, sans délai, sans effet « retrait » (la paire reste disponible), mêmes effets sur les idées qu'un retrait. Adultes uniquement. Suite de visibilité : 404 pour un non-administrateur sur tout `/api/admin`, aucune donnée d'idée dans les réponses d'administration, amitié forcée indiscernable (API, `/sync`, notifications, export), mise en relation visible de ses deux seuls destinataires (404 pour un tiers), « Ignorer » jamais révélé à l'autre. Ordre des lots : … 15, puis 16 (administration).
 
 ---
 
@@ -482,6 +502,7 @@ Tous les points ouverts ont été traités et toutes les hypothèses validées.
 | **13. Mes cadeaux** | Écran « Mes cadeaux pour mes amis » : réservés, cotisations, offerts, filtres par type et par ami ; entrées dans Amis et Ma liste (décision 62) | Suite de visibilité verte (idée reçue : trace du donateur pour lui seul) ; tests unitaires et parcours e2e |
 | **14. Mise en relation** | « Présenter à des amis… » sur la page de liste d'un ami, suggestions reçues dans l'onglet Amis, demande issue d'une suggestion, notification d'aboutissement (décision 65) | Suite de visibilité verte (B, tiers, auteur, enfants) ; tests back et front, parcours e2e à trois |
 | **15. Idées communes** | Plusieurs destinataires par idée (`IdeaRecipient`, migration depuis `owner`), choix des destinataires dans le formulaire, affichage sur chaque liste, droits partagés, notifications groupées, vue invité, « Mes cadeaux », `/sync` et export (décision 69) | Suite de visibilité verte (chaque destinataire, ami d'un seul destinataire, gestionnaire destinataire, vue invité) ; tests back et front, parcours e2e à trois (Anne, Luc, un ami) |
+| **16. Administration** | Rôle superadmin en ligne de commande, écran `/admin` (utilisateurs, fiche, recherche), mise en relation par l'équipe (reçue par les deux, acceptée par les deux), amitié forcée silencieuse, suppression d'amitié, actions groupées (décision 71) | Suite de visibilité verte (non-administrateur, amitié forcée indiscernable, mise en relation, enfants) ; tests back et front, parcours e2e admin |
 
 ---
 
