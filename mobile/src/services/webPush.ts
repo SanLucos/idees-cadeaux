@@ -12,7 +12,7 @@ import { notificationsApi } from './notifications';
 
 /** What the browser offers; injected by the tests. */
 export interface WebPushEnv {
-  serviceWorker?: Pick<ServiceWorkerContainer, 'ready' | 'addEventListener' | 'removeEventListener'>;
+  serviceWorker?: Pick<ServiceWorkerContainer, 'ready' | 'getRegistration' | 'addEventListener' | 'removeEventListener'>;
   notification?: Pick<typeof Notification, 'permission' | 'requestPermission'>;
   hasPushManager: boolean;
   serviceWorkerEnabled: boolean;
@@ -26,6 +26,9 @@ function browserEnv(): WebPushEnv {
     serviceWorkerEnabled: import.meta.env.PROD,
   };
 }
+
+/** How long subscribing waits for the service worker to be active. */
+const READY_TIMEOUT_MS = 10_000;
 
 let env: WebPushEnv | null = null;
 let publicKey: Promise<string> | null = null;
@@ -65,11 +68,28 @@ function sameKey(current: ArrayBuffer | null | undefined, expected: Uint8Array):
   return bytes.length === expected.length && bytes.every((byte, i) => byte === expected[i]);
 }
 
-async function subscription(create: boolean): Promise<PushSubscription | null> {
+/**
+ * The service worker's registration. Never waits on `ready` alone: it
+ * never resolves when the worker could not be registered (blocked, failed
+ * install, Cypress), and sign-out must not hang on it.
+ */
+async function registration(wait: boolean): Promise<ServiceWorkerRegistration | undefined> {
   const sw = current().serviceWorker;
-  if (!sw) return null;
-  const registration = await sw.ready;
-  const existing = await registration.pushManager.getSubscription();
+  if (!sw) return undefined;
+  if (!wait) return sw.getRegistration();
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<undefined>((resolve) => {
+    timer = setTimeout(() => resolve(undefined), READY_TIMEOUT_MS);
+  });
+
+  return Promise.race([sw.ready, timeout]).finally(() => clearTimeout(timer));
+}
+
+async function subscription(create: boolean): Promise<PushSubscription | null> {
+  const worker = await registration(create);
+  if (!worker) return null;
+  const existing = await worker.pushManager.getSubscription();
   if (!create) return existing;
 
   const key = await serverKey();
@@ -79,7 +99,7 @@ async function subscription(create: boolean): Promise<PushSubscription | null> {
   if (existing && sameKey(existing.options.applicationServerKey, applicationServerKey)) return existing;
   await existing?.unsubscribe();
 
-  return registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+  return worker.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
 }
 
 export const webPush = {

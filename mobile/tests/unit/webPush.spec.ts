@@ -22,12 +22,13 @@ function fakeSubscription(endpoint: string, key: Uint8Array) {
 }
 
 function setup(permission: NotificationPermission, existing: ReturnType<typeof fakeSubscription> | null = null) {
-  const sw = new EventTarget() as EventTarget & { ready: Promise<unknown> }
+  const sw = new EventTarget() as EventTarget & { ready: Promise<unknown>; getRegistration: () => Promise<unknown> }
   const pushManager = {
     getSubscription: vi.fn(() => Promise.resolve(existing)),
     subscribe: vi.fn((options: { applicationServerKey: Uint8Array }) => Promise.resolve(fakeSubscription('https://push.example/new', options.applicationServerKey))),
   }
   sw.ready = Promise.resolve({ pushManager })
+  sw.getRegistration = () => Promise.resolve({ pushManager })
   const notification = { permission, requestPermission: vi.fn(() => Promise.resolve('granted' as NotificationPermission)) }
   webPush.useEnv({ serviceWorker: sw as never, notification: notification as never, hasPushManager: true, serviceWorkerEnabled: true } satisfies WebPushEnv)
 
@@ -106,5 +107,27 @@ describe('Web Push (spec §11 décision 70)', () => {
     await webPush.unregister()
     expect(notificationsApi.unregisterDevice).toHaveBeenCalledWith('https://push.example/mine')
     expect(existing.unsubscribe).toHaveBeenCalled()
+  })
+
+  test('without a service worker, sign-out does not wait for one (Cypress blocks it)', async () => {
+    const { sw } = setup('granted')
+    sw.ready = new Promise(() => undefined)
+    sw.getRegistration = () => Promise.resolve(undefined)
+    await webPush.unregister()
+    expect(notificationsApi.unregisterDevice).not.toHaveBeenCalled()
+  })
+
+  test('subscribing gives up when the service worker never becomes active', async () => {
+    vi.useFakeTimers()
+    try {
+      const { sw } = setup('granted')
+      sw.ready = new Promise(() => undefined)
+      const done = webPush.register(() => undefined)
+      await vi.advanceTimersByTimeAsync(10_000)
+      await done
+      expect(notificationsApi.registerDevice).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
