@@ -28,6 +28,7 @@ La durabilité du stockage est assurée par l'hébergeur. Si le versionnage du b
 2. Frigologie déployé avec le réseau `proxy` (créé par sa CI, sinon `docker network create proxy`).
 3. Bucket S3 et clé (ci-dessus).
 4. Sur le serveur : cloner le dépôt, copier `.env.prod.example` en `.env.prod`, remplir les valeurs (`openssl rand -hex 32` pour `APP_SECRET` et les mots de passe). Le script refuse de déployer si un secret est vide ou si `APP_SECRET` fait moins de 32 caractères.
+   Push de l'appli web (décision 70) : générer une fois la paire VAPID, `docker compose run --rm php bin/console app:web-push:generate-keys` (ou sur n'importe quelle machine avec le dépôt), et la copier dans `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`. Ne plus la changer ensuite (chaque navigateur devrait se réabonner) ; sans elle, pas de push web.
 5. Dossier de données : `DATA_DIR` (par défaut `/home/deploy/ideescadeaux-data`, créé par le script, sans droits administrateur).
 6. `./deploy-prod.sh`
 

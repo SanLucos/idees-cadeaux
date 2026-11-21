@@ -60,6 +60,7 @@ docker compose run --rm php bin/console doctrine:migrations:diff --no-interactio
 ```
 Connexion Google/Apple (lot 1) : `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` dans `backend/.env` sont des placeholders. À remplacer par les vrais identifiants OAuth une fois créés (Google Cloud Console / Apple Developer) pour que `/api/auth/social/*` fonctionne.
 Push (lot 5) : `FCM_PROJECT_ID` / `FCM_SERVICE_ACCOUNT_JSON` dans `backend/.env` sont vides ; les renseigner (projet Firebase, clé de compte de service, jamais commitée) active l'envoi push. Sans eux, in-app et email fonctionnent. Les rappels d'anniversaire tournent chaque heure sur le `worker`.
+Push web (spec §11 décision 70) : l'appli web installée (Chrome Android) reçoit les push par Web Push/VAPID (`App\Notification\Push\WebPushSender`, aiguillage `RoutingPushSender`, `src/services/webPush.ts`, gestionnaires `push` / `notificationclick` du `sw.js` généré par `vite.config.ts`). Clés : `bin/console app:web-push:generate-keys` → `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` dans `backend/.env.local` (vides = pas de push web). Le service worker n'existe que dans un build (`npm run build && npx vite preview`), pas avec `npm run dev`.
 
 **Mobile (`/mobile`, sur l'hôte, Node ≥ 20)**
 ```

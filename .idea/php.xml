@@ -145,6 +145,15 @@
       <path value="$PROJECT_DIR$/backend/vendor/symfony/expression-language" />
       <path value="$PROJECT_DIR$/backend/vendor/dama/doctrine-test-bundle" />
       <path value="$PROJECT_DIR$/backend/vendor/lcobucci/jwt" />
+      <path value="$PROJECT_DIR$/backend/vendor/psr/http-factory" />
+      <path value="$PROJECT_DIR$/backend/vendor/psr/http-message" />
+      <path value="$PROJECT_DIR$/backend/vendor/psr/http-client" />
+      <path value="$PROJECT_DIR$/backend/vendor/minishlink/web-push" />
+      <path value="$PROJECT_DIR$/backend/vendor/php-http/discovery" />
+      <path value="$PROJECT_DIR$/backend/vendor/php-http/promise" />
+      <path value="$PROJECT_DIR$/backend/vendor/php-http/httplug" />
+      <path value="$PROJECT_DIR$/backend/vendor/spomky-labs/base64url" />
+      <path value="$PROJECT_DIR$/backend/vendor/nyholm/psr7" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration">
