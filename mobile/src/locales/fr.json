@@ -82,6 +82,14 @@
       "introducedTitle": "Présenté à",
       "pending": "En attente",
       "cancel": "Annuler"
+    },
+    "introductions": {
+      "title": "Mise en relation · {count} | Mises en relation · {count}",
+      "from": "L'équipe {app} vous propose de devenir amis",
+      "accept": "Accepter",
+      "ignore": "Ignorer",
+      "accepted": "C'est noté : vous serez amis si {name} accepte aussi.",
+      "friends": "Vous êtes maintenant ami avec {name}."
     }
   },
   "auth": {
@@ -379,6 +387,10 @@
     "friend_suggestion": {
       "not_a_friend": "Vous ne pouvez présenter que vos amis adultes.",
       "recipients_invalid": "Choisissez entre 1 et 30 amis."
+    },
+    "admin": {
+      "mode_invalid": "Mode inconnu.",
+      "users_invalid": "Choisissez entre 2 et 20 utilisateurs."
     }
   },
   "locales": {
@@ -418,7 +430,9 @@
       "manager_invitation_accepted": "{actor} gère désormais avec vous le profil de {child}.",
       "friend_request_received_suggested": "{actor} vous a envoyé une demande d'ami, suggérée par {suggestedBy}.",
       "friend_suggestion_received": "{actor} vous suggère de devenir ami avec {friend}.",
-      "friend_suggestion_accepted": "{actor} et {friend} sont maintenant amis grâce à vous."
+      "friend_suggestion_accepted": "{actor} et {friend} sont maintenant amis grâce à vous.",
+      "introduction_received": "L'équipe {app} vous propose de devenir ami avec {friend}.",
+      "introduction_accepted": "Vous êtes maintenant ami avec {friend}."
     }
   },
   "occasions": {
@@ -765,7 +779,9 @@
       "manager_invitation_received": "Invitation à gérer un enfant",
       "manager_invitation_accepted": "Deuxième gestionnaire ajouté",
       "friend_suggestion_received": "Suggestion d'ami",
-      "friend_suggestion_accepted": "Mise en relation réussie"
+      "friend_suggestion_accepted": "Mise en relation réussie",
+      "introduction_received": "Mise en relation par l'équipe",
+      "introduction_accepted": "Mise en relation acceptée"
     }
   },
   "sync": {
@@ -969,5 +985,96 @@
       "none": "Vous n'avez encore rien réservé. Sur la liste d'un ami, touchez « Je l'offre » ou « Cotiser à plusieurs ».",
       "filtered": "Aucun cadeau ne correspond à ces filtres."
     }
+  },
+  "admin": {
+    "entry": "Administration",
+    "title": "Administration",
+    "searchPlaceholder": "Rechercher (pseudo, email)",
+    "filters": {
+      "all": "Tous",
+      "regular": "Adultes",
+      "managed": "Enfants",
+      "deleting": "En suppression"
+    },
+    "sort": {
+      "createdAt": "Plus récents",
+      "displayName": "Pseudo"
+    },
+    "total": "{count} utilisateur | {count} utilisateurs",
+    "columns": {
+      "user": "Utilisateur",
+      "email": "Email",
+      "type": "Type",
+      "signIn": "Connexion",
+      "friends": "Amis",
+      "createdAt": "Inscrit le"
+    },
+    "type": {
+      "regular": "Adulte",
+      "managed": "Enfant"
+    },
+    "managedBy": "géré par {names}",
+    "signIn": {
+      "password": "Mot de passe",
+      "emailLink": "Lien + session longue",
+      "google": "Google",
+      "apple": "Apple",
+      "none": "Aucune"
+    },
+    "unverified": "email non vérifié",
+    "deleting": "suppression programmée",
+    "superAdmin": "superadmin",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "page": "Page {page} / {pages}",
+    "selected": "{count} sélectionné | {count} sélectionnés",
+    "clearSelection": "Effacer",
+    "introduceAll": "Mettre en relation",
+    "forceAll": "Rendre amis",
+    "modes": {
+      "introduce": "Mettre en relation",
+      "force": "Rendre amis"
+    },
+    "introduceHint": "Les deux reçoivent une proposition de l'équipe et deviennent amis s'ils acceptent tous les deux.",
+    "forceHint": "Ils deviennent amis tout de suite, sans notification ni indication de votre intervention.",
+    "confirmTitle": "{mode} · {count} paire | {mode} · {count} paires",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "result": "{done} paire traitée, {unavailable} non disponible | {done} paires traitées, {unavailable} non disponibles",
+    "card": {
+      "children": "Enfants",
+      "friends": "Amis · {count}",
+      "requests": "Demandes en cours",
+      "introductions": "Mises en relation en attente",
+      "add": "Ajouter un ami",
+      "searchPlaceholder": "Rechercher un utilisateur",
+      "since": "depuis le {date}",
+      "expires": "expire le {date}",
+      "incoming": "reçue",
+      "outgoing": "envoyée",
+      "remove": "Retirer",
+      "cancelIntroduction": "Annuler",
+      "removeConfirm": "Retirer l'amitié entre {a} et {b} ? Aucun des deux ne sera prévenu.",
+      "removed": "Amitié retirée.",
+      "cancelled": "Mise en relation annulée.",
+      "none": "Aucun"
+    },
+    "origin": {
+      "request": "demande",
+      "link": "lien",
+      "conversion": "rattachement",
+      "family": "famille",
+      "introduction": "mise en relation",
+      "admin": "forcée"
+    },
+    "relation": {
+      "friends": "Déjà amis",
+      "introduced": "Mise en relation en attente",
+      "request_pending": "Demande en cours",
+      "available": "",
+      "unavailable": "Non disponible"
+    },
+    "empty": "Aucun utilisateur.",
+    "wideHint": "Plus confortable sur un grand écran."
   }
 }

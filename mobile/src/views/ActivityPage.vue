@@ -42,6 +42,7 @@
                 <template #days>{{ item.payload.days }}</template>
                 <template #child><strong>{{ item.payload.child?.displayName }}</strong></template>
                 <template #suggestedBy>{{ item.payload.suggestedBy?.displayName }}</template>
+                <template #app>{{ t('app.name') }}</template>
               </i18n-t>
               <span class="item__time">{{ when(item.createdAt) }}</span>
             </div>

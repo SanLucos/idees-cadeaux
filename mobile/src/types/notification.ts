@@ -16,7 +16,9 @@ export type NotificationType =
   | 'manager_invitation_received'
   | 'manager_invitation_accepted'
   | 'friend_suggestion_received'
-  | 'friend_suggestion_accepted';
+  | 'friend_suggestion_accepted'
+  | 'introduction_received'
+  | 'introduction_accepted';
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   'friend_request_received',
@@ -36,6 +38,8 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   'manager_invitation_accepted',
   'friend_suggestion_received',
   'friend_suggestion_accepted',
+  'introduction_received',
+  'introduction_accepted',
   'share_link_suspended',
 ];
 
@@ -61,6 +65,8 @@ export interface AppNotification {
     idea?: { id: string; title: string };
     contribution?: { id: string };
     friendship?: { id: string };
+    /** A team introduction (spec §11 décision 71): never an actor, it's « l'équipe ». */
+    introduction?: { id: string };
     /** A friend request sent from a suggestion (spec §11 décision 65). */
     suggestedBy?: Person;
     days?: number;

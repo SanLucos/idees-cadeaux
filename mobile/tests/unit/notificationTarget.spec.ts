@@ -36,4 +36,9 @@ describe('notificationTarget', () => {
     expect(notificationTarget(n('friend_suggestion_received', { actor: { id: 'u1', displayName: 'Luc' }, friend: { id: 'u2', displayName: 'Bruno' } }))).toEqual({ path: '/tabs/friends', actAs: null })
     expect(notificationTarget(n('friend_suggestion_accepted', { actor: { id: 'u3', displayName: 'Anna' }, friend: { id: 'u2', displayName: 'Bruno' } })).path).toBe('/tabs/friends/u2')
   })
+
+  test('team introductions (spec §11 décision 71): answered from the Amis tab; once friends, the new friend', () => {
+    expect(notificationTarget(n('introduction_received', { friend: { id: 'u2', displayName: 'Bruno' }, introduction: { id: 'i1' } }))).toEqual({ path: '/tabs/friends', actAs: null })
+    expect(notificationTarget(n('introduction_accepted', { friend: { id: 'u2', displayName: 'Bruno' } })).path).toBe('/tabs/friends/u2')
+  })
 })

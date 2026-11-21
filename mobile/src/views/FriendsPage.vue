@@ -60,6 +60,30 @@
         </div>
       </template>
 
+      <!-- Spec §11 décision 71: introductions by the team, mine only. -->
+      <template v-if="!activeProfile.active && introductions.received.length">
+        <SectionTitle>{{ t('friends.introductions.title', { count: introductions.received.length }) }}</SectionTitle>
+        <div class="ic-stack">
+          <div v-for="i in introductions.received" :key="i.id" class="ic-card request-card" data-cy="introduction">
+            <div class="request-card__who">
+              <AppAvatar :id="i.user.id" :name="i.user.displayName" :url="i.user.avatarUrl" :size="56" />
+              <div>
+                <div class="name">{{ i.user.displayName }}</div>
+                <div class="ic-muted">{{ t('friends.introductions.from', { app: t('app.name') }) }}</div>
+              </div>
+            </div>
+            <div class="request-card__actions">
+              <ion-button class="ic-button-surface" expand="block" :disabled="busy" @click="answer(() => introductions.ignore(i.id))">
+                {{ t('friends.introductions.ignore') }}
+              </ion-button>
+              <ion-button color="dark" expand="block" :disabled="busy" @click="acceptIntroduction(i)">
+                {{ t('friends.introductions.accept') }}
+              </ion-button>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <!-- Spec §11 décision 65: my own suggestions, not the child's. -->
       <template v-if="!activeProfile.active && suggestions.received.length">
         <SectionTitle>{{ t('friends.suggestions.title', { count: suggestions.received.length }) }}</SectionTitle>
@@ -163,6 +187,8 @@ import {
   type RefresherCustomEvent,
 } from '@ionic/vue';
 import { useFriendSuggestionsStore } from '../stores/friendSuggestions';
+import { useIntroductionsStore } from '../stores/introductions';
+import type { Introduction } from '../types/introduction';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { compareNames, joinNames } from '../utils/names';
 import { readFriendSort, sortFriends, storeFriendSort, type FriendSort } from '../utils/friendSort';
@@ -186,6 +212,7 @@ const web = isWeb();
 const activeProfile = useActiveProfileStore();
 
 const suggestions = useFriendSuggestionsStore();
+const introductions = useIntroductionsStore();
 const { describe } = useErrorMessage();
 const busy = ref(false);
 
@@ -193,6 +220,7 @@ const busy = ref(false);
 function fetchSuggestions(): void {
   if (activeProfile.active) return;
   suggestions.fetchReceived().catch(() => undefined);
+  introductions.fetch().catch(() => undefined);
 }
 
 // Switching profile shows the other profile's friends.
@@ -218,11 +246,24 @@ function suggesters(s: ReceivedFriendSuggestion): string {
   return joinNames(s.suggestedBy.map((p) => p.displayName), locale.value);
 }
 
-async function answer(action: () => Promise<void>, done?: string): Promise<void> {
+/** Friends now, or « vous serez amis si X accepte aussi » (never whether X answered). */
+function acceptIntroduction(i: Introduction): Promise<void> {
+  let friends = false;
+
+  return answer(
+    async () => {
+      friends = await introductions.accept(i.id);
+    },
+    () => t(friends ? 'friends.introductions.friends' : 'friends.introductions.accepted', { name: i.user.displayName }),
+  );
+}
+
+async function answer(action: () => Promise<void>, done?: string | (() => string)): Promise<void> {
   busy.value = true;
   try {
     await action();
-    if (done) await (await toastController.create({ message: done, duration: 2500, color: 'success' })).present();
+    const message = 'function' === typeof done ? done() : done;
+    if (message) await (await toastController.create({ message, duration: 2500, color: 'success' })).present();
   } catch (e) {
     await (await toastController.create({ message: describe(e), duration: 3000, color: 'danger' })).present();
   } finally {

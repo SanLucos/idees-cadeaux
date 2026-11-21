@@ -82,6 +82,14 @@
       "introducedTitle": "Introduced to",
       "pending": "Pending",
       "cancel": "Cancel"
+    },
+    "introductions": {
+      "title": "Introduction · {count} | Introductions · {count}",
+      "from": "The {app} team suggests you become friends",
+      "accept": "Accept",
+      "ignore": "Ignore",
+      "accepted": "Noted: you'll be friends if {name} accepts too.",
+      "friends": "You are now friends with {name}."
     }
   },
   "auth": {
@@ -379,6 +387,10 @@
     "friend_suggestion": {
       "not_a_friend": "You can only introduce your adult friends.",
       "recipients_invalid": "Pick between 1 and 30 friends."
+    },
+    "admin": {
+      "mode_invalid": "Unknown mode.",
+      "users_invalid": "Choose between 2 and 20 users."
     }
   },
   "locales": {
@@ -418,7 +430,9 @@
       "manager_invitation_accepted": "{actor} now manages {child}'s profile with you.",
       "friend_request_received_suggested": "{actor} sent you a friend request, suggested by {suggestedBy}.",
       "friend_suggestion_received": "{actor} suggests you become friends with {friend}.",
-      "friend_suggestion_accepted": "{actor} and {friend} are now friends, thanks to you."
+      "friend_suggestion_accepted": "{actor} and {friend} are now friends, thanks to you.",
+      "introduction_received": "The {app} team suggests you become friends with {friend}.",
+      "introduction_accepted": "You are now friends with {friend}."
     }
   },
   "occasions": {
@@ -765,7 +779,9 @@
       "manager_invitation_received": "Invitation to manage a child",
       "manager_invitation_accepted": "Second manager added",
       "friend_suggestion_received": "Friend suggestion",
-      "friend_suggestion_accepted": "Introduction made"
+      "friend_suggestion_accepted": "Introduction made",
+      "introduction_received": "Introduction by the team",
+      "introduction_accepted": "Introduction accepted"
     }
   },
   "sync": {
@@ -969,5 +985,96 @@
       "none": "You haven't reserved anything yet. On a friend's list, tap “I'll give it” or “Chip in together”.",
       "filtered": "No gift matches these filters."
     }
+  },
+  "admin": {
+    "entry": "Administration",
+    "title": "Administration",
+    "searchPlaceholder": "Search (pseudo, email)",
+    "filters": {
+      "all": "All",
+      "regular": "Adults",
+      "managed": "Children",
+      "deleting": "Being deleted"
+    },
+    "sort": {
+      "createdAt": "Newest",
+      "displayName": "Pseudo"
+    },
+    "total": "{count} user | {count} users",
+    "columns": {
+      "user": "User",
+      "email": "Email",
+      "type": "Type",
+      "signIn": "Sign-in",
+      "friends": "Friends",
+      "createdAt": "Joined"
+    },
+    "type": {
+      "regular": "Adult",
+      "managed": "Child"
+    },
+    "managedBy": "managed by {names}",
+    "signIn": {
+      "password": "Password",
+      "emailLink": "Link + long session",
+      "google": "Google",
+      "apple": "Apple",
+      "none": "None"
+    },
+    "unverified": "email not verified",
+    "deleting": "deletion scheduled",
+    "superAdmin": "superadmin",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {page} / {pages}",
+    "selected": "{count} selected | {count} selected",
+    "clearSelection": "Clear",
+    "introduceAll": "Introduce",
+    "forceAll": "Make friends",
+    "modes": {
+      "introduce": "Introduce",
+      "force": "Make friends"
+    },
+    "introduceHint": "Both receive a proposal from the team and become friends if they both accept.",
+    "forceHint": "They become friends at once, with no notification nor sign of your doing.",
+    "confirmTitle": "{mode} · {count} pair | {mode} · {count} pairs",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "result": "{done} pair done, {unavailable} unavailable | {done} pairs done, {unavailable} unavailable",
+    "card": {
+      "children": "Children",
+      "friends": "Friends · {count}",
+      "requests": "Pending requests",
+      "introductions": "Pending introductions",
+      "add": "Add a friend",
+      "searchPlaceholder": "Search a user",
+      "since": "since {date}",
+      "expires": "expires on {date}",
+      "incoming": "received",
+      "outgoing": "sent",
+      "remove": "Remove",
+      "cancelIntroduction": "Cancel",
+      "removeConfirm": "Remove the friendship between {a} and {b}? Neither will be told.",
+      "removed": "Friendship removed.",
+      "cancelled": "Introduction cancelled.",
+      "none": "None"
+    },
+    "origin": {
+      "request": "request",
+      "link": "link",
+      "conversion": "attachment",
+      "family": "family",
+      "introduction": "introduction",
+      "admin": "forced"
+    },
+    "relation": {
+      "friends": "Already friends",
+      "introduced": "Introduction pending",
+      "request_pending": "Request pending",
+      "available": "",
+      "unavailable": "Unavailable"
+    },
+    "empty": "No user.",
+    "wideHint": "More comfortable on a large screen."
   }
 }

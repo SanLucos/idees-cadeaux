@@ -19,7 +19,9 @@ export function notificationTarget(n: AppNotification): NotificationTarget {
       // Both answered from the Amis tab (spec §11 décision 65).
       case 'friend_request_received':
       case 'friend_suggestion_received':
+      case 'introduction_received':
         return '/tabs/friends';
+      case 'introduction_accepted':
       case 'friend_suggestion_accepted':
         return p.friend ? `/tabs/friends/${p.friend.id}` : '/tabs/friends';
       case 'friend_request_accepted':
