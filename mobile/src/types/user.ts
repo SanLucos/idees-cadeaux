@@ -15,6 +15,8 @@ export interface User {
   deletionScheduledAt?: string | null;
   /** Re-authentication: the password, or else a code sent by email. */
   hasPassword?: boolean;
+  /** Spec §5.17: shows the « Administration » entry. */
+  isSuperAdmin?: boolean;
 }
 
 /** A child profile (spec §5.15), as listed by GET /managed-profiles. */

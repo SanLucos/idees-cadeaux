@@ -86,6 +86,11 @@
             <ion-icon slot="start" :icon="downloadOutline" aria-hidden="true" />
             <ion-label>{{ t('account.export.title') }}</ion-label>
           </ion-item>
+          <!-- Spec §5.17: the superadmin only, never while acting as a child. -->
+          <ion-item v-if="auth.user?.isSuperAdmin && !activeProfile.active" button router-link="/admin" detail data-cy="admin-entry">
+            <ion-icon slot="start" :icon="keyOutline" aria-hidden="true" />
+            <ion-label>{{ t('admin.entry') }}</ion-label>
+          </ion-item>
           <ion-item button :href="privacyUrl" target="_blank" rel="noopener" detail>
             <ion-icon slot="start" :icon="shieldCheckmarkOutline" aria-hidden="true" />
             <ion-label>{{ t('account.privacy') }}</ion-label>
@@ -120,7 +125,7 @@ import { appVersionLabel } from '../utils/appVersion';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { add, chevronDown, chevronForward, downloadOutline, globeOutline, informationCircleOutline, logOutOutline, notificationsOutline, shareSocialOutline, shieldCheckmarkOutline, trashOutline } from 'ionicons/icons';
+import { add, chevronDown, chevronForward, downloadOutline, globeOutline, informationCircleOutline, keyOutline, logOutOutline, notificationsOutline, shareSocialOutline, shieldCheckmarkOutline, trashOutline } from 'ionicons/icons';
 import { actionSheetController, alertController, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonPage, onIonViewWillEnter, toastController, useIonRouter } from '@ionic/vue';
 import { useErrorMessage } from '../composables/useErrorMessage';
 import { useAuthStore } from '../stores/auth';

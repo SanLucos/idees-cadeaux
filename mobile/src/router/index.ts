@@ -180,6 +180,13 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/auth/InvitationPage.vue'),
     meta: { guest: true },
   },
+  // Spec §5.17: the superadmin's back-office, wide on a large screen.
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: () => import('../views/AdminPage.vue'),
+    meta: { requiresAuth: true, requiresOnboarding: true, requiresSuperAdmin: true },
+  },
   {
     path: '/settings/notifications',
     name: 'NotificationSettings',
@@ -230,6 +237,10 @@ router.beforeEach(async (to) => {
     return { name: 'Onboarding' };
   }
   if ('Onboarding' === to.name && auth.user?.isOnboarded) {
+    return { name: 'MyList' };
+  }
+  // The server answers 404 anyway (spec §5.17): nothing to see here.
+  if (to.meta.requiresSuperAdmin && !auth.user?.isSuperAdmin) {
     return { name: 'MyList' };
   }
   // A share received while signed out (spec §5.6): open it once signed in and onboarded.

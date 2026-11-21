@@ -327,6 +327,11 @@ ion-chip.ic-chip.ic-chip-selected {
     border-inline: 1px solid var(--ic-border);
     background: var(--ion-background-color);
   }
+
+  /* The back-office (spec §5.17) is made of tables: wider column. */
+  :root[data-layout="wide"] ion-app {
+    max-width: 1200px;
+  }
 }
 
 /* ------------------------------------------------------------------
