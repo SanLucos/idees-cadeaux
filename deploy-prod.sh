@@ -30,6 +30,12 @@ if [ ${#missing[@]} -gt 0 ]; then
   red "À remplir dans .env.prod : ${missing[*]}"
   exit 1
 fi
+# Sans clés VAPID, l'appli web ne reçoit aucun push (décision 70), sans
+# autre signe : le dire à chaque déploiement.
+if [ -z "$(value VAPID_PUBLIC_KEY)" ] || [ -z "$(value VAPID_PRIVATE_KEY)" ]; then
+  red "Attention : VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY vides dans .env.prod, aucune notification push sur l'appli web."
+  red "  Les générer une fois : docker compose -f docker-compose.prod.yaml --env-file .env.prod run --rm php bin/console app:web-push:generate-keys"
+fi
 if [ "$(value APP_SECRET | wc -c)" -lt 33 ]; then
   red "APP_SECRET doit faire au moins 32 caractères (openssl rand -hex 32)."
   exit 1

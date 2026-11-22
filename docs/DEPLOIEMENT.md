@@ -28,7 +28,7 @@ La durabilité du stockage est assurée par l'hébergeur. Si le versionnage du b
 2. Frigologie déployé avec le réseau `proxy` (créé par sa CI, sinon `docker network create proxy`).
 3. Bucket S3 et clé (ci-dessus).
 4. Sur le serveur : cloner le dépôt, copier `.env.prod.example` en `.env.prod`, remplir les valeurs (`openssl rand -hex 32` pour `APP_SECRET` et les mots de passe). Le script refuse de déployer si un secret est vide ou si `APP_SECRET` fait moins de 32 caractères.
-   Push de l'appli web (décision 70) : générer une fois la paire VAPID, `docker compose run --rm php bin/console app:web-push:generate-keys` (ou sur n'importe quelle machine avec le dépôt), et la copier dans `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`. Ne plus la changer ensuite (chaque navigateur devrait se réabonner) ; sans elle, pas de push web.
+   Push de l'appli web (décision 70) : générer une fois la paire VAPID, `docker compose -f docker-compose.prod.yaml --env-file .env.prod run --rm php bin/console app:web-push:generate-keys` (ou en dev sur n'importe quelle machine avec le dépôt), et la copier dans `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`. Ne plus la changer ensuite (chaque navigateur devrait se réabonner) ; sans elle, pas de push web (`deploy-prod.sh` le signale). Après l'avoir ajoutée à un `.env.prod` existant, redéployer (ou `$P up -d php worker`) : les conteneurs ne relisent `.env.prod` qu'à leur création.
 5. Dossier de données : `DATA_DIR` (par défaut `/home/deploy/ideescadeaux-data`, créé par le script, sans droits administrateur).
 6. `./deploy-prod.sh`
 
@@ -63,7 +63,10 @@ Toujours avec le fichier et le projet de prod, jamais un `docker compose` nu : i
 cd ~/ideescadeaux
 P="docker compose -p ideescadeaux -f docker-compose.prod.yaml --env-file .env.prod"
 $P exec php bin/console app:admin:grant <email>      # back-office (lot 16), --revoke pour retirer
+$P exec php bin/console app:push:test <email>        # pourquoi pas de push : config, consentement, appareils, envoi de test
 ```
+
+Push introuvable sur un téléphone : `app:push:test <email>` dit si les clés VAPID sont lues par le back, si le compte a consenti, quels appareils sont abonnés, et envoie une notification de test à chacun avec la réponse du service push (`201 sent` : accepté par Google ; `410` : abonnement mort, retiré). Aucun appareil : l'appli ne s'est jamais abonnée (rouvrir Profil › Notifications et réactiver le push).
 
 ## Sauvegardes
 
