@@ -22,7 +22,9 @@ x-php: &php
     args: &build-args
       APP_VERSION: ${APP_VERSION:-}
       APP_BUILD: ${APP_BUILD:-}
-  image: ideescadeaux-php:latest
+  # Built by the Deploy workflow and pulled from ghcr.io (IMAGE_REPO and
+  # IMAGE_TAG set by it); without them, deploy-prod.sh builds them here.
+  image: ${IMAGE_REPO:-ideescadeaux}-php:${IMAGE_TAG:-latest}
   restart: unless-stopped
   depends_on:
     - postgres
@@ -97,7 +99,7 @@ services:
       dockerfile: docker/php/Dockerfile.prod
       target: nginx
       args: *build-args
-    image: ideescadeaux-nginx:latest
+    image: ${IMAGE_REPO:-ideescadeaux}-nginx:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       - php

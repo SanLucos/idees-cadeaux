@@ -2,9 +2,12 @@
 #
 #   git tag v1.2.0 && git push origin v1.2.0
 #
-# Runs the whole CI first, checks the tag is on main, then on the server:
-# fetch the tag, check it out, ./deploy-prod.sh (build, migrations,
-# restart, health check). One deployment at a time.
+# Runs the whole CI and builds the php and nginx images (pushed to
+# ghcr.io/<owner>/ideescadeaux-{php,nginx}:<tag>) side by side, checks the
+# tag is on main, then on the server: fetch the tag, check it out,
+# ./deploy-prod.sh (image download, migrations, restart, health check).
+# The server never builds: a build there took all its memory. One
+# deployment at a time.
 #
 # Repository secrets (Settings → Secrets and variables → Actions):
 #   DEPLOY_SSH_KEY          private key allowed for deploy@frigologie.fr
@@ -26,10 +29,68 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
 
+  images:
+    name: Build the images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      repo: ${{ steps.meta.outputs.repo }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Registry names are lowercase; the release and commit are shown in
+      # Profil (« Version 0.0.10 · abc1234 »), the image has no .git.
+      - id: meta
+        run: |
+          echo "repo=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ideescadeaux" >> "$GITHUB_OUTPUT"
+          echo "build=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Same builder for both: nginx reuses the web and php stages just built.
+      - name: php image (php-fpm and worker)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile.prod
+          target: php
+          push: true
+          tags: ${{ steps.meta.outputs.repo }}-php:${{ github.ref_name }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          build-args: |
+            APP_VERSION=${{ github.ref_name }}
+            APP_BUILD=${{ steps.meta.outputs.build }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: nginx image (web app and public/)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile.prod
+          target: nginx
+          push: true
+          tags: ${{ steps.meta.outputs.repo }}-nginx:${{ github.ref_name }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          build-args: |
+            APP_VERSION=${{ github.ref_name }}
+            APP_BUILD=${{ steps.meta.outputs.build }}
+
   deploy:
     name: Deploy to ideescadeaux.frigologie.fr
-    needs: ci
+    needs: [ci, images]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     environment:
       name: production
       url: https://ideescadeaux.frigologie.fr
@@ -75,12 +136,18 @@ jobs:
             # Rewritten in place: the file keeps its owner and rights.
             cat "$tmp" > .env.prod'
 
+      # The job's token (packages: read, valid until the job ends) goes
+      # through ssh's input to deploy-prod.sh, which logs in to the registry
+      # in a throwaway Docker config. git fetch gets no input: it would eat it.
       - name: Deploy the tag
+        env:
+          IMAGE_REPO: ${{ needs.images.outputs.repo }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ssh prod "cd ~/ideescadeaux \
-            && git fetch --tags --force origin \
+          printf '%s\n' "$REGISTRY_TOKEN" | ssh prod "cd ~/ideescadeaux \
+            && git fetch --tags --force origin < /dev/null \
             && git checkout --force --detach '${GITHUB_REF_NAME}' \
-            && ./deploy-prod.sh"
+            && IMAGE_REPO='${IMAGE_REPO}' IMAGE_TAG='${GITHUB_REF_NAME}' REGISTRY_USER='${GITHUB_ACTOR}' ./deploy-prod.sh"
 
       - name: Check it is online
         run: curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-all-errors https://ideescadeaux.frigologie.fr/api/health
