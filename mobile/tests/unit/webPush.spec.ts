@@ -65,7 +65,7 @@ describe('Web Push (spec §11 décision 70)', () => {
 
   test('subscribes with the server key and registers the subscription', async () => {
     const { pushManager } = setup('granted')
-    await webPush.register(() => undefined)
+    expect(await webPush.register(() => undefined)).toBe(true)
     expect(pushManager.subscribe).toHaveBeenCalledWith({ userVisibleOnly: true, applicationServerKey: base64UrlToBytes(KEY) })
     expect(notificationsApi.registerDevice).toHaveBeenCalledWith('https://push.example/new', 'web', { p256dh: 'p256', auth: 'auth' })
   })
@@ -84,11 +84,28 @@ describe('Web Push (spec §11 décision 70)', () => {
     expect(pushManager.subscribe).toHaveBeenCalled()
   })
 
-  test('the server without a key: no subscription', async () => {
+  test('the server without a key: no subscription, and it says so', async () => {
     api.get.mockResolvedValue({ publicKey: '' })
     const { pushManager } = setup('granted')
-    await webPush.register(() => undefined)
+    expect(await webPush.isConfigured()).toBe(false)
+    expect(await webPush.register(() => undefined)).toBe(false)
     expect(pushManager.subscribe).not.toHaveBeenCalled()
+  })
+
+  test('a refused subscription is reported, not taken for working', async () => {
+    const { pushManager } = setup('granted')
+    pushManager.subscribe.mockRejectedValueOnce(new DOMException('Registration failed - push service error', 'AbortError'))
+    await expect(webPush.register(() => undefined)).rejects.toThrow()
+    expect(notificationsApi.registerDevice).not.toHaveBeenCalled()
+  })
+
+  test('subscribed means a subscription exists, not only the permission', async () => {
+    setup('granted')
+    expect(await webPush.isSubscribed()).toBe(false)
+    setup('granted', fakeSubscription('https://push.example/mine', base64UrlToBytes(KEY)))
+    expect(await webPush.isSubscribed()).toBe(true)
+    setup('default', fakeSubscription('https://push.example/mine', base64UrlToBytes(KEY)))
+    expect(await webPush.isSubscribed()).toBe(false)
   })
 
   test('a tapped notification opens the app where it is (sw.js posts push-open)', async () => {

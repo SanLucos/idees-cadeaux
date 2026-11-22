@@ -31,7 +31,7 @@
           </ion-item>
         </ion-list>
 
-        <ion-text v-if="denied" color="danger"><p>{{ t(webPush ? 'consent.deniedWeb' : 'consent.denied') }}</p></ion-text>
+        <ion-text v-if="refused" color="danger"><p>{{ 'failed' === refused ? t('consent.failed') : t(webPush ? 'consent.deniedWeb' : 'consent.denied') }}</p></ion-text>
 
         <ion-button expand="block" :disabled="saving" @click="save">{{ t('consent.continue') }}</ion-button>
         <ion-button expand="block" fill="clear" :disabled="saving" @click="done">{{ t('consent.later') }}</ion-button>
@@ -63,17 +63,20 @@ const webPush = push.isWebPush();
 const pushWanted = ref(pushAvailable);
 const emailWanted = ref(false);
 const saving = ref(false);
-const denied = ref(false);
+const refused = ref<'denied' | 'failed' | null>(null);
 
 async function save(): Promise<void> {
   saving.value = true;
-  denied.value = false;
+  refused.value = null;
   try {
     if (emailWanted.value) await notificationsApi.updateSettings({ consents: { email: true } });
-    if (pushWanted.value && !(await pushConsent.enable())) {
-      denied.value = true;
+    if (pushWanted.value) {
+      const result = await pushConsent.enable();
+      if ('granted' !== result) {
+        refused.value = result;
 
-      return;
+        return;
+      }
     }
     done();
   } finally {

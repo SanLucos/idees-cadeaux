@@ -11,6 +11,8 @@ import { webPush } from './webPush';
  * where the browser supports it — the app installed from Chrome on
  * Android first; elsewhere these calls do nothing.
  */
+export type PushEnableResult = 'granted' | 'denied' | 'failed';
+
 let currentToken: string | null = null;
 let listeners: PluginListenerHandle[] = [];
 
@@ -26,40 +28,53 @@ export const push = {
 
   /**
    * Whether this device would show pushes now: the consent recorded on
-   * the server is not enough (another device, or a browser that never
-   * asked). True where push is not available: the consent alone counts.
+   * the server is not enough (another device, a browser that never asked,
+   * or one whose subscription failed). True where push is not available:
+   * the consent alone counts.
    */
-  async isPermissionGranted(): Promise<boolean> {
+  async isActiveHere(): Promise<boolean> {
     if (!this.isAvailable()) return true;
-    if (this.isWebPush()) return webPush.isGranted();
+    if (this.isWebPush()) return webPush.isSubscribed();
 
     return 'granted' === (await PushNotifications.checkPermissions()).receive;
   },
 
-  /** Asks the OS; true when granted (and the device is then registered). */
-  async requestPermissionAndRegister(onOpen: (data: Record<string, string>) => void): Promise<boolean> {
-    if (!this.isAvailable()) return false;
-    if (this.isWebPush()) {
-      if (!(await webPush.requestPermission())) return false;
-      await webPush.register(onOpen).catch(() => undefined);
+  /** Whether this device can be offered push: the web needs the server's VAPID key. */
+  async canBeTurnedOn(): Promise<boolean> {
+    return this.isWebPush() ? webPush.isConfigured() : true;
+  },
 
-      return true;
+  /**
+   * Asks the OS, then registers the device. `denied`: the user (or the
+   * browser) said no; `failed`: allowed, but the device could not be
+   * subscribed — never reported as working.
+   */
+  async requestPermissionAndRegister(onOpen: (data: Record<string, string>) => void): Promise<PushEnableResult> {
+    if (!this.isAvailable()) return 'failed';
+    if (this.isWebPush()) {
+      if (!(await webPush.requestPermission())) return 'denied';
+
+      return (await webPush.register(onOpen).catch(() => false)) ? 'granted' : 'failed';
     }
 
     let status = await PushNotifications.checkPermissions();
     if ('prompt' === status.receive || 'prompt-with-rationale' === status.receive) {
       status = await PushNotifications.requestPermissions();
     }
-    if ('granted' !== status.receive) return false;
+    if ('granted' !== status.receive) return 'denied';
 
     await this.register(onOpen);
 
-    return true;
+    return 'granted';
   },
 
   /** At sign-in or app start, when permission was already granted. */
   async register(onOpen: (data: Record<string, string>) => void): Promise<void> {
-    if (this.isWebPush()) return webPush.register(onOpen).catch(() => undefined);
+    if (this.isWebPush()) {
+      await webPush.register(onOpen).catch(() => false);
+
+      return;
+    }
     if (!this.isAvailable() || 'granted' !== (await PushNotifications.checkPermissions()).receive) return;
 
     await Promise.all(listeners.map((l) => l.remove()));

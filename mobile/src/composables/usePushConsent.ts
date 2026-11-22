@@ -1,5 +1,5 @@
 import { useIonRouter } from '@ionic/vue';
-import { push } from '../services/push';
+import { push, type PushEnableResult } from '../services/push';
 import { notificationsApi } from '../services/notifications';
 
 /**
@@ -20,11 +20,12 @@ export function usePushConsent() {
     ionRouter.push('/tabs/activity');
   }
 
-  async function enable(): Promise<boolean> {
-    const granted = push.isAvailable() ? await push.requestPermissionAndRegister(onOpen) : true;
-    if (granted) await notificationsApi.updateSettings({ consents: { push: true } });
+  /** The consent is recorded only once this device really receives push. */
+  async function enable(): Promise<PushEnableResult> {
+    const result = push.isAvailable() ? await push.requestPermissionAndRegister(onOpen) : 'granted';
+    if ('granted' === result) await notificationsApi.updateSettings({ consents: { push: true } });
 
-    return granted;
+    return result;
   }
 
   async function disable(): Promise<void> {

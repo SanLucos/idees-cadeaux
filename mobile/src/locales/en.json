@@ -742,7 +742,9 @@
     "later": "Later",
     "changeLater": "You can change your mind anytime in Profile › Notifications.",
     "denied": "Notifications are blocked by the system: allow them in your phone's settings.",
-    "deniedWeb": "Notifications are blocked by the browser: allow them in the site settings (icon left of the address) or the app settings."
+    "deniedWeb": "Notifications are blocked by the browser: allow them in the site settings (icon left of the address) or the app settings.",
+    "failed": "Notifications could not be turned on on this device. Please try again later.",
+    "pushUnavailable": "Not available on the web version for now."
   },
   "notificationSettings": {
     "title": "Notifications",

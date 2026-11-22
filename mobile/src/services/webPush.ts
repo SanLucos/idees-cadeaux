@@ -119,6 +119,18 @@ export const webPush = {
     return 'granted' === current().notification?.permission;
   },
 
+  /** Whether the server sends Web Push at all (a VAPID key is set). */
+  async isConfigured(): Promise<boolean> {
+    return '' !== (await serverKey());
+  },
+
+  /** Whether this browser really is subscribed: permission alone is not enough. */
+  async isSubscribed(): Promise<boolean> {
+    if (!this.isSupported() || !this.isGranted()) return false;
+
+    return null !== (await subscription(false).catch(() => null));
+  },
+
   /** The browser's own prompt, after our explanation (spec §5.11). */
   async requestPermission(): Promise<boolean> {
     const notification = current().notification;
@@ -127,9 +139,13 @@ export const webPush = {
     return 'granted' === (await notification.requestPermission());
   },
 
-  /** Subscribes this browser (or renews its subscription) and registers it. */
-  async register(onOpen: (data: Record<string, string>) => void): Promise<void> {
-    if (!this.isSupported() || !this.isGranted()) return;
+  /**
+   * Subscribes this browser (or renews its subscription) and registers it.
+   * False when it could not: no permission, no key on the server, no
+   * service worker, or the push service refused.
+   */
+  async register(onOpen: (data: Record<string, string>) => void): Promise<boolean> {
+    if (!this.isSupported() || !this.isGranted()) return false;
 
     const sw = current().serviceWorker!;
     if (openListener) sw.removeEventListener('message', openListener as EventListener);
@@ -139,10 +155,12 @@ export const webPush = {
     sw.addEventListener('message', openListener as EventListener);
 
     const sub = await subscription(true);
-    if (!sub) return;
+    if (!sub) return false;
     const { keys } = sub.toJSON();
-    if (!keys?.p256dh || !keys.auth) return;
+    if (!keys?.p256dh || !keys.auth) return false;
     await notificationsApi.registerDevice(sub.endpoint, 'web', { p256dh: keys.p256dh, auth: keys.auth });
+
+    return true;
   },
 
   /** At sign-out or when push is turned off: this browser stops receiving. */

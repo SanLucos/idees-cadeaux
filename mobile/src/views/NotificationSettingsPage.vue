@@ -7,7 +7,7 @@
         <SectionTitle>{{ t('notificationSettings.channels') }}</SectionTitle>
         <ion-list class="ic-card-list" lines="inset">
           <ion-item>
-            <ion-toggle :checked="pushOn" justify="space-between" @ion-change="togglePush($event.detail.checked)">
+            <ion-toggle :checked="pushOn" :disabled="!pushCanBeOn" justify="space-between" @ion-change="togglePush($event.detail.checked)">
               <div class="label">{{ t('consent.push') }}</div>
               <div class="hint">{{ consentHint('push') }}</div>
             </ion-toggle>
@@ -81,9 +81,12 @@ const { t, locale } = useI18n();
 const { describe } = useErrorMessage();
 const pushConsent = usePushConsent();
 const settings = ref<NotificationSettings | null>(null);
-// The consent is the account's; the permission, this device's (a browser
-// where push was accepted before Web Push existed never asked for it).
+// The consent is the account's; the subscription, this device's (a
+// browser where push was accepted before Web Push existed, or whose
+// subscription failed, receives nothing).
 const permissionHere = ref(true);
+// The web without the server's VAPID key: push cannot be turned on.
+const pushCanBeOn = ref(true);
 const pushOn = computed(() => !!settings.value?.consents.push.granted && permissionHere.value);
 const webPush = push.isWebPush();
 
@@ -91,7 +94,7 @@ const webPush = push.isWebPush();
 const visibleTypes = computed(() => NOTIFICATION_TYPES.filter((type) => !['friend_joined_via_link', 'share_link_suspended'].includes(type)));
 
 onIonViewWillEnter(async () => {
-  [settings.value, permissionHere.value] = await Promise.all([notificationsApi.settings(), push.isPermissionGranted()]);
+  [settings.value, permissionHere.value, pushCanBeOn.value] = await Promise.all([notificationsApi.settings(), push.isActiveHere(), push.canBeTurnedOn()]);
 });
 
 async function save(patch: Parameters<typeof notificationsApi.updateSettings>[0]): Promise<void> {
@@ -106,17 +109,20 @@ async function save(patch: Parameters<typeof notificationsApi.updateSettings>[0]
 async function togglePush(on: boolean): Promise<void> {
   if (on === pushOn.value) return;
   if (on) {
-    if (!(await pushConsent.enable())) {
-      await (await toastController.create({ message: t(webPush ? 'consent.deniedWeb' : 'consent.denied'), duration: 3500, color: 'danger' })).present();
+    const result = await pushConsent.enable();
+    if ('granted' !== result) {
+      const message = 'failed' === result ? t('consent.failed') : t(webPush ? 'consent.deniedWeb' : 'consent.denied');
+      await (await toastController.create({ message, duration: 4000, color: 'danger' })).present();
     }
   } else {
     await pushConsent.disable();
   }
-  [settings.value, permissionHere.value] = await Promise.all([notificationsApi.settings(), push.isPermissionGranted()]);
+  [settings.value, permissionHere.value] = await Promise.all([notificationsApi.settings(), push.isActiveHere()]);
 }
 
 function consentHint(channel: 'push' | 'email'): string {
   const consent = settings.value?.consents[channel];
+  if ('push' === channel && !pushCanBeOn.value) return t('consent.pushUnavailable');
   if ('push' === channel && webPush && !pushOn.value) return t('consent.pushHintWeb');
   if (!consent?.granted || !consent.consentedAt || ('push' === channel && !pushOn.value)) return t(`consent.${channel}Hint`);
 
