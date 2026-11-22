@@ -55,6 +55,8 @@ ssh -p 1138 deploy@frigologie.fr 'cd ~/ideescadeaux && git fetch --tags --force 
 
 Pour réutiliser des images déjà publiées par la CI, ajouter `IMAGE_REPO=ghcr.io/<propriétaire>/ideescadeaux IMAGE_TAG=<tag>` devant `./deploy-prod.sh` (images publiques : aucune connexion au registre nécessaire ; sinon `docker login ghcr.io` d'abord).
 
+Une fois les conteneurs démarrés, `deploy-prod.sh` écrit `IMAGE_REPO` / `IMAGE_TAG` dans `.env.prod` (il les retire après un build local) : les commandes à la main (`$P up -d`, `$P run --rm php …`) visent ainsi les images en service, et non une ancienne image `ideescadeaux-*:latest` restée sur le serveur.
+
 Les migrations passent **avant** le redémarrage : le nouveau code ne tourne jamais sur un schéma ancien.
 
 ## Commandes sur le serveur

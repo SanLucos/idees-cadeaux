@@ -116,6 +116,19 @@ compose run --rm -T --no-deps php php bin/console doctrine:migrations:migrate --
 blue "→ Démarrage des conteneurs"
 compose up -d --remove-orphans
 
+# The images now running, kept in .env.prod: a later `$P up -d` or
+# `$P run` by hand reads them there, instead of falling back to the old
+# local ideescadeaux-*:latest (silently older code) or building here.
+# A local build (no IMAGE_TAG) removes them: :latest is the right one.
+env_prod=$(mktemp)
+grep -v -E '^IMAGE_(REPO|TAG)=' .env.prod > "$env_prod" || true
+if [ -n "$IMAGE_TAG" ]; then
+  printf 'IMAGE_REPO=%s\nIMAGE_TAG=%s\n' "$IMAGE_REPO" "$IMAGE_TAG" >> "$env_prod"
+fi
+# Rewritten in place: the file keeps its owner and rights.
+cat "$env_prod" > .env.prod
+rm -f "$env_prod"
+
 blue "→ Vérification"
 for _ in $(seq 1 30); do
   if compose exec -T nginx wget -qO- http://127.0.0.1/api/health 2> /dev/null; then
