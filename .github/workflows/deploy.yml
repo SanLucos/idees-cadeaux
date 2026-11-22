@@ -9,6 +9,9 @@
 # Repository secrets (Settings → Secrets and variables → Actions):
 #   DEPLOY_SSH_KEY          private key allowed for deploy@frigologie.fr
 #   DEPLOY_SSH_KNOWN_HOSTS  output of: ssh-keyscan -p 1138 frigologie.fr
+#   VAPID_PUBLIC_KEY        Web Push key pair (spec §11 décision 70), made once
+#   VAPID_PRIVATE_KEY       with bin/console app:web-push:generate-keys; never
+#                           change it after (every browser would resubscribe)
 name: Deploy
 
 on:
@@ -48,6 +51,29 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           printf 'Host prod\n  HostName frigologie.fr\n  Port 1138\n  User deploy\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n  ServerAliveInterval 15\n  ServerAliveCountMax 8\n' > ~/.ssh/config
+
+      # The secrets kept by the CI join the server's .env.prod, as Frigologie
+      # does: its other values stay as they are. Sent through ssh's input,
+      # never on a command line. Without them, the server keeps its own
+      # (deploy-prod.sh warns if it has none).
+      - name: Web Push keys
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+        run: |
+          if [ -z "$VAPID_PUBLIC_KEY" ] || [ -z "$VAPID_PRIVATE_KEY" ]; then
+            echo "::warning::No VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY secret: the server's .env.prod is left as it is, and without keys there no push reaches the web app."
+            exit 0
+          fi
+          printf 'VAPID_PUBLIC_KEY=%s\nVAPID_PRIVATE_KEY=%s\n' "$VAPID_PUBLIC_KEY" "$VAPID_PRIVATE_KEY" | ssh prod 'set -e
+            cd ~/ideescadeaux
+            test -f .env.prod
+            tmp=$(mktemp)
+            trap "rm -f \"$tmp\"" EXIT
+            grep -v -E "^VAPID_(PUBLIC|PRIVATE)_KEY=" .env.prod > "$tmp" || true
+            cat >> "$tmp"
+            # Rewritten in place: the file keeps its owner and rights.
+            cat "$tmp" > .env.prod'
 
       - name: Deploy the tag
         run: |
