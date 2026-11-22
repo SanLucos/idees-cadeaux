@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notification\Push;
 
+use App\Entity\DeviceToken;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\WebPush;
 use Psr\Log\LoggerInterface;
@@ -52,6 +53,29 @@ final class WebPushSender implements PushSender
 
     public function send(array $tokens, string $title, string $body, array $data): array
     {
+        $invalid = [];
+        foreach ($this->deliver($tokens, $title, $body, $data) as $result) {
+            if ($result['expired']) {
+                $invalid[] = $result['token'];
+            } elseif (!$result['success']) {
+                $this->logger->warning('Web push send failed: {status} {reason}', ['status' => $result['status'], 'reason' => $result['reason']]);
+            }
+        }
+
+        return $invalid;
+    }
+
+    /**
+     * One result per subscription, in order: what the push service said
+     * (bin/console app:push:test shows it).
+     *
+     * @param DeviceToken[]         $tokens
+     * @param array<string, string> $data
+     *
+     * @return list<array{token: DeviceToken, success: bool, expired: bool, status: ?int, reason: string}>
+     */
+    public function deliver(array $tokens, string $title, string $body, array $data): array
+    {
         if (!$this->isConfigured()) {
             return [];
         }
@@ -69,24 +93,23 @@ final class WebPushSender implements PushSender
         }
 
         // flush() sends one by one, in the order queued.
-        $invalid = [];
+        $results = [];
         foreach ($webPush->flush() as $i => $report) {
-            if ($report->isSuccess()) {
+            if (!isset($queued[$i])) {
                 continue;
             }
-            // Spec §5.11 "nettoyage des tokens invalides": 404 / 410, the
-            // browser dropped the subscription (signed out, data cleared…).
-            if ($report->isSubscriptionExpired() && isset($queued[$i])) {
-                $invalid[] = $queued[$i];
-            } else {
-                $this->logger->warning('Web push send failed: {status} {reason}', [
-                    'status' => $report->getResponse()?->getStatusCode(),
-                    'reason' => $report->getReason(),
-                ]);
-            }
+            $results[] = [
+                'token' => $queued[$i],
+                'success' => $report->isSuccess(),
+                // Spec §5.11 "nettoyage des tokens invalides": 404 / 410, the
+                // browser dropped the subscription (signed out, data cleared…).
+                'expired' => $report->isSubscriptionExpired(),
+                'status' => $report->getResponse()?->getStatusCode(),
+                'reason' => $report->isSuccess() ? '' : $report->getReason(),
+            ];
         }
 
-        return $invalid;
+        return $results;
     }
 
     private function webPush(): WebPush

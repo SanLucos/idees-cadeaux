@@ -21,7 +21,9 @@ friend_suggestion_received: "%actor% vous suggère de devenir ami avec %friend%.
 friend_suggestion_accepted: "%actor% et %friend% sont maintenant amis grâce à vous."
 introduction_received: "L'équipe %app% vous propose de devenir ami avec %friend%."
 introduction_accepted: "Vous êtes maintenant ami avec %friend%."
+push_test: "Les notifications push fonctionnent sur cet appareil."
 title:
+  push_test: "Notification de test"
   friend_request_received: "Demande d'ami"
   friend_request_accepted: "Nouvel ami"
   friend_joined_via_link: "Nouvel ami"
