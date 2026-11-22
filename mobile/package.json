@@ -10,7 +10,8 @@
     "test:e2e": "cypress run",
     "test:unit": "vitest",
     "lint": "eslint .",
-    "postinstall": "node scripts/copy-sql-wasm.mjs"
+    "postinstall": "node scripts/copy-sql-wasm.mjs",
+    "test:e2e:push": "cypress run --browser chrome --config-file cypress.push.config.ts"
   },
   "dependencies": {
     "@aparajita/capacitor-secure-storage": "^8.0.0",

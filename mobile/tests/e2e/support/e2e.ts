@@ -23,8 +23,9 @@ beforeEach(() => {
 // the browser. CI runs showed /login blank, with no request nor error, as
 // if the app never started (04-share-link, 12-share-to-friend): the one
 // piece of state shared across specs is the prime suspect.
+// Except for the Web Push journey (cypress.push.config.ts), which needs it.
 Cypress.on('window:before:load', (win) => {
-  if ('serviceWorker' in win.navigator) {
+  if (!Cypress.env('realServiceWorker') && 'serviceWorker' in win.navigator) {
     win.navigator.serviceWorker.register = () => new Promise<ServiceWorkerRegistration>(() => undefined);
   }
 });
