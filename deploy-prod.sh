@@ -66,12 +66,35 @@ compose() {
   "${COMPOSE[@]}" -p "$PROJECT" -f docker-compose.prod.yaml --env-file .env.prod "$@"
 }
 
-blue "→ Build des images"
-# Shown in Profil (« Version 0.0.10 · abc1234 »): the image has no .git.
-APP_VERSION=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
-APP_BUILD=$(git rev-parse --short HEAD 2>/dev/null || true)
-export APP_VERSION APP_BUILD
-compose build
+IMAGE_REPO=${IMAGE_REPO:-}
+IMAGE_TAG=${IMAGE_TAG:-}
+export IMAGE_REPO IMAGE_TAG
+if [ -n "$IMAGE_TAG" ]; then
+  # Built by the Deploy workflow (.github/workflows/deploy.yml): the server
+  # only downloads them, a build here takes too much memory.
+  if [ -z "$IMAGE_REPO" ]; then
+    red "IMAGE_TAG sans IMAGE_REPO (ex. ghcr.io/<propriétaire>/ideescadeaux)."
+    exit 1
+  fi
+  blue "→ Téléchargement des images $IMAGE_REPO-{php,nginx}:$IMAGE_TAG"
+  # REGISTRY_USER set: the registry token comes on stdin, kept in a
+  # throwaway Docker config, gone at the end of the script.
+  if [ -n "${REGISTRY_USER:-}" ]; then
+    REGISTRY_CONFIG=$(mktemp -d)
+    trap 'rm -rf "$REGISTRY_CONFIG"' EXIT
+    DOCKER_CONFIG=$REGISTRY_CONFIG docker login "${IMAGE_REPO%%/*}" -u "$REGISTRY_USER" --password-stdin > /dev/null
+  fi
+  for image in php nginx; do
+    DOCKER_CONFIG=${REGISTRY_CONFIG:-${DOCKER_CONFIG:-$HOME/.docker}} docker pull -q "$IMAGE_REPO-$image:$IMAGE_TAG"
+  done
+else
+  blue "→ Build des images"
+  # Shown in Profil (« Version 0.0.10 · abc1234 »): the image has no .git.
+  APP_VERSION=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+  APP_BUILD=$(git rev-parse --short HEAD 2>/dev/null || true)
+  export APP_VERSION APP_BUILD
+  compose build
+fi
 
 blue "→ Base de données"
 compose up -d postgres
@@ -95,7 +118,18 @@ compose up -d --remove-orphans
 
 blue "→ Vérification"
 for _ in $(seq 1 30); do
-  if compose exec -T nginx wget -qO- http://127.0.0.1/api/health 2> /dev/null; then echo; exit 0; fi
+  if compose exec -T nginx wget -qO- http://127.0.0.1/api/health 2> /dev/null; then
+    echo
+    # Older versions downloaded from the registry: a redeploy of an old tag
+    # downloads it again.
+    if [ -n "$IMAGE_TAG" ]; then
+      for image in php nginx; do
+        docker images "$IMAGE_REPO-$image" --format '{{.Repository}}:{{.Tag}}' \
+          | grep -vxF "$IMAGE_REPO-$image:$IMAGE_TAG" | xargs -r docker rmi > /dev/null || true
+      done
+    fi
+    exit 0
+  fi
   sleep 1
 done
 red "L'API ne répond pas : ${COMPOSE[*]} -p $PROJECT -f docker-compose.prod.yaml logs php nginx"

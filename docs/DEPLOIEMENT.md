@@ -10,7 +10,7 @@ Les deux stacks sont indépendantes. Leur seul point commun est le réseau Docke
 - `docker/php/Dockerfile.prod` : images `php` (code + dépendances, `APP_ENV=prod`) et `nginx` (dossier `public/`).
 - `docker/backup/backup.sh` : sauvegarde quotidienne de la base (service `backup`).
 - `.env.prod` : secrets et réglages, sur le serveur uniquement (modèle : `.env.prod.example`).
-- `deploy-prod.sh` : contrôle de `.env.prod`, build, clés JWT, migrations, démarrage, contrôle de `/api/health`.
+- `deploy-prod.sh` : contrôle de `.env.prod`, téléchargement des images construites par la CI (ou build sur place, à la main), clés JWT, migrations, démarrage, contrôle de `/api/health`.
 
 ## Stockage des images
 
@@ -43,15 +43,17 @@ git tag v1.2.0
 git push origin v1.2.0
 ```
 
-GitHub Actions relance toute la CI, vérifie que le tag est sur `main`, puis sur le serveur : récupère le tag, le place (`git checkout --detach`) et lance `./deploy-prod.sh`. Un seul déploiement à la fois ; le suivi est dans l'onglet Actions du dépôt (environnement `production`).
+GitHub Actions relance toute la CI et, en parallèle, construit les images `php` et `nginx` et les publie sur le registre GitHub (`ghcr.io/<propriétaire>/ideescadeaux-php:<tag>` et `…-nginx:<tag>`, gratuit pour un dépôt public). Il vérifie ensuite que le tag est sur `main`, puis sur le serveur : récupère le tag, le place (`git checkout --detach`) et lance `./deploy-prod.sh`, qui télécharge ces images au lieu de les construire. Le serveur ne fait plus de build : il y prenait toute la mémoire (déploiement de `v0.0.19` bloqué, serveur injoignable). Le jeton du job (lecture des paquets, valable le temps du job) sert à télécharger les images ; il passe par l'entrée de `ssh` et n'est gardé que dans une configuration Docker temporaire, supprimée à la fin du script. Après un déploiement réussi, les images des versions précédentes sont supprimées du serveur ; redéployer un ancien tag (relancer son workflow) les télécharge de nouveau. Un seul déploiement à la fois ; le suivi est dans l'onglet Actions du dépôt (environnement `production`).
 
 Mise en place, une seule fois : une clé SSH dédiée autorisée pour `deploy` sur le serveur (`~/.ssh/authorized_keys`), et deux secrets du dépôt GitHub (Settings → Secrets and variables → Actions) : `DEPLOY_SSH_KEY` (la clé privée) et `DEPLOY_SSH_KNOWN_HOSTS` (sortie de `ssh-keyscan -p 1138 frigologie.fr`).
 
-**À la main**, si besoin :
+**À la main**, si besoin (sans `IMAGE_TAG`, `deploy-prod.sh` construit les images sur le serveur, ce qui est long et gourmand en mémoire) :
 
 ```
 ssh -p 1138 deploy@frigologie.fr 'cd ~/ideescadeaux && git fetch --tags --force origin && git checkout --force --detach origin/main && ./deploy-prod.sh'
 ```
+
+Pour réutiliser des images déjà publiées par la CI, ajouter `IMAGE_REPO=ghcr.io/<propriétaire>/ideescadeaux IMAGE_TAG=<tag>` devant `./deploy-prod.sh` (images publiques : aucune connexion au registre nécessaire ; sinon `docker login ghcr.io` d'abord).
 
 Les migrations passent **avant** le redémarrage : le nouveau code ne tourne jamais sur un schéma ancien.
 
@@ -86,7 +88,7 @@ $P start php worker
 
 ## Appli web
 
-Rien à faire en plus : `./deploy-prod.sh` la construit et la publie avec le reste. Le bas de l'onglet Profil affiche la version, reprise automatiquement du tag déployé (`deploy-prod.sh` la passe au build, sans le « v »), et le commit construit : « Version 0.0.3 · abc1234 ». Rien à modifier à la main ; la version de `mobile/package.json` ne sert qu'en dernier recours, quand aucun tag n'est trouvé.
+Rien à faire en plus : elle est construite dans l'image `nginx` avec le reste. Le bas de l'onglet Profil affiche la version, reprise automatiquement du tag déployé (le workflow, ou `deploy-prod.sh` pour un build à la main, la passe au build, sans le « v »), et le commit construit : « Version 0.0.3 · abc1234 ». Rien à modifier à la main ; la version de `mobile/package.json` ne sert qu'en dernier recours, quand aucun tag n'est trouvé.
 
 Après un déploiement, vérifier que l'appli est installable depuis Chrome (icône « Installer » dans la barre d'adresse, ou menu → « Caster, enregistrer et partager » → « Installer la page en tant qu'appli ») : `https://<APP_HOST>/site.webmanifest` doit renvoyer du JSON (et non la page HTML de l'appli), le titre de l'onglet doit être « Idées Cadeaux ». La connexion y est gardée dans un cookie `httpOnly` (jamais lisible par le JavaScript), l'appli ne garde aucune copie locale et fonctionne en ligne uniquement.
 
