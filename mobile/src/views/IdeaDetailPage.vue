@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page :class="{ 'ic-wide': hasSecretZone }">
     <ion-content>
       <TopBar :default-href="backHref">
         <template v-if="idea && hasActions" #end>
@@ -11,7 +11,9 @@
 
       <EmptyState v-if="notFound" :icon="helpCircleOutline">{{ t('ideas.notFound') }}</EmptyState>
 
-      <article v-if="idea">
+      <!-- Computer layout (spec §11 décision 72): the public half and the secret zone side by side. -->
+      <article v-if="idea" :class="{ 'idea--split': hasSecretZone }">
+        <div class="idea__public">
         <div class="hero" :style="heroStyle">
           <img v-if="idea.imageUrl" :src="idea.imageUrl" alt="" />
           <ion-icon v-else :icon="imageOutline" aria-hidden="true" />
@@ -58,6 +60,7 @@
           <ion-button v-if="idea.canUnarchive" class="ic-button-surface" expand="block" @click="actions.unarchive(idea)">
             {{ t('ideas.actions.unarchive') }}
           </ion-button>
+        </div>
         </div>
 
         <IdeaSecretZone v-if="hasSecretZone" :idea="idea" :owner-name="ownerName" @update="idea = $event" />
@@ -171,6 +174,18 @@ useLocalRefresh(load);
 </script>
 
 <style scoped>
+:root[data-desktop] .idea--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+  padding-bottom: 32px;
+}
+
+:root[data-desktop] .idea--split .hero {
+  aspect-ratio: 4 / 3;
+}
+
 .hero {
   display: flex;
   align-items: center;
