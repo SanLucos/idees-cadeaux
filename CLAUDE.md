@@ -29,7 +29,7 @@ Application web (point d'entrée principal, spec §11 décision 56) et mobile (i
 
 ## Méthode de travail
 
-- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8, 9 (appli web, spec §11 décision 56), puis 10 (icônes et vérification native), 11 (unités des tailles, tailles des enfants), 12 (« Partager avec mes amis », deuxième gestionnaire) — décisions 57 à 61, puis 13 (« Mes cadeaux pour mes amis », décision 62), puis 14 (mise en relation entre amis, décision 65), puis 15 (idées communes à plusieurs destinataires, décision 69), puis 16 (back-office superadmin, décision 71).
+- Avance **lot par lot**, dans l'ordre de la section 12 : 0, 1, 2, 3, 4, 4 bis, 5, 6, 7, 7 bis, 8, 9 (appli web, spec §11 décision 56), puis 10 (icônes et vérification native), 11 (unités des tailles, tailles des enfants), 12 (« Partager avec mes amis », deuxième gestionnaire) — décisions 57 à 61, puis 13 (« Mes cadeaux pour mes amis », décision 62), puis 14 (mise en relation entre amis, décision 65), puis 15 (idées communes à plusieurs destinataires, décision 69), puis 16 (back-office superadmin, décision 71), puis 17 (interface ordinateur, décision 72).
 - Ne passe pas au lot suivant si la CI ou la suite de visibilité est rouge.
 - Avant chaque lot : relis les sections concernées, propose un plan court, puis implémente.
 - Écris les tests avec le code (PHPUnit et client de test API Platform côté back, Vitest côté front).
@@ -89,7 +89,7 @@ Lien de partage (lot 7 bis, spec §5.16) : `SHARE_LINK_BASE_URL`, `APP_ID`, `APP
 
 RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en dev, S3 hébergé en prod, décision 52), servies par le back via des URL signées (`MEDIA_BASE_URL`, route `/media/…`). Export (ZIP construit par le `worker`, lien 48 h par email) et suppression de compte (14 jours de grâce, effacement par la tâche quotidienne du `worker`). Politique de confidentialité (brouillon) sur `/privacy`. Préparation des stores : `docs/stores/`. Les liens des emails utilisent `DEFAULT_URI`.
 
-**Appli web** (lot 9, spec §11 décision 56) : la même appli Ionic, servie à la racine du domaine en production (image `nginx`, `docker/nginx/prod.vhost.conf`). Sur le web : session dans un cookie `httpOnly` (`X-Client: web`), en ligne uniquement (`src/offline/onlineOnly.ts`), fonctions propres au téléphone masquées (`src/utils/platform.ts`), mise en page mobile centrée sur grand écran.
+**Appli web** (lot 9, spec §11 décision 56) : la même appli Ionic, servie à la racine du domaine en production (image `nginx`, `docker/nginx/prod.vhost.conf`). Sur le web : session dans un cookie `httpOnly` (`X-Client: web`), en ligne uniquement (`src/offline/onlineOnly.ts`), fonctions propres au téléphone masquées (`src/utils/platform.ts`), mise en page mobile centrée de 640 à 1023 px.
 
 **Tailles et famille** (lots 11 et 12, spec §11 décisions 57 à 60) : unité optionnelle des tailles (`App\Entity\Enum\ProfileSizeUnit`, `src/utils/sizeUnits.ts`), tailles et préférences d'un enfant sur sa fiche. « Partager avec mes amis » : amitiés d'origine `family` tenues à jour par `App\Service\FamilyFriendships` (déclenché par `App\Doctrine\FamilyFriendshipsListener`), jamais écrites à la main. Deuxième gestionnaire : `User.coManagedBy`, invitations `ManagerInvitation` ; utiliser `isManagedBy()` / `getManagers()` / `UserRepository::findChildrenOf()`, jamais `managedBy` seul.
 
@@ -100,6 +100,8 @@ RGPD et médias (lot 8, spec §5.13) : images privées dans le bucket (Garage en
 **Connexion sans mot de passe** (issue #8, spec §11 décision 68) : `POST /api/auth/email-sign-in` puis `/verify` (`App\Security\EmailSignIn`, entité `EmailSignInCode`), écran `/login/email` (`EmailSignInPage.vue`). Le lien de l'email pointe vers `WEB_APP_URL`. Session longue : `RefreshToken.longSession`, prolongée à chaque rotation par `LongSessionRotationListener`.
 
 **Back-office** (lot 16, spec §11 décision 71) : rôle `ROLE_SUPERADMIN` donné uniquement par `docker compose run --rm php bin/console app:admin:grant <email>` (`--revoke` pour le retirer) ; écran `/admin` (`AdminPage.vue`, `AdminUserCard.vue`), API `/api/admin/*` en 404 pour les autres (`App\Security\AdminGuard`). Mise en relation par l'équipe : entité `Introduction` (`App\Service\Introductions`, `AdminFriendships`) ; « Ignorer » silencieux, la proposition reste chez l'autre jusqu'à expiration. Amitié forcée : origine `admin` stockée, exposée `request` (`FriendshipOrigin::exposed()`). Suppression par l'admin : `Friendship::removeByAdmin()` (pas de `removedBy`).
+
+**Interface ordinateur** (lot 17, spec §11 décision 72) : web seulement, à partir de 1024 px (`src/composables/useDesktop.ts` pose `data-desktop` sur `<html>`). Barre latérale `DesktopSidebar.vue` dans un `ion-split-pane` (`App.vue`), barre d'onglets masquée en CSS (elle garde le suivi de l'onglet actif). Largeur du contenu par `--ic-page-width` (`src/theme/variables.css`) : 640 px par défaut, 1120 px avec la classe `ic-wide` sur `ion-page`. Listes d'idées : `IdeaTable.vue`, filtres `FilterChipGroup.vue` / `useOccasionFilter`, logique pure dans `src/utils/ideaTable.ts` (toutes les pages via `ideasApi.listAll`). Test : `tests/e2e/specs/18-desktop.cy.ts`.
 
 **Production** : `docs/DEPLOIEMENT.md` (`./deploy-prod.sh`, `.env.prod`, sauvegardes, builds web et natifs).
 
