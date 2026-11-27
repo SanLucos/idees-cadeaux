@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="ic-wide">
     <ion-content>
       <ion-refresher slot="fixed" @ion-refresh="pullToRefresh">
         <ion-refresher-content />
@@ -12,22 +12,30 @@
         {{ acting ? acting.displayName : t('myList.title') }}
         <template #end>
           <SyncBadge />
-          <ion-button class="ic-round-button" :aria-label="t('myList.search')" @click="toggleSearch">
+          <ion-searchbar
+            v-if="desktop"
+            v-model="search"
+            class="search search--desktop"
+            :aria-label="t('myList.search')"
+            :placeholder="t('myList.search')"
+            :debounce="200"
+          />
+          <ion-button v-else class="ic-round-button" :aria-label="t('myList.search')" @click="toggleSearch">
             <ion-icon aria-hidden="true" slot="icon-only" :icon="searchOutline" />
           </ion-button>
         </template>
       </ScreenHeader>
 
       <ion-searchbar
-        v-if="searchOpen"
+        v-if="searchOpen && !desktop"
         v-model="search"
         class="search"
         :placeholder="t('myList.searchPlaceholder')"
         :debounce="300"
-        @ion-input="reload"
+        @ion-input="onSearchInput"
       />
 
-      <ion-segment v-model="tab" class="ic-segment" mode="ios" scrollable @ion-change="reload">
+      <ion-segment v-if="!desktop" v-model="tab" class="ic-segment" mode="ios" scrollable @ion-change="reload">
         <ion-segment-button value="published">
           <ion-label>{{ t('myList.tabs.published', { count: counts.published }) }}</ion-label>
         </ion-segment-button>
@@ -53,6 +61,42 @@
       <!-- Only my own reservations and contributions on friends' lists: nothing about this list (spec §4). -->
       <MyGiftsLink v-if="!acting" class="my-gifts" />
 
+      <!-- Computer layout (spec §11 décision 72): every idea in one table, filtered on the device. -->
+      <template v-if="desktop">
+        <div class="ic-card filters">
+          <FilterChipGroup multiple :label="t('desktop.filters.state')" :group-label="t('desktop.filters.byState')" :options="stateOptions" @toggle="toggleState" />
+          <FilterChipGroup :label="t('desktop.filters.occasion')" :group-label="t('ideas.filterByOccasion')" :options="occasionFilter.options.value" @toggle="occasionFilter.pick" />
+        </div>
+
+        <div class="table-bar">
+          <span class="ic-muted">
+            {{ t('ideas.count', { count: rows.length }, rows.length) }}<template v-if="hiddenArchived">
+              · {{ t('desktop.hiddenArchived', { count: hiddenArchived }, hiddenArchived) }}</template>
+          </span>
+          <router-link v-if="states.has('draft') && !acting" to="/tabs/list/private" class="all-drafts">
+            <ion-icon :icon="lockClosedOutline" aria-hidden="true" />{{ t('myList.allDrafts') }}
+          </router-link>
+        </div>
+
+        <IdeaTable
+          v-if="rows.length"
+          v-model:sort="tableSort"
+          :ideas="rows"
+          :columns="tableColumns"
+          :owner-name="acting?.displayName ?? null"
+          :actions="(idea) => idea.canEdit || idea.canUnarchive"
+          @actions="actions.openSheet"
+          @publish="actions.publish"
+        />
+        <EmptyState v-else-if="loaded" :icon="giftOutline">
+          {{ t(allIdeas.length ? 'myList.empty.filtered' : 'myList.empty.published') }}
+          <template v-if="!allIdeas.length" #action>
+            <ion-button router-link="/ideas/new">{{ t('ideas.new') }}</ion-button>
+          </template>
+        </EmptyState>
+      </template>
+
+      <template v-else>
       <OccasionChips v-model="occasion" class="chips" @update:model-value="reload" />
 
       <div class="list-bar">
@@ -100,6 +144,7 @@
       <ion-infinite-scroll :disabled="ideas.length >= totalItems" @ion-infinite="loadMore">
         <ion-infinite-scroll-content />
       </ion-infinite-scroll>
+      </template>
     </ion-content>
   </ion-page>
 </template>
@@ -141,11 +186,32 @@ import IdeaCard from '../components/IdeaCard.vue';
 import OccasionChips from '../components/OccasionChips.vue';
 import ScreenHeader from '../components/ScreenHeader.vue';
 import SyncBadge from '../components/SyncBadge.vue';
+import FilterChipGroup, { type FilterOption } from '../components/FilterChipGroup.vue';
+import IdeaTable, { type IdeaColumn } from '../components/IdeaTable.vue';
+import { useDesktop } from '../composables/useDesktop';
+import { useIdeaLabels } from '../composables/useIdeaLabels';
+import { useOccasionFilter } from '../composables/useOccasionFilter';
+import {
+  countBy,
+  DEFAULT_SORT,
+  filterIdeas,
+  ideaState,
+  readStoredSet,
+  sortIdeas,
+  storeSet,
+  toggled,
+  uniqueIdeas,
+  type IdeaState,
+  type TableSort,
+} from '../utils/ideaTable';
 import type { Idea, IdeaListQuery, IdeaSort } from '../types/idea';
 
 const BANNER_KEY = 'ic.surpriseBannerDismissed';
+/** The « État » filter of the computer layout, kept between visits. */
+const STATES_KEY = 'ic.myList.states';
+const ALL_STATES: readonly IdeaState[] = ['published', 'draft', 'archived'];
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const activeProfile = useActiveProfileStore();
@@ -167,6 +233,63 @@ const counts = ref({ published: 0, drafts: 0, archived: 0 });
 const showSurpriseBanner = ref(readBannerVisible());
 
 const filtered = computed(() => null !== occasion.value || '' !== search.value.trim());
+
+// ---- Computer layout (spec §11 décision 72) ----
+const desktop = useDesktop();
+const labels = useIdeaLabels();
+/** Archived ideas pile up over the years: hidden until asked for. */
+const states = ref<Set<IdeaState>>(readStoredSet(STATES_KEY, ALL_STATES, ['published', 'draft']));
+const tableSort = ref<TableSort>(DEFAULT_SORT);
+const allIdeas = ref<Idea[]>([]);
+
+const stateCounts = computed(() => countBy(allIdeas.value, ideaState));
+const byState = computed(() => filterIdeas(allIdeas.value, { states: states.value, search: search.value }));
+const rows = computed(() =>
+  sortIdeas(
+    filterIdeas(byState.value, { occasion: occasion.value }),
+    tableSort.value,
+    { occasion: labels.occasionLabel, source: (idea) => labels.sourceLabel(idea, acting.value?.displayName ?? null) },
+    locale.value,
+  ),
+);
+const hiddenArchived = computed(() => (states.value.has('archived') ? 0 : (stateCounts.value.archived ?? 0)));
+const tableColumns = computed<IdeaColumn[]>(() =>
+  // Managing a child: friends' suggestions and what they do show too, in plum (spec §5.15).
+  acting.value ? ['idea', 'state', 'source', 'occasion', 'price', 'status', 'interactions', 'added'] : ['idea', 'state', 'occasion', 'price', 'added'],
+);
+
+const stateOptions = computed<FilterOption[]>(() =>
+  (['published', 'draft', 'archived'] as const).map((state) => ({
+    value: state,
+    label: t(`desktop.states.${'draft' === state ? 'drafts' : state}`, { count: stateCounts.value[state] ?? 0 }),
+    pressed: states.value.has(state),
+  })),
+);
+
+const occasionFilter = useOccasionFilter(() => byState.value, occasion);
+
+function toggleState(value: string): void {
+  states.value = toggled(states.value, value as IdeaState);
+  storeSet(STATES_KEY, states.value);
+}
+
+
+async function loadTable(): Promise<void> {
+  const kind = acting.value ? 'personal' : undefined;
+  const slices = await Promise.all([
+    ideasApi.listAll({ status: 'active', visibility: 'published', kind }),
+    ideasApi.listAll({ status: 'active', visibility: 'private', kind }),
+    ideasApi.listAll({ status: 'archived', kind }),
+    acting.value ? ideasApi.listAll({ kind: 'suggestion', visibility: 'published' }) : Promise.resolve([]),
+  ]);
+  allIdeas.value = uniqueIdeas(slices.flat());
+  loaded.value = true;
+}
+
+function onSearchInput(): void {
+  // On a computer the table filters itself.
+  if (!desktop.value) void reload();
+}
 
 // Any change can move the idea to another segment or change the counts: reload.
 const actions = useIdeaActions(() => reload());
@@ -193,6 +316,11 @@ async function fetchPage(): Promise<void> {
 }
 
 async function reload(): Promise<void> {
+  if (desktop.value) {
+    await loadTable();
+
+    return;
+  }
   page.value = 1;
   await Promise.all([fetchPage(), fetchSuggestions()]);
 }
@@ -208,6 +336,7 @@ async function fetchSuggestions(): Promise<void> {
 }
 
 watch(() => activeProfile.activeId, () => reload());
+watch(desktop, () => reload());
 
 async function loadMore(event: InfiniteScrollCustomEvent): Promise<void> {
   page.value += 1;
@@ -226,6 +355,7 @@ function showRequestedTab(): void {
   const requested = route.query.tab;
   if ('published' !== requested && 'drafts' !== requested) return;
   tab.value = requested;
+  states.value = new Set([...states.value, 'drafts' === requested ? 'draft' : 'published']);
   occasion.value = null;
   search.value = '';
   searchOpen.value = false;
@@ -280,6 +410,37 @@ function dismissBanner(): void {
 </script>
 
 <style scoped>
+.search--desktop {
+  width: 300px;
+  padding: 0;
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px 16px;
+}
+
+.table-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 10px;
+  font-size: 0.875rem;
+}
+
+.all-drafts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-weight: 600;
+}
+
 .search {
   padding: 0 0 8px;
   --background: var(--ic-surface);
