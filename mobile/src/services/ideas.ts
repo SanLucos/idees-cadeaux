@@ -6,6 +6,10 @@ import { useActiveProfileStore } from '../stores/activeProfile';
 import { fileToDataUrl } from '../utils/fileToDataUrl';
 import type { Idea, IdeaArchiveKind, IdeaInput, IdeaListQuery, IdeaPage, PrivateIdea } from '../types/idea';
 
+/** The API's largest page (IdeaListFilter::MAX_ITEMS_PER_PAGE). */
+const ALL_PAGE_SIZE = 50;
+const MAX_PAGES = 20;
+
 function selfId(): string {
   return useActiveProfileStore().activeId ?? useAuthStore().user?.id ?? '';
 }
@@ -27,6 +31,21 @@ export const ideasApi = {
     });
 
     return api.get<IdeaPage>(`/users/${ownerId}/ideas?${params}`);
+  },
+
+  /**
+   * Every page of a slice, for the tables of the computer layout
+   * (spec §11 décision 72): a list holds a few dozen ideas at most.
+   */
+  async listAll(query: IdeaListQuery, userId?: string): Promise<Idea[]> {
+    const ideas: Idea[] = [];
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const result = await this.list({ ...query, page, itemsPerPage: ALL_PAGE_SIZE }, userId);
+      ideas.push(...result.member);
+      if (!result.member.length || ideas.length >= result.totalItems) break;
+    }
+
+    return ideas;
   },
 
   async privateIdeas(): Promise<PrivateIdea[]> {
