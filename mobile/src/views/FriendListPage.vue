@@ -37,7 +37,6 @@
           </ion-button>
         </div>
         </div>
-        <IntroduceFriend :user-id="userId" :name="profile.displayName" :child="!!profile.managedBy" />
 
         <SecretBand class="band">{{ t('friendList.secretBand', { name: profile.displayName }) }}</SecretBand>
 
@@ -63,7 +62,6 @@
           <EmptyState v-else-if="loaded">
             {{ allIdeas.length ? t('myList.empty.filtered') : t('friendList.empty.personal', { name: profile.displayName }) }}
           </EmptyState>
-          <div class="bottom-space" />
         </template>
 
         <template v-else>
@@ -116,8 +114,13 @@
           <span class="ic-muted">{{ archivedCount }}</span>
           <ion-icon :icon="chevronForward" aria-hidden="true" />
         </router-link>
-        <div class="bottom-space" />
         </template>
+
+        <!-- After the ideas, which are what the page is for. -->
+        <div class="introduce-section">
+          <IntroduceFriend :user-id="userId" :name="profile.displayName" :child="!!profile.managedBy" />
+        </div>
+        <div class="bottom-space" />
       </template>
     </ion-content>
   </ion-page>
@@ -467,6 +470,19 @@ async function confirmRemove(): Promise<void> {
 
 .archives-link__label {
   flex-grow: 1;
+}
+
+.introduce-section {
+  margin-top: 24px;
+}
+
+.introduce-section:empty {
+  display: none;
+}
+
+/* Computer: the button and its list keep a form's width (spec §11 décision 72). */
+:root[data-desktop] .introduce-section {
+  max-width: 640px;
 }
 
 .bottom-space {

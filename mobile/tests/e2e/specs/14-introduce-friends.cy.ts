@@ -15,6 +15,12 @@ describe('Introduce friends', () => {
           // From Bruno's page, Luc picks Anna among his friends.
           cy.loginUi(luc);
           cy.visit(`/tabs/friends/${bruno.id}`);
+          // Below the ideas: they are what the page is for.
+          cy.get('[data-cy=introduce]').should(($button) => {
+            const ideas = Cypress.$('ion-content h2').filter((_, h) => /Ses idées|idée/.test(h.textContent ?? '')).first();
+            expect(ideas.length, 'ideas title').to.equal(1);
+            expect(ideas[0].compareDocumentPosition($button[0]) & Node.DOCUMENT_POSITION_FOLLOWING, 'after the ideas').to.be.greaterThan(0);
+          });
           cy.tap('Présenter à des amis…', 'ion-button');
           cy.get('ion-alert').should('be.visible').contains('button', 'Anna').click();
           cy.get('ion-alert').contains('button', 'Suggérer').click();
