@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="ic-wide">
     <ion-content>
       <TopBar default-href="/tabs/profile">{{ t('admin.title') }}</TopBar>
 

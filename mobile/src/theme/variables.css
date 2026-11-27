@@ -335,6 +335,66 @@ ion-chip.ic-chip.ic-chip-selected {
 }
 
 /* ------------------------------------------------------------------
+ * Ordinateur (spec § 11 décision 72) : l'appli web à partir de 1024 px
+ * (src/composables/useDesktop.ts pose data-desktop). Pleine largeur,
+ * navigation latérale (DesktopSidebar), contenu centré : 640 px pour les
+ * formulaires et réglages, 1120 px pour les listes (classe ic-wide sur
+ * ion-page). Les modales gardent leur largeur.
+ * ------------------------------------------------------------------ */
+:root[data-desktop] {
+  --ic-page-width: 640px;
+  --ic-page-gutter: 48px;
+}
+
+:root[data-desktop] body {
+  background: var(--ion-background-color);
+}
+
+:root[data-desktop] ion-app {
+  max-width: none;
+  border-inline: 0;
+}
+
+:root[data-desktop] ion-split-pane {
+  --side-width: 256px;
+  --side-min-width: 256px;
+  --side-max-width: 256px;
+  --border: 1px solid var(--ic-border);
+}
+
+:root[data-desktop] .ion-page.ic-wide {
+  --ic-page-width: 1120px;
+}
+
+:root[data-desktop] ion-router-outlet ion-content {
+  --padding-start: max(var(--ic-page-gutter), calc((100% - var(--ic-page-width)) / 2));
+  --padding-end: max(var(--ic-page-gutter), calc((100% - var(--ic-page-width)) / 2));
+}
+
+:root[data-desktop] ion-router-outlet ion-header ion-toolbar,
+:root[data-desktop] ion-router-outlet ion-footer ion-toolbar {
+  padding-inline: max(var(--ic-page-gutter), calc((100% - var(--ic-page-width)) / 2));
+}
+
+/* The menu's own content keeps its padding. */
+:root[data-desktop] ion-menu ion-content {
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+/* Room enough: chip rows wrap instead of scrolling sideways. */
+:root[data-desktop] .ic-chip-row {
+  flex-wrap: wrap;
+  overflow: visible;
+  margin: 0;
+  padding: 2px 0;
+}
+
+:root[data-desktop] .ic-screen-title {
+  font-size: 2.5rem;
+}
+
+/* ------------------------------------------------------------------
  * Fond teinté selon le profil actif (spec § 11 décision 64) : crème pour
  * mon compte, une teinte par enfant (src/utils/profileTint.ts). Teintes
  * claires, sans prune (réservée au secret), qui gardent le texte et le

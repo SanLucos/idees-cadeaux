@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="ic-wide">
     <ion-content>
       <ion-refresher slot="fixed" @ion-refresh="refresh">
         <ion-refresher-content />

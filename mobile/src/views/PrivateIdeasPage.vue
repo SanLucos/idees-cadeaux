@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="ic-wide">
     <ion-content>
       <TopBar default-href="/tabs/list">{{ t('privateIdeas.title') }}</TopBar>
       <p class="ic-muted intro">{{ t('privateIdeas.intro') }}</p>

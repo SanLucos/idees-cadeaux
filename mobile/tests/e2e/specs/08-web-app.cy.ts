@@ -1,7 +1,8 @@
 /**
  * The web app (spec §11 décision 56): the session survives a reload through
  * its httpOnly cookie, no token is ever readable by the page, signing out
- * ends it, and on a computer the phone layout sits in a centred column.
+ * ends it, and on a medium screen the phone layout sits in a centred column
+ * (from 1024 px, the computer layout: 18-desktop.cy.ts).
  */
 describe('Web app', () => {
   it('keeps the session in an httpOnly cookie only', () => {
@@ -34,14 +35,14 @@ describe('Web app', () => {
     });
   });
 
-  it('centres the phone layout on a computer screen', () => {
-    cy.viewport(1280, 800);
+  it('centres the phone layout on a medium screen', () => {
+    cy.viewport(1000, 800);
     cy.visit('/login');
     cy.see('Se connecter');
     cy.get('ion-app').should(($app) => {
       const box = $app[0].getBoundingClientRect();
       expect(box.width).to.equal(480);
-      expect(Math.round(box.left)).to.equal(400);
+      expect(Math.round(box.left)).to.equal(260);
     });
     cy.screenshot('web/desktop-login', { capture: 'viewport', overwrite: true });
   });
