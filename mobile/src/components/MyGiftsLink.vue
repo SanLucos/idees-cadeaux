@@ -1,5 +1,5 @@
 <template>
-  <router-link to="/gifts" class="ic-card my-gifts-link">
+  <router-link v-if="!desktop" to="/gifts" class="ic-card my-gifts-link">
     <ion-icon :icon="giftOutline" color="secret" aria-hidden="true" />
     <span class="my-gifts-link__label">{{ t('myGifts.title') }}</span>
     <span v-if="count" class="ic-muted" :aria-label="t('myGifts.toOffer', { count }, count)">{{ count }}</span>
@@ -15,10 +15,16 @@ import { chevronForward, giftOutline } from 'ionicons/icons';
 import { useLocalDb } from '../offline/db';
 import { repo } from '../offline/repo';
 import { giftsToOffer } from '../utils/myGifts';
+import { useDesktop } from '../composables/useDesktop';
 
-/** Entry to « Mes cadeaux pour mes amis » (Amis and Ma liste tabs), with the number still to offer. */
+/**
+ * Entry to « Mes cadeaux pour mes amis » (Amis and Ma liste tabs), with the
+ * number still to offer. On a computer it sits in the side navigation
+ * instead (spec §11 décision 72).
+ */
 const { t } = useI18n();
 const db = useLocalDb();
+const desktop = useDesktop();
 const count = computed(() => (db.revision, giftsToOffer(repo.myGifts())));
 </script>
 

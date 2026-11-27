@@ -131,3 +131,13 @@ ion-tab-button ion-icon {
   font-size: 26px;
 }
 </style>
+
+<style scoped>
+/* Computer layout (spec §11 décision 72): the side navigation replaces the
+   tab bar and its « + » button. The bar stays in the page, hidden: it keeps
+   track of the selected tab. */
+:root[data-desktop] ion-tab-bar,
+:root[data-desktop] .tab-add {
+  display: none;
+}
+</style>
