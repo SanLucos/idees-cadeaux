@@ -1,16 +1,16 @@
 <template>
-  <template v-if="idea.reservation">
+  <template v-if="'counters' !== only && idea.reservation">
     <StatusPill variant="success" :icon="checkmark">
       {{ idea.reservation.isMine ? t('interactions.reservedByMe') : t('interactions.reservedBy', { name: idea.reservation.user.displayName }) }}
     </StatusPill>
   </template>
-  <StatusPill v-else-if="openContribution" variant="secret" :icon="cashOutline">
+  <StatusPill v-else-if="'counters' !== only && openContribution" variant="secret" :icon="cashOutline">
     {{ contributionLabel }}
   </StatusPill>
-  <span v-if="idea.reactions?.count" class="counter" :aria-label="t('interactions.likes', { count: idea.reactions.count }, idea.reactions.count)">
+  <span v-if="'status' !== only && idea.reactions?.count" class="counter" :aria-label="t('interactions.likes', { count: idea.reactions.count }, idea.reactions.count)">
     <ion-icon :icon="idea.reactions.likedByMe ? heart : heartOutline" aria-hidden="true" />{{ idea.reactions.count }}
   </span>
-  <span v-if="idea.commentCount" class="counter" :aria-label="t('interactions.comments', { count: idea.commentCount }, idea.commentCount)">
+  <span v-if="'status' !== only && idea.commentCount" class="counter" :aria-label="t('interactions.comments', { count: idea.commentCount }, idea.commentCount)">
     <ion-icon :icon="chatbubbleOutline" aria-hidden="true" />{{ idea.commentCount }}
   </span>
 </template>
@@ -28,7 +28,11 @@ import type { Idea } from '../types/idea';
  * Status of an idea on a friend's list (ListeAmi mock-up): only built
  * from the hidden fields the API sent — absent in the owner view.
  */
-const props = defineProps<{ idea: Idea }>();
+const props = defineProps<{
+  idea: Idea;
+  /** The idea tables split them in two columns (spec §11 décision 72): Statut, Entre amis. */
+  only?: 'status' | 'counters';
+}>();
 
 const { t, locale } = useI18n();
 
