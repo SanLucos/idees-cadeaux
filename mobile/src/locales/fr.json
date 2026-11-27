@@ -1078,5 +1078,54 @@
     },
     "empty": "Aucun utilisateur.",
     "wideHint": "Plus confortable sur un grand écran."
+  },
+  "desktop": {
+    "mainNav": "Navigation principale",
+    "myGifts": "Mes cadeaux",
+    "filters": {
+      "state": "État",
+      "source": "Source",
+      "occasion": "Occasion",
+      "byState": "Filtrer par état",
+      "bySource": "Filtrer par source"
+    },
+    "states": {
+      "published": "Publiées · {count}",
+      "drafts": "Brouillons · {count}",
+      "archived": "Archivées · {count}",
+      "active": "En cours · {count}"
+    },
+    "sources": {
+      "owner": "Idées de {name} · {count}",
+      "suggestions": "Suggestions · {count}",
+      "drafts": "Mes brouillons · {count}"
+    },
+    "occasionCount": "{label} · {count}",
+    "noOccasion": "Sans occasion",
+    "hiddenArchived": "aucune archivée masquée | {count} archivée masquée | {count} archivées masquées",
+    "columns": {
+      "idea": "Idée",
+      "state": "État",
+      "source": "Source",
+      "occasion": "Occasion",
+      "price": "Prix",
+      "status": "Statut",
+      "interactions": "Entre amis",
+      "added": "Ajoutée",
+      "actions": "Actions"
+    },
+    "state": {
+      "published": "Publiée",
+      "draft": "Brouillon",
+      "archived": "Archivée"
+    },
+    "source": {
+      "owner": "Idée de {name}",
+      "myDraft": "Mon brouillon"
+    },
+    "status": {
+      "free": "Libre",
+      "archivedOn": "{kind} · {date}"
+    }
   }
 }

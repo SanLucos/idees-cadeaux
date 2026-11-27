@@ -1078,5 +1078,54 @@
     },
     "empty": "No user.",
     "wideHint": "More comfortable on a large screen."
+  },
+  "desktop": {
+    "mainNav": "Main navigation",
+    "myGifts": "My gifts",
+    "filters": {
+      "state": "Status",
+      "source": "Source",
+      "occasion": "Occasion",
+      "byState": "Filter by status",
+      "bySource": "Filter by source"
+    },
+    "states": {
+      "published": "Published · {count}",
+      "drafts": "Drafts · {count}",
+      "archived": "Archived · {count}",
+      "active": "Current · {count}"
+    },
+    "sources": {
+      "owner": "{name}'s ideas · {count}",
+      "suggestions": "Suggestions · {count}",
+      "drafts": "My drafts · {count}"
+    },
+    "occasionCount": "{label} · {count}",
+    "noOccasion": "No occasion",
+    "hiddenArchived": "no archived idea hidden | {count} archived idea hidden | {count} archived ideas hidden",
+    "columns": {
+      "idea": "Idea",
+      "state": "Status",
+      "source": "Source",
+      "occasion": "Occasion",
+      "price": "Price",
+      "status": "Gift status",
+      "interactions": "Among friends",
+      "added": "Added",
+      "actions": "Actions"
+    },
+    "state": {
+      "published": "Published",
+      "draft": "Draft",
+      "archived": "Archived"
+    },
+    "source": {
+      "owner": "{name}'s idea",
+      "myDraft": "My draft"
+    },
+    "status": {
+      "free": "Available",
+      "archivedOn": "{kind} · {date}"
+    }
   }
 }
