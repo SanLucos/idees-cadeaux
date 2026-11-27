@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="ic-wide">
     <ion-content>
       <ion-refresher slot="fixed" @ion-refresh="pullToRefresh">
         <ion-refresher-content />
@@ -14,6 +14,7 @@
       </TopBar>
 
       <template v-if="profile">
+        <div class="head">
         <div class="identity">
           <AppAvatar :id="profile.id" :name="profile.displayName" :url="profile.avatarUrl" :size="72" />
           <div>
@@ -35,10 +36,37 @@
             {{ t('friendList.suggest') }}
           </ion-button>
         </div>
+        </div>
         <IntroduceFriend :user-id="userId" :name="profile.displayName" :child="!!profile.managedBy" />
 
         <SecretBand class="band">{{ t('friendList.secretBand', { name: profile.displayName }) }}</SecretBand>
 
+        <!-- Computer layout (spec §11 décision 72): ideas, suggestions, my drafts and archives in one table. -->
+        <template v-if="desktop">
+          <div class="ic-card filters">
+            <FilterChipGroup multiple :label="t('desktop.filters.state')" :group-label="t('desktop.filters.byState')" :options="phaseOptions" @toggle="togglePhase" />
+            <FilterChipGroup multiple :label="t('desktop.filters.source')" :group-label="t('desktop.filters.bySource')" :options="sourceOptions" @toggle="toggleSource" />
+            <FilterChipGroup :label="t('desktop.filters.occasion')" :group-label="t('ideas.filterByOccasion')" :options="occasionFilter.options.value" @toggle="occasionFilter.pick" />
+          </div>
+
+          <SectionTitle>{{ t('ideas.count', { count: rows.length }, rows.length) }}</SectionTitle>
+          <IdeaTable
+            v-if="rows.length"
+            v-model:sort="tableSort"
+            :ideas="rows"
+            :columns="['idea', 'source', 'occasion', 'price', 'status', 'interactions']"
+            :owner-name="profile.displayName"
+            :actions="(idea) => idea.canEdit || idea.canUnarchive || !!idea.canMarkGifted"
+            @actions="actions.openSheet"
+            @publish="actions.publish"
+          />
+          <EmptyState v-else-if="loaded">
+            {{ allIdeas.length ? t('myList.empty.filtered') : t('friendList.empty.personal', { name: profile.displayName }) }}
+          </EmptyState>
+          <div class="bottom-space" />
+        </template>
+
+        <template v-else>
         <OccasionChips v-model="occasion" class="chips" @update:model-value="loadAll" />
 
         <SectionTitle>{{ t('friendList.theirIdeas', { count: personal.totalItems }) }}</SectionTitle>
@@ -89,13 +117,14 @@
           <ion-icon :icon="chevronForward" aria-hidden="true" />
         </router-link>
         <div class="bottom-space" />
+        </template>
       </template>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import {
@@ -138,6 +167,26 @@ import SecretBand from '../components/SecretBand.vue';
 import SectionTitle from '../components/SectionTitle.vue';
 import StatusPill from '../components/StatusPill.vue';
 import TopBar from '../components/TopBar.vue';
+import FilterChipGroup, { type FilterOption } from '../components/FilterChipGroup.vue';
+import IdeaTable from '../components/IdeaTable.vue';
+import { useDesktop } from '../composables/useDesktop';
+import { useIdeaLabels } from '../composables/useIdeaLabels';
+import { useOccasionFilter } from '../composables/useOccasionFilter';
+import {
+  countBy,
+  DEFAULT_SORT,
+  filterIdeas,
+  ideaPhase,
+  ideaSource,
+  readStoredSet,
+  sortIdeas,
+  storeSet,
+  toggled,
+  uniqueIdeas,
+  type IdeaPhase,
+  type IdeaSource,
+  type TableSort,
+} from '../utils/ideaTable';
 import type { Idea, IdeaListQuery } from '../types/idea';
 
 interface FriendProfile {
@@ -181,6 +230,76 @@ const drafts = section({ kind: 'suggestion', visibility: 'private' });
 
 const actions = useIdeaActions(() => loadAll());
 
+// ---- Computer layout (spec §11 décision 72) ----
+/** The « État » filter, kept between visits: archives hidden until asked for. */
+const PHASES_KEY = 'ic.friendList.phases';
+const desktop = useDesktop();
+const labels = useIdeaLabels();
+const phases = ref<Set<IdeaPhase>>(readStoredSet(PHASES_KEY, ['active', 'archived'], ['active']));
+const sources = ref<Set<IdeaSource>>(new Set(['owner', 'suggestion', 'draft']));
+const tableSort = ref<TableSort>(DEFAULT_SORT);
+const allIdeas = ref<Idea[]>([]);
+
+const phaseCounts = computed(() => countBy(allIdeas.value, ideaPhase));
+const byPhase = computed(() => filterIdeas(allIdeas.value, { phases: phases.value }));
+const sourceCounts = computed(() => countBy(byPhase.value, ideaSource));
+const bySource = computed(() => filterIdeas(byPhase.value, { sources: sources.value }));
+const rows = computed(() =>
+  sortIdeas(
+    filterIdeas(bySource.value, { occasion: occasion.value }),
+    tableSort.value,
+    { occasion: labels.occasionLabel, source: (idea) => labels.sourceLabel(idea, profile.value?.displayName ?? null) },
+    locale.value,
+  ),
+);
+
+const phaseOptions = computed<FilterOption[]>(() =>
+  (['active', 'archived'] as const).map((phase) => ({
+    value: phase,
+    label: t(`desktop.states.${phase}`, { count: phaseCounts.value[phase] ?? 0 }),
+    pressed: phases.value.has(phase),
+  })),
+);
+
+const sourceOptions = computed<FilterOption[]>(() => {
+  const labelOf = { owner: 'desktop.sources.owner', suggestion: 'desktop.sources.suggestions', draft: 'desktop.sources.drafts' } as const;
+
+  // My drafts only show when I have some.
+  return (['owner', 'suggestion', 'draft'] as const)
+    .filter((source) => 'draft' !== source || sourceCounts.value.draft)
+    .map((source) => ({
+      value: source,
+      label: t(labelOf[source], { name: profile.value?.displayName ?? '', count: sourceCounts.value[source] ?? 0 }),
+      pressed: sources.value.has(source),
+    }));
+});
+
+const occasionFilter = useOccasionFilter(() => bySource.value, occasion);
+
+function togglePhase(value: string): void {
+  phases.value = toggled(phases.value, value as IdeaPhase);
+  storeSet(PHASES_KEY, phases.value);
+}
+
+function toggleSource(value: string): void {
+  sources.value = toggled(sources.value, value as IdeaSource);
+}
+
+
+/** Same slices as the phone layout, archives included, all pages. */
+async function loadTable(): Promise<void> {
+  const slices = await Promise.all([
+    ideasApi.listAll({ kind: 'personal', visibility: 'published' }, userId),
+    ideasApi.listAll({ kind: 'suggestion', visibility: 'published' }, userId),
+    ideasApi.listAll({ kind: 'suggestion', visibility: 'private' }, userId),
+    ideasApi.listAll({ status: 'archived' }, userId),
+  ]);
+  allIdeas.value = uniqueIdeas(slices.flat());
+  loaded.value = true;
+}
+
+watch(desktop, () => void loadAll());
+
 const birthday = computed(() => {
   const p = profile.value;
   if (!p?.birthDay || !p.birthMonth) return null;
@@ -197,6 +316,11 @@ async function fetchSection(s: Section): Promise<void> {
 }
 
 async function loadAll(): Promise<void> {
+  if (desktop.value) {
+    await loadTable();
+
+    return;
+  }
   for (const s of [personal, suggestions, drafts]) s.page = 1;
   const [, , , archived] = await Promise.all([
     fetchSection(personal),
@@ -257,6 +381,33 @@ async function confirmRemove(): Promise<void> {
 </script>
 
 <style scoped>
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px 16px;
+}
+
+/* Computer layout: identity and actions on one line. */
+:root[data-desktop] .head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+}
+
+:root[data-desktop] .head .identity {
+  flex-grow: 1;
+  margin-top: 0;
+}
+
+:root[data-desktop] .head .cta {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 0;
+}
+
 .identity {
   display: flex;
   align-items: center;
